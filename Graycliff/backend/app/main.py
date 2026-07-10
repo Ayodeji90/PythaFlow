@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models  # noqa: F401 — register tables
 from .database import Base, SessionLocal, engine
-from .routers import dashboard, guests, menu, misc, orders
+from .routers import dashboard, forecast_pricing, guests, menu, misc, orders
 from .seed import seed_if_empty
 
 
@@ -36,6 +36,7 @@ app.include_router(orders.router)
 app.include_router(guests.router)
 app.include_router(misc.router)
 app.include_router(dashboard.router)
+app.include_router(forecast_pricing.router)
 
 
 @app.get("/api/health")
