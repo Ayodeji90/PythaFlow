@@ -1,4 +1,8 @@
+import io
+
+import qrcode
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -7,6 +11,18 @@ from ..models import Event, Order, Reservation
 from ..schemas import ReservationIn
 
 router = APIRouter(prefix="/api", tags=["misc"])
+
+MENU_BASE_URL = "http://localhost:5173"
+
+
+@router.get("/qr/{table_no}")
+def table_qr(table_no: int):
+    """QR code PNG for a printed table card — scans straight to the menu."""
+    img = qrcode.make(f"{MENU_BASE_URL}/?table={table_no}", box_size=8, border=2)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="image/png")
 
 
 def demo_today(db: Session) -> str:

@@ -126,6 +126,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold-soft); }
 
 /* ---- Menu (guest) ---- */
 .menu-item { display: flex; justify-content: space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.menu-item > div:first-child { flex: 1; min-width: 0; }
 .menu-item:last-child { border-bottom: none; }
 .menu-item .name { color: var(--cream); font-size: 15.5px; font-family: var(--font-display); }
 .menu-item .desc { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
