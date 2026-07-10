@@ -104,9 +104,9 @@ def centre_points() -> List[Dict[str, float]]:
     """
     return [
         {"lat": 25.0343, "lng": -77.3963},  # Nassau (New Providence)
-        {"lat": 24.5551, "lng": -81.7800},  # Grand Bahama
-        {"lat": 22.3500, "lng": -73.1333},  # Exuma
-        {"lat": 21.4667, "lng": -71.1333},  # Andros
+        {"lat": 26.5333, "lng": -78.7000},  # Freeport (Grand Bahama)
+        {"lat": 23.5061, "lng": -75.7597},  # George Town (Exuma)
+        {"lat": 24.7000, "lng": -77.7667},  # Fresh Creek (Andros)
     ]
 
 
@@ -143,6 +143,10 @@ def main() -> None:
                 details = fetch_details(place_id)
                 name = details.get("name", entry.get("name", ""))
                 address = details.get("formatted_address", entry.get("vicinity", ""))
+                # The 50 km radius around some islands reaches Florida and the
+                # Turks & Caicos — keep only venues actually in the Bahamas.
+                if "bahamas" not in address.lower():
+                    continue
                 geometry = details.get("geometry", {}).get("location", {})
                 lat = geometry.get("lat")
                 lng = geometry.get("lng")
@@ -167,4 +171,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-""
