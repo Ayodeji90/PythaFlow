@@ -1,0 +1,161 @@
+/* Graycliff demo theme — committed dark luxury look (charcoal + gold).
+   Chart series tokens validated with dataviz validator against --surface-1. */
+
+:root {
+  --bg: #12100e;
+  --surface-1: #1c1a17;
+  --surface-2: #24211d;
+  --surface-3: #2c2822;
+
+  --gold: #c9a227;          /* brand accent (chrome only) */
+  --gold-soft: #a8862a;
+  --cream: #f3ead8;
+
+  --ink: #f5f1e8;
+  --ink-2: #b8b2a4;
+  --muted: #8d8778;
+
+  --border: rgba(255, 255, 255, 0.09);
+  --grid: #2e2b26;
+
+  /* validated chart series (dark surface #1c1a17) */
+  --series-1: #c98500;
+  --series-2: #3987e5;
+  --series-3: #199e70;
+
+  /* fixed status palette (reference set — all ≥3:1 on dark) */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, .display { font-family: var(--font-display); font-weight: 500; letter-spacing: 0.01em; }
+
+a { color: inherit; text-decoration: none; }
+
+/* ---- App shell ---- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+  position: sticky; top: 0; z-index: 20;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand-name { font-family: var(--font-display); font-size: 22px; letter-spacing: 0.18em; color: var(--cream); }
+.brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.nav { display: flex; gap: 4px; }
+.nav a {
+  padding: 7px 14px; border-radius: 8px; font-size: 13.5px; color: var(--ink-2);
+}
+.nav a:hover { background: var(--surface-2); color: var(--ink); }
+.nav a.active { background: var(--surface-3); color: var(--gold); }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
+.page-title { font-size: 26px; margin: 4px 0 2px; color: var(--cream); }
+.page-sub { color: var(--muted); font-size: 13.5px; margin-bottom: 24px; }
+
+/* ---- Cards & grids ---- */
+.grid { display: grid; gap: 16px; }
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.card h3 { margin: 0 0 2px; font-size: 16px; color: var(--cream); }
+.card .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 14px; }
+
+.stat-value { font-size: 30px; color: var(--ink); line-height: 1.15; }
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.delta-up { color: var(--status-good); font-size: 12.5px; }
+.delta-down { color: var(--status-critical); font-size: 12.5px; }
+
+/* ---- Lists ---- */
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+.badge {
+  font-size: 11px; padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--border); color: var(--ink-2); white-space: nowrap;
+}
+.badge.gold { color: var(--gold); border-color: rgba(201, 162, 39, 0.4); }
+
+/* ---- Buttons & inputs ---- */
+.btn {
+  font-family: var(--font-ui); font-size: 13.5px;
+  padding: 9px 16px; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--ink);
+}
+.btn:hover { background: var(--surface-3); }
+.btn.primary { background: var(--gold-soft); border-color: transparent; color: #16130c; font-weight: 600; }
+.btn.primary:hover { background: var(--gold); }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+
+.chip {
+  padding: 6px 14px; border-radius: 999px; font-size: 13px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--ink-2);
+}
+.chip.active { background: var(--surface-3); color: var(--gold); border-color: rgba(201,162,39,0.4); }
+
+input, textarea, select {
+  font-family: var(--font-ui); font-size: 14px; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 9px; padding: 9px 12px; outline: none;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--gold-soft); }
+
+/* ---- Menu (guest) ---- */
+.menu-item { display: flex; justify-content: space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.menu-item:last-child { border-bottom: none; }
+.menu-item .name { color: var(--cream); font-size: 15.5px; font-family: var(--font-display); }
+.menu-item .desc { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+.menu-item .price { color: var(--gold); font-size: 15px; white-space: nowrap; }
+
+.cart-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+  background: var(--surface-2); border-top: 1px solid var(--border);
+  padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+}
+
+.upsell {
+  background: linear-gradient(135deg, rgba(201,162,39,0.12), rgba(201,162,39,0.04));
+  border: 1px solid rgba(201,162,39,0.35);
+  border-radius: 12px; padding: 12px 16px; margin: 10px 0;
+}
+
+/* ---- Chart chrome ---- */
+.recharts-default-tooltip { border-radius: 10px !important; }
+.tip {
+  background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 12px; font-size: 12.5px; color: var(--ink);
+}
+.tip .k { color: var(--muted); margin-right: 8px; }
+
+@media (max-width: 860px) {
+  .topbar { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
+  .brand-sub { display: none; }
+  .brand-name { font-size: 18px; }
+  .nav { overflow-x: auto; max-width: 100%; }
+  .nav a { padding: 6px 10px; font-size: 12.5px; white-space: nowrap; }
+  .page { padding: 18px 14px 90px; }
+}
