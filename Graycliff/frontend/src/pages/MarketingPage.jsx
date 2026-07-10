@@ -83,7 +83,7 @@ export default function MarketingPage() {
               {STATUS_BADGE[d.status].label}
             </span>
           </div>
-          <div className="sub">{d.channel} · {d.created_at}{d.engine ? ` · ${d.engine === "claude" ? "Claude AI" : "template (no API key)"}` : ""}</div>
+          <div className="sub">{d.channel} · {d.created_at}{d.engine ? ` · ${d.engine === "template" ? "template (no AI provider)" : `AI (${d.engine})`}` : ""}</div>
 
           {editing[d.id] !== undefined ? (
             <>

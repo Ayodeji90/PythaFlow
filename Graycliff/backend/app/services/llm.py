@@ -1,37 +1,23 @@
-"""LLM gateway for voice intent extraction and marketing copy.
+"""Voice intent extraction and marketing copy — app-core AI logic.
 
-Uses the Claude API when ANTHROPIC_API_KEY is set (loaded from the repo
-root .env). Without a key, both features fall back to rule-based logic
-so the demo always runs — the fallback is clearly flagged in responses.
+This module is vendor-blind: it talks to the LLMService interface only
+(see llm_service.py) and never imports a provider SDK. Model/provider
+choice lives in .env. Without any provider configured, both features
+fall back to rule-based logic so the demo always runs — the fallback is
+clearly flagged in responses.
 """
 
 import difflib
 import json
-import os
 import re
 from datetime import date, timedelta
-from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parents[4] / ".env")
-
-VOICE_MODEL = "claude-haiku-4-5-20251001"      # low latency for spoken turns
-MARKETING_MODEL = "claude-sonnet-5"            # best copy quality
-
-_client = None
+from .llm_service import get_llm_service
 
 
-def llm_available() -> bool:
-    return bool(os.getenv("ANTHROPIC_API_KEY"))
-
-
-def _get_client():
-    global _client
-    if _client is None:
-        import anthropic
-        _client = anthropic.Anthropic()
-    return _client
+def _extract_json(text: str) -> dict:
+    text = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.M).strip()
+    return json.loads(text)
 
 
 # ---------------------------------------------------------------------------
@@ -39,15 +25,16 @@ def _get_client():
 # ---------------------------------------------------------------------------
 
 def interpret_voice(transcript: str, menu_names: list[str], today: str) -> dict:
-    if llm_available():
+    svc = get_llm_service()
+    if svc.available():
         try:
-            return _interpret_with_claude(transcript, menu_names, today)
+            return _interpret_with_llm(svc, transcript, menu_names, today)
         except Exception:
             pass  # fall through to the rule-based parser
     return _interpret_rule_based(transcript, menu_names, today)
 
 
-def _interpret_with_claude(transcript: str, menu_names: list[str], today: str) -> dict:
+def _interpret_with_llm(svc, transcript: str, menu_names: list[str], today: str) -> dict:
     prompt = f"""You are the voice concierge for Graycliff Restaurant, Nassau.
 Today's date is {today}. The menu items are:
 {chr(10).join('- ' + n for n in menu_names)}
@@ -65,14 +52,8 @@ a table, intent is "reservation". Keep the reply short and warm.
 
 Guest said: "{transcript}"
 """
-    resp = _get_client().messages.create(
-        model=VOICE_MODEL, max_tokens=500,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = resp.content[0].text.strip()
-    text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.M).strip()
-    data = json.loads(text)
-    data["engine"] = "claude"
+    data = _extract_json(svc.generate(prompt, tier="fast", max_tokens=500))
+    data["engine"] = svc.name
     return data
 
 
@@ -164,15 +145,16 @@ BRAND_VOICE = (
 
 
 def generate_marketing(channel: str, topic: str | None, tone: str, context: dict) -> dict:
-    if llm_available():
+    svc = get_llm_service()
+    if svc.available():
         try:
-            return _marketing_with_claude(channel, topic, tone, context)
+            return _marketing_with_llm(svc, channel, topic, tone, context)
         except Exception:
             pass
     return _marketing_template(channel, topic, context)
 
 
-def _marketing_with_claude(channel: str, topic: str | None, tone: str, context: dict) -> dict:
+def _marketing_with_llm(svc, channel: str, topic: str | None, tone: str, context: dict) -> dict:
     prompt = f"""{BRAND_VOICE}
 
 Write one {channel} piece for Graycliff Restaurant.
@@ -186,14 +168,8 @@ Live restaurant data:
 
 Respond with ONLY JSON: {{"title": "<subject line or hook, under 80 chars>",
 "body": "<the piece: 60-120 words for social, 120-180 for email>"}}"""
-    resp = _get_client().messages.create(
-        model=MARKETING_MODEL, max_tokens=700,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = resp.content[0].text.strip()
-    text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.M).strip()
-    data = json.loads(text)
-    data["engine"] = "claude"
+    data = _extract_json(svc.generate(prompt, tier="quality", max_tokens=700))
+    data["engine"] = svc.name
     return data
 
 

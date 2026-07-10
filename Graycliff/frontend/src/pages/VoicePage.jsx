@@ -113,7 +113,7 @@ export default function VoicePage() {
              result.action.type === "reservation" ? "Reservation confirmed" : "Heard you"}
           </h3>
           <div className="sub">
-            intent: {result.intent} · engine: {result.engine === "claude" ? "Claude AI" : "rule-based (no API key)"}
+            intent: {result.intent} · engine: {result.engine === "rules" ? "rule-based (no AI provider)" : `AI (${result.engine})`}
           </div>
           <p style={{ color: "var(--cream)" }}>"{result.reply}"</p>
 

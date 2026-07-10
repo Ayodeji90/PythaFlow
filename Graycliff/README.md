@@ -37,7 +37,13 @@ Set in the repo-root `.env` (see `.env.example`):
 
 | Variable | Effect |
 |---|---|
-| `ANTHROPIC_API_KEY` | Voice intent + marketing copy use Claude. Without it both fall back to rule-based/template logic — the demo still runs, clearly labelled. |
+| `LLM_PROVIDER` | `auto` (default) \| `anthropic` \| `openai` \| `none` |
+| `ANTHROPIC_API_KEY` | Enables the Claude provider |
+| `OPENAI_API_KEY` / `OPENAI_BASE_URL` | Enables any OpenAI-compatible provider (OpenAI, Groq, Mistral, local Ollama) |
+| `LLM_MODEL_FAST` / `LLM_MODEL_QUALITY` | Optional model overrides per tier (fast = voice turns, quality = marketing copy) |
+
+Without any provider, voice and marketing fall back to rule-based/template
+logic — the demo still runs, clearly labelled in the UI.
 
 ## The pages
 
@@ -81,9 +87,31 @@ backend/   FastAPI + SQLite (SQLAlchemy)
   app/services/forecast.py     trailing level × weekday profile × event uplift
   app/services/pricing.py      rule engine + guardrails (≥2× cost, ±15% cap)
   app/services/recommender.py  co-occurrence CF + content tags + guest history
-  app/services/llm.py          Claude API with rule/template fallbacks
+  app/services/llm.py          voice/marketing AI logic (vendor-blind)
+  app/services/llm_service.py  LLMService interface + provider factory
+  app/services/providers/      one wrapper per vendor (anthropic, openai-compatible)
 data/      synthetic dataset generator + seed CSVs
 ```
+
+### AI provider isolation
+
+The app core never touches a vendor SDK — it talks to a stable interface,
+and each provider is a thin replaceable wrapper:
+
+```
+App Core (routers, llm.py prompts & fallbacks)   ← stable
+        ↓
+LLMService interface (llm_service.py)            ← stable: generate(prompt, tier)
+        ↓
+Provider wrapper (services/providers/*)          ← swap freely
+        ↓
+Vendor API (Anthropic / OpenAI / Groq / Ollama…)
+```
+
+Switching vendors or models = edit `.env` (`LLM_PROVIDER`,
+`LLM_MODEL_FAST`, `LLM_MODEL_QUALITY`) and restart. Adding a vendor =
+one new file in `services/providers/` implementing `generate()`; no
+other code changes.
 
 Production path (post-signature): swap the CSV seed for a POS webhook
 (Toast/Square/Lightspeed), move SQLite → Postgres, pin the demo "today"

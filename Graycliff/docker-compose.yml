@@ -6,9 +6,14 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Optional — voice intent & marketing copy use Claude when set,
-      # rule-based/template fallbacks when not.
+      # AI provider selection — see .env.example. All optional; without
+      # keys the voice/marketing modules use rule-based fallbacks.
+      - LLM_PROVIDER=${LLM_PROVIDER:-auto}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - LLM_MODEL_FAST=${LLM_MODEL_FAST:-}
+      - LLM_MODEL_QUALITY=${LLM_MODEL_QUALITY:-}
 
   frontend:
     build:
