@@ -21,6 +21,9 @@
 ---
 
 ## 3. Data Architecture Overview
+
+> **Note:** To view the diagram, open this file in VS Code with the *Markdown Preview Mermaid* extension or any Markdown viewer that supports Mermaid.
+
 ```mermaid
 flowchart TD
     subgraph Sources[Data Sources]
