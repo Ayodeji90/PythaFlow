@@ -1,0 +1,45 @@
+id,name,category,price,cost,tags,description,pairing_item_id,active
+1,Bahamian Conch Fritters,Starter,24,6.5,"conch,seafood,fried,local",Golden conch fritters with calypso rémoulade,,1
+2,Stone Crab Claws,Starter,38,14,"crab,seafood,chilled,local",Chilled Bahamian stone crab with mustard aioli,,1
+3,Seared Foie Gras,Starter,34,12,"foie-gras,rich,french","Seared foie gras, guava glaze, brioche",,1
+4,Tuna Tartare,Starter,28,9,"tuna,seafood,raw,light","Yellowfin tartare, plantain crisps, citrus soy",,1
+5,Escargot Bourguignonne,Starter,26,7,"escargot,french,garlic","Burgundy snails, garlic-herb butter",,1
+6,Caribbean Lobster Bisque,Starter,22,6,"lobster,soup,seafood,rich","Silky lobster bisque, cognac cream",,1
+7,Conch Chowder Graycliff,Starter,19,5,"conch,soup,local,spiced","House conch chowder, dark rum, thyme",,1
+8,Caesar Salad Tableside,Starter,21,5.5,"salad,classic,tableside",Prepared tableside with white anchovies,,1
+9,Heirloom Tomato & Burrata,Starter,23,7,"salad,vegetarian,fresh","Island tomatoes, burrata, basil oil",,1
+10,Grilled Bahamian Lobster Thermidor,Main,92,30,"lobster,seafood,signature,grilled","Whole local lobster, thermidor glaze",33,1
+11,Pan-Seared Grouper,Main,58,17,"grouper,seafood,local","Nassau grouper, lemon beurre blanc",35,1
+12,Wagyu Beef Tenderloin A5,Main,145,52,"wagyu,beef,premium","Japanese A5 wagyu, truffle jus",28,1
+13,Rack of Lamb Provencale,Main,68,22,"lamb,french,herbs","Herb-crusted rack, ratatouille",32,1
+14,Duck a l'Orange,Main,62,19,"duck,french,classic","Crispy duckling, Grand Marnier orange sauce",34,1
+15,Filet Mignon au Poivre,Main,74,24,"beef,steak,peppercorn","Center-cut filet, green peppercorn cream",29,1
+16,Chateaubriand for Two,Main,190,62,"beef,steak,sharing,tableside","Carved tableside, sauce béarnaise",28,1
+17,Blackened Mahi-Mahi,Main,54,15,"mahi,seafood,spiced,local","Cajun-blackened mahi, mango salsa",35,1
+18,Seafood Linguine Graycliff,Main,56,16,"pasta,seafood,lobster,shrimp","Lobster, shrimp, scallops, saffron cream",33,1
+19,"Cracked Conch, Peas 'n' Rice",Main,46,12,"conch,local,fried,classic",Island classic with island-spiced rice,35,1
+20,Vegetarian Wellington,Main,44,10,"vegetarian,pastry,mushroom",Wild mushroom & spinach wellington,34,1
+21,Chef's Five-Course Tasting,Tasting,165,50,"tasting,signature,chef",Five-course seasonal degustation,36,1
+22,Graycliff Chocolate Souffle,Dessert,24,5,"chocolate,souffle,signature","Estate chocolate soufflé, vanilla anglaise",30,1
+23,Guava Duff with Rum Butter,Dessert,16,3.5,"guava,local,classic","Bahamian guava duff, aged rum butter",,1
+24,Creme Brulee Madagascar,Dessert,15,3,"custard,vanilla,classic",Madagascar vanilla bean brûlée,,1
+25,Key Lime Tart,Dessert,14,3,"citrus,tart,light","Key lime curd, toasted meringue",,1
+26,Chocolatier Truffle Selection,Dessert,22,5,"chocolate,truffles,signature",Six truffles from Graycliff Chocolatier,31,1
+27,Baked Alaska Flambe,Dessert,26,6,"flambe,tableside,classic",Flamed tableside with 151 rum,,1
+28,Chateau Margaux 2015,Wine,950,400,"wine,red,bordeaux,premium","Premier Grand Cru Classé, Margaux",,1
+29,Opus One 2018,Wine,650,270,"wine,red,napa,premium",Napa Valley Bordeaux blend,,1
+30,Dom Perignon 2013,Wine,480,195,"wine,champagne,premium","Vintage champagne, Épernay",,1
+31,Graycliff Private Reserve Cabernet,Wine,220,75,"wine,red,house,signature",From the Graycliff cellar collection,,1
+32,Barolo Riserva (glass),Wine,28,10,"wine,red,italian,glass","Nebbiolo, Piedmont",,1
+33,Chablis Grand Cru (glass),Wine,26,9,"wine,white,burgundy,glass","Les Clos, mineral and precise",,1
+34,Pinot Noir Russian River (glass),Wine,22,8,"wine,red,california,glass","Silky, red-fruited",,1
+35,Sauvignon Blanc Marlborough (glass),Wine,16,5,"wine,white,newzealand,glass","Crisp, citrus, aromatic",,1
+36,Sommelier Wine Pairing Flight,Wine,85,30,"wine,pairing,tasting",Paired pours for the tasting menu,,1
+37,Graycliff Royale,Beverage,22,5,"cocktail,champagne,signature","Champagne, hibiscus, gold sugar rim",,1
+38,Bahama Mama,Beverage,16,3.5,"cocktail,rum,tropical","Two rums, coconut, island juices",,1
+39,Classic Martini,Beverage,18,4,"cocktail,gin,classic","Stirred, olive or twist",,1
+40,Espresso Martini,Beverage,17,4,"cocktail,coffee","Espresso, vodka, coffee liqueur",,1
+41,Bahamian Switcha Lemonade,Beverage,9,1.5,"mocktail,citrus,local","Fresh native limes, cane sugar",,1
+42,San Pellegrino 750ml,Beverage,8,2,"water,sparkling",Sparkling mineral water,,1
+43,Graycliff Chateau Grand Cru Cigar,Cigar,65,16,"cigar,signature,lounge",Rolled at the estate factory,,1
+44,Graycliff Turbo Cigar,Cigar,48,12,"cigar,signature,lounge",Medium-bodied estate blend,,1

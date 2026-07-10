@@ -1,0 +1,7 @@
+fastapi>=0.130
+uvicorn[standard]>=0.40
+sqlalchemy>=2.0
+pandas>=2.2
+python-dotenv>=1.0
+anthropic>=0.100
+qrcode[pil]>=8.0
