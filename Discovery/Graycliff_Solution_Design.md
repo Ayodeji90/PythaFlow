@@ -77,18 +77,41 @@ flowchart TD
 
 ---
 
-## 5. Pricing & Business Model (Buyable SaaS)
-1. **Subscription Tier** – $250 / month per location (covers data ingestion, core models, and UI).  
-2. **Usage‑Based Add‑Ons** –
-   - **Dynamic Pricing Engine**: $0.05 per transaction processed.
-   - **Voice‑Ordering**: $0.02 per order.
-3. **Pilot Discount** – 50 % off for the first 3 months for Graycliff (to secure a reference case).
+## 5. Pricing & Business Model (Implementation + SaaS)
 
-**Revenue Projection (first year)**
-- Pilot (Graycliff): $250 × 12 = $3,000 (discounted to $1,500).
-- Assuming 5 similar premium hotels join after pilot: $250 × 5 × 12 = $15,000.
-- Add‑on usage (estimated 2,000 transactions): $0.05 × 2,000 = $100.
-- **Total Year‑1 ≈ $16,600** – a solid baseline to iterate on.
+> Positioning: **bespoke AI implementation for luxury hospitality**, not a
+> self-serve app. The one-time implementation fee is where the revenue is;
+> the subscription is the recurring tail that compounds.
+
+1. **Implementation & Tailoring** – **$15,000 one-time** per property
+   (POS data integration, brand-tailored guest experience, menu and
+   wine-cellar modelling, staff onboarding, 30-day tuning period).
+   *Pilot offer for Graycliff: $7,500 (50% off) in exchange for a named
+   case study and two referral introductions.*
+2. **Platform Subscription** – **$490 / month per location** — all five
+   modules, hosting, model retraining, support. (A $250 price point
+   signals "tool"; $490 signals "partner" to a five-star property.)
+3. **Usage-Based Add-Ons** –
+   - **Dynamic Pricing Engine**: $0.05 per transaction processed.
+   - **Voice-Ordering**: $0.02 per order.
+
+**Path to $200K in 4 months**
+
+| Source | Count | Revenue |
+|---|---|---|
+| Graycliff pilot (discounted) | 1 | $7,500 |
+| Full-fee implementations (Nassau → Caribbean → EU island resorts) | 12 | $180,000 |
+| Subscriptions (avg. 2 active months across signings) | ~13 × $490 × 2 | $12,740 |
+| **Total** | | **≈ $200,000** |
+
+That is **three signed implementations per month** after the pilot — the
+demo platform exists to compress that sales cycle: every pitch is a live
+product walk-through, not a slide deck.
+
+**Reference-case economics (for the pitch):** the demo baseline shows
+~$3.4K/week of perishable waste at risk and a mid-single-digit upsell
+lift — at Graycliff's volume the platform pays back its implementation
+fee within a quarter.
 
 ---
 

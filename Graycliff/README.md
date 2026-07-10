@@ -1,0 +1,90 @@
+# Graycliff AI Platform — PythaFlow Demo
+
+Five AI solutions for Graycliff Hotel & Restaurant (Nassau), built as one
+integrated demo: Smart Menu & Dynamic Pricing, Guest Personalization,
+Voice Ordering & Reservations, AI Marketing Content, and a Contactless
+QR-Menu with AI Upsell.
+
+Runs entirely on a realistic **synthetic dataset** (12 months of seasonal
+Nassau fine-dining POS history) until the client shares real data.
+
+## Quick start (local dev)
+
+```bash
+# 1. Generate the dataset (only needed once, or after changing the generator)
+../.venv/bin/python data/generate_graycliff_data.py
+
+# 2. Backend — http://localhost:8000 (docs at /docs)
+cd backend && ../../.venv/bin/uvicorn app.main:app --port 8000
+
+# 3. Frontend — http://localhost:5173
+cd frontend && npm install && npm run dev
+```
+
+First backend boot seeds `backend/graycliff.db` (SQLite) from `data/seed/`.
+Delete that file to reset the demo to a clean state.
+
+### Docker
+
+```bash
+docker compose up --build
+# frontend: http://localhost:5173   backend: http://localhost:8000
+```
+
+### Environment (optional)
+
+Set in the repo-root `.env` (see `.env.example`):
+
+| Variable | Effect |
+|---|---|
+| `ANTHROPIC_API_KEY` | Voice intent + marketing copy use Claude. Without it both fall back to rule-based/template logic — the demo still runs, clearly labelled. |
+
+## The pages
+
+| URL | Audience | What it shows |
+|---|---|---|
+| `/?table=12` | Guest | QR menu with cart and AI upsell |
+| `/?table=12&guest=7` | Returning guest | Adds the personalized "For you" section |
+| `/dashboard` | Manager | Forecast, dynamic-pricing approvals, waste risk, sales |
+| `/voice` | Guest | Voice/text concierge — orders & reservations |
+| `/marketing` | Marketing | AI copy studio with approval workflow |
+| `:8000/api/qr/12` | Ops | Printable QR PNG for table card 12 |
+
+## The 10-minute pitch script
+
+1. **Open `/?table=12&guest=7`** (phone-sized window). Point out the
+   personalized "For you" picks with reasons. Add the **Lobster Thermidor**
+   — the sommelier-pairing prompt appears. Accept it. Review order → note
+   the upsell suggestions under "May we also suggest" → **Send to kitchen**.
+   *Message: every table upsells itself, politely.*
+2. **Open `/dashboard`.** Tonight's revenue includes the order just placed.
+   Walk the stat row: **waste at risk** is real money ($3k+/week). Show the
+   covers forecast picking up Saturday and festival peaks.
+3. **Scroll to Dynamic pricing.** Read one scarcity rationale aloud (the
+   lobster one) and one waste rationale (the foie gras). Click **Apply** on
+   one — the guest menu price updates live. *Message: AI suggests, the
+   manager decides; guardrails are visible.*
+4. **Open `/voice`.** Click the sample phrase "Book a table for four
+   tomorrow at 8pm" — reservation confirmed and spoken back. Then order by
+   voice/text: "the wagyu and a glass of Barolo".
+5. **Open `/marketing`.** Generate an Instagram post — it references this
+   week's actual best seller and the next event. Approve → Schedule.
+   *Message: on-brand content in seconds, human always approves.*
+6. **Close on `/dashboard`** — the reservation and orders from steps 1–4
+   are all visible. One platform, five modules, live loop.
+
+## Architecture (demo build)
+
+```
+frontend/  React + Vite SPA, dark luxury theme, recharts
+backend/   FastAPI + SQLite (SQLAlchemy)
+  app/services/forecast.py     trailing level × weekday profile × event uplift
+  app/services/pricing.py      rule engine + guardrails (≥2× cost, ±15% cap)
+  app/services/recommender.py  co-occurrence CF + content tags + guest history
+  app/services/llm.py          Claude API with rule/template fallbacks
+data/      synthetic dataset generator + seed CSVs
+```
+
+Production path (post-signature): swap the CSV seed for a POS webhook
+(Toast/Square/Lightspeed), move SQLite → Postgres, pin the demo "today"
+to the real clock, and add auth in front of the manager routes.

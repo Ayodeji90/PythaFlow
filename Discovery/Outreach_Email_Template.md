@@ -1,21 +1,17 @@
 # Outreach Email Template
 
-**Subject:** Unlock Higher Revenue & Efficiency for Your Restaurant with AI
+**Subject:** A working AI platform for {{RestaurantName}} — 10-minute live walkthrough
 
 Hi {{RestaurantOwnerName}},
 
-My name is [Your Name] and I’m working on a set of AI‑driven tools designed specifically for restaurants in the Caribbean, Central America, and European islands. Our solution helps you:
+My name is [Your Name], founder of PythaFlow. We build AI platforms for luxury hospitality — and rather than pitch you slides, I'd like to show you a **working platform, live**, in 10 minutes:
 
-- Reduce food waste by up to 15 %
-- Optimize staffing and pricing in real‑time
-- Increase average check size through personalized upsells
+- A demand forecast that flags **$3,000+ per week of perishable waste** before it happens
+- Dynamic price suggestions your manager approves with one click — margin guardrails built in
+- A QR menu whose sommelier-style pairings lift the average check at every table
+- Voice ordering & reservations, and on-brand marketing copy drafted from your own sales data
 
-We are currently validating the market and would love to hear about the challenges you face today. Would you be open to a short 15‑minute conversation to discuss:
-
-1. The biggest operational pain points you encounter (e.g., inventory forecasting, staffing, menu pricing)
-2. Your willingness to invest in a solution that could deliver measurable savings
-
-Your feedback will directly shape the product, and you’ll receive early‑access to a pilot program at a discounted rate.
+We are selecting **one flagship property per market** for a pilot at 50% off the implementation fee, in exchange for a named case study.
 
 If you’re interested, please let me know a convenient time, or feel free to book a slot on my calendar: [Calendly link]
 
