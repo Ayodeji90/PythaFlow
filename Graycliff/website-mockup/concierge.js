@@ -44,7 +44,7 @@
     '  display: none; flex-direction: column; overflow: hidden; box-shadow: 0 18px 60px rgba(0,0,0,.5); }' +
     '.panel.open { display: flex; }' +
     '.head { padding: 16px 18px 12px; border-bottom: 1px solid rgba(243,234,216,.12); }' +
-    '.head .brand { font-family: Georgia, serif; letter-spacing: .18em; font-size: 15px; color: #f3ead8; }' +
+    '.head .brand { font-family: "Berkshire Swash", Georgia, serif; letter-spacing: .01em; font-size: 21px; color: #ffffff; }' +
     '.head .sub { font-size: 10.5px; color: #9b9384; letter-spacing: .06em; margin-top: 3px; }' +
     '.head .sub b { color: #b3902f; font-weight: 600; }' +
     '.log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }' +
@@ -84,7 +84,7 @@
 
     '<div class="panel" role="dialog" aria-label="Graycliff concierge">' +
     '  <div class="head">' +
-    '    <div class="brand">GRAYCLIFF</div>' +
+    '    <div class="brand">Graycliff</div>' +
     '    <div class="sub">AI Concierge · <b>prototype</b> — reservations &amp; dining questions</div>' +
     '  </div>' +
     '  <div class="log"></div>' +

@@ -4,10 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graycliff Hotel &amp; Restaurant — Nassau, Bahamas (Layout Mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap" rel="stylesheet">
 <style>
   :root {
     --charcoal: #17140f;
     --charcoal-2: #211c15;
+    --indigo: #2a1a57;
+    --indigo-2: #221346;
+    --brown: #4a3421;
+    --star: #f2c230;
     --paper: #f7f3ea;
     --paper-2: #efe9db;
     --ink: #262019;
@@ -33,26 +40,30 @@
     letter-spacing: 0.12em; padding: 5px 50px; pointer-events: none;
   }
 
-  /* ---------- top utility bar ---------- */
+  /* ---------- brown hairline + white utility bar (as on the live site) ---------- */
+  .brownline { height: 6px; background: var(--brown); }
   .topbar {
-    background: #0f0d0a; color: rgba(243, 234, 216, 0.75);
+    background: #ffffff; color: #8f8b84;
     font-family: var(--sans); font-size: 11.5px;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 7px 26px; gap: 12px;
+    padding: 9px 26px; gap: 12px;
   }
-  .topbar .social { display: flex; gap: 14px; letter-spacing: 0.06em; }
-  .topbar a:hover { color: var(--gold); }
+  .topbar .social { display: flex; gap: 16px; letter-spacing: 0.06em; }
+  .topbar a:hover { color: var(--indigo); }
 
-  /* ---------- header ---------- */
+  /* ---------- header — deep indigo band with the star-crowned script mark ---------- */
   header.site {
-    background: var(--charcoal); color: var(--cream);
-    padding: 20px 26px 0; position: sticky; top: 0; z-index: 50;
-    border-bottom: 1px solid var(--line-dark);
+    background: var(--indigo); color: var(--cream);
+    padding: 18px 26px 0; position: sticky; top: 0; z-index: 50;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
   .masthead { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
-  .wordmark { line-height: 1.1; }
-  .wordmark .name { font-size: 30px; letter-spacing: 0.22em; color: #fff; }
-  .wordmark .sub { font-family: var(--sans); font-size: 9.5px; letter-spacing: 0.34em; color: var(--gold); margin-top: 4px; }
+  .logo { line-height: 1; display: inline-block; text-align: center; }
+  .logo .stars { color: var(--star); font-size: 13px; letter-spacing: 9px; margin-bottom: 3px; text-indent: 9px; }
+  .logo .name-script {
+    font-family: "Berkshire Swash", Georgia, serif; font-weight: 400;
+    font-size: 46px; color: #ffffff; letter-spacing: 0.01em;
+  }
   .book-btn {
     font-family: var(--sans); font-size: 12px; letter-spacing: 0.14em;
     border: 1px solid var(--gold); color: var(--gold); padding: 10px 22px;
@@ -63,9 +74,9 @@
   nav.main ul { display: flex; gap: 4px; min-width: max-content; }
   nav.main a {
     display: block; font-family: var(--sans); font-size: 12.5px; letter-spacing: 0.08em;
-    padding: 12px 14px; color: rgba(243, 234, 216, 0.85); border-bottom: 2px solid transparent;
+    padding: 12px 14px; color: rgba(255, 255, 255, 0.82); border-bottom: 2px solid transparent;
   }
-  nav.main a:hover, nav.main a.active { color: #fff; border-bottom-color: var(--gold); }
+  nav.main a:hover, nav.main a.active { color: #fff; border-bottom-color: var(--star); }
 
   /* ---------- hero slider ---------- */
   .hero { position: relative; height: min(78vh, 640px); overflow: hidden; background: var(--charcoal); }
@@ -102,7 +113,7 @@
   .dots button.on { background: var(--gold); border-color: var(--gold); }
 
   /* ---------- booking band ---------- */
-  .booking { background: var(--charcoal-2); border-top: 1px solid var(--line-dark); }
+  .booking { background: var(--indigo-2); border-top: 1px solid rgba(255, 255, 255, 0.1); }
   .booking form {
     max-width: 1200px; margin: 0 auto; padding: 18px 26px;
     display: flex; flex-wrap: wrap; gap: 12px; align-items: end;
@@ -148,7 +159,8 @@
   .card .more:hover { color: var(--ink); }
 
   /* ---------- footer ---------- */
-  footer.site { background: var(--charcoal); color: rgba(243, 234, 216, 0.8); font-family: var(--sans); }
+  footer.site { background: var(--indigo); color: rgba(243, 234, 216, 0.85); font-family: var(--sans); }
+  footer.site .script { font-family: "Berkshire Swash", Georgia, serif; font-size: 24px; letter-spacing: 0.01em; text-transform: none; }
   .foot-inner { max-width: 1200px; margin: 0 auto; padding: 54px 26px 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 34px; }
   .foot-inner h4 { font-family: var(--serif); color: var(--cream); font-weight: 500; letter-spacing: 0.12em; font-size: 15px; margin-bottom: 14px; }
   .foot-inner li { margin-bottom: 8px; font-size: 13px; }
@@ -165,6 +177,7 @@
 <body>
   <div class="mock-ribbon">MOCKUP</div>
 
+  <div class="brownline"></div>
   <div class="topbar">
     <div class="social">
       <a href="#">Facebook</a><a href="#">Instagram</a><a href="#">X</a><a href="#">YouTube</a><a href="#">TripAdvisor</a>
@@ -174,9 +187,9 @@
 
   <header class="site">
     <div class="masthead">
-      <div class="wordmark">
-        <div class="name">GRAYCLIFF</div>
-        <div class="sub">HOTEL · RESTAURANT · NASSAU</div>
+      <div class="logo">
+        <div class="stars" aria-hidden="true">★ ★ ★ ★ ★</div>
+        <div class="name-script">Graycliff</div>
       </div>
       <a class="book-btn" href="#booking">BOOK YOUR STAY</a>
     </div>
@@ -303,7 +316,7 @@
   <footer class="site">
     <div class="foot-inner">
       <div>
-        <h4>GRAYCLIFF</h4>
+        <h4 class="script">Graycliff</h4>
         <ul>
           <li>West Hill Street</li>
           <li>P.O. Box N10246</li>
