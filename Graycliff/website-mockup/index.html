@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graycliff Hotel &amp; Restaurant — Nassau, Bahamas (Layout Mockup)</title>
+<style>
+  :root {
+    --charcoal: #17140f;
+    --charcoal-2: #211c15;
+    --paper: #f7f3ea;
+    --paper-2: #efe9db;
+    --ink: #262019;
+    --ink-2: #5c5443;
+    --gold: #b3902f;
+    --gold-deep: #8a6d1c;
+    --cream: #f3ead8;
+    --line: rgba(38, 32, 25, 0.14);
+    --line-dark: rgba(243, 234, 216, 0.16);
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: var(--serif); color: var(--ink); background: var(--paper); }
+  img { max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  ul { list-style: none; padding: 0; }
+
+  .mock-ribbon {
+    position: fixed; top: 14px; left: -46px; z-index: 99;
+    transform: rotate(-45deg); background: var(--gold);
+    color: #17140f; font-family: var(--sans); font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.12em; padding: 5px 50px; pointer-events: none;
+  }
+
+  /* ---------- top utility bar ---------- */
+  .topbar {
+    background: #0f0d0a; color: rgba(243, 234, 216, 0.75);
+    font-family: var(--sans); font-size: 11.5px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 26px; gap: 12px;
+  }
+  .topbar .social { display: flex; gap: 14px; letter-spacing: 0.06em; }
+  .topbar a:hover { color: var(--gold); }
+
+  /* ---------- header ---------- */
+  header.site {
+    background: var(--charcoal); color: var(--cream);
+    padding: 20px 26px 0; position: sticky; top: 0; z-index: 50;
+    border-bottom: 1px solid var(--line-dark);
+  }
+  .masthead { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+  .wordmark { line-height: 1.1; }
+  .wordmark .name { font-size: 30px; letter-spacing: 0.22em; color: #fff; }
+  .wordmark .sub { font-family: var(--sans); font-size: 9.5px; letter-spacing: 0.34em; color: var(--gold); margin-top: 4px; }
+  .book-btn {
+    font-family: var(--sans); font-size: 12px; letter-spacing: 0.14em;
+    border: 1px solid var(--gold); color: var(--gold); padding: 10px 22px;
+    transition: background 0.2s, color 0.2s; white-space: nowrap;
+  }
+  .book-btn:hover { background: var(--gold); color: var(--charcoal); }
+  nav.main { max-width: 1200px; margin: 14px auto 0; overflow-x: auto; }
+  nav.main ul { display: flex; gap: 4px; min-width: max-content; }
+  nav.main a {
+    display: block; font-family: var(--sans); font-size: 12.5px; letter-spacing: 0.08em;
+    padding: 12px 14px; color: rgba(243, 234, 216, 0.85); border-bottom: 2px solid transparent;
+  }
+  nav.main a:hover, nav.main a.active { color: #fff; border-bottom-color: var(--gold); }
+
+  /* ---------- hero slider ---------- */
+  .hero { position: relative; height: min(78vh, 640px); overflow: hidden; background: var(--charcoal); }
+  .slide {
+    position: absolute; inset: 0; opacity: 0; transition: opacity 1.6s ease;
+    display: flex; align-items: flex-end;
+  }
+  .slide.on { opacity: 1; }
+  .slide .art { position: absolute; inset: 0; }
+  .slide .vignette {
+    position: absolute; inset: 0;
+    background: radial-gradient(120% 90% at 50% 30%, transparent 40%, rgba(10, 8, 5, 0.55) 100%),
+                linear-gradient(180deg, rgba(10, 8, 5, 0.35), transparent 30%, transparent 60%, rgba(10, 8, 5, 0.72));
+  }
+  .slide .caption {
+    position: relative; z-index: 2; width: 100%; max-width: 1200px; margin: 0 auto;
+    padding: 0 26px 56px; color: var(--cream);
+  }
+  .slide .caption .kicker { font-family: var(--sans); font-size: 11px; letter-spacing: 0.3em; color: var(--gold); margin-bottom: 10px; }
+  .slide .caption h1 { font-weight: 500; font-size: clamp(30px, 5vw, 52px); letter-spacing: 0.04em; text-wrap: balance; }
+  .art.mansion { background:
+      radial-gradient(90% 70% at 70% 20%, #e8b96a 0%, transparent 42%),
+      linear-gradient(180deg, #d99a4e 0%, #a75f33 34%, #4a2f22 68%, #241811 100%); }
+  .art.cellar { background:
+      radial-gradient(70% 55% at 50% 42%, #b3902f33 0%, transparent 60%),
+      radial-gradient(45% 60% at 22% 66%, #5c1f24 0%, transparent 70%),
+      radial-gradient(45% 60% at 78% 66%, #5c1f24 0%, transparent 70%),
+      linear-gradient(180deg, #241511 0%, #1a0e0c 100%); }
+  .art.pool { background:
+      radial-gradient(80% 55% at 50% 18%, #f0d9a2 0%, transparent 45%),
+      linear-gradient(180deg, #cfa75e 0%, #3d6b6d 40%, #17454e 72%, #0d2a31 100%); }
+  .dots { position: absolute; z-index: 3; bottom: 20px; right: 26px; display: flex; gap: 8px; }
+  .dots button { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--cream); background: transparent; cursor: pointer; padding: 0; }
+  .dots button.on { background: var(--gold); border-color: var(--gold); }
+
+  /* ---------- booking band ---------- */
+  .booking { background: var(--charcoal-2); border-top: 1px solid var(--line-dark); }
+  .booking form {
+    max-width: 1200px; margin: 0 auto; padding: 18px 26px;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: end;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; font-family: var(--sans); }
+  .field label { font-size: 10px; letter-spacing: 0.18em; color: var(--gold); }
+  .field input, .field select {
+    background: #171310; color: var(--cream); border: 1px solid var(--line-dark);
+    padding: 9px 11px; font-family: var(--sans); font-size: 13px; min-width: 110px;
+  }
+  .field input:focus, .field select:focus { outline: 1px solid var(--gold); }
+  .booking .go {
+    font-family: var(--sans); letter-spacing: 0.14em; font-size: 12px;
+    background: var(--gold); color: var(--charcoal); border: none; padding: 11px 26px; cursor: pointer;
+  }
+  .booking .go:hover { background: #c9a63d; }
+
+  /* ---------- statement ---------- */
+  .statement { max-width: 780px; margin: 0 auto; padding: 74px 26px 60px; text-align: center; }
+  .statement .rule { width: 54px; height: 2px; background: var(--gold); margin: 0 auto 26px; }
+  .statement h2 { font-weight: 500; font-size: clamp(24px, 3.4vw, 34px); letter-spacing: 0.03em; margin-bottom: 18px; text-wrap: balance; }
+  .statement p { color: var(--ink-2); font-size: 16.5px; line-height: 1.75; }
+
+  /* ---------- six-card grid ---------- */
+  .grid-section { max-width: 1200px; margin: 0 auto; padding: 0 26px 84px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 26px; }
+  .card { background: #fffdf8; border: 1px solid var(--line); }
+  .card .photo { height: 210px; position: relative; overflow: hidden; }
+  .card .photo::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(15, 12, 8, 0.35));
+  }
+  .photo.hotel { background: radial-gradient(80% 60% at 30% 25%, #e9c27b 0%, transparent 50%), linear-gradient(160deg, #c99a55 0%, #7c5230 55%, #38251a 100%); }
+  .photo.restaurant { background: radial-gradient(60% 50% at 70% 30%, #f1d7a0 0%, transparent 55%), linear-gradient(200deg, #a8722f 0%, #5d3620 60%, #2a1712 100%); }
+  .photo.weddings { background: radial-gradient(70% 60% at 50% 20%, #f6e7c8 0%, transparent 55%), linear-gradient(180deg, #d9b98a 0%, #9b7d5e 60%, #57432f 100%); }
+  .photo.chocolatier { background: radial-gradient(60% 50% at 35% 30%, #b0713a 0%, transparent 55%), linear-gradient(190deg, #7c4a26 0%, #4a2a15 60%, #221208 100%); }
+  .photo.cigars { background: radial-gradient(65% 55% at 60% 35%, #c8964d 0%, transparent 55%), linear-gradient(170deg, #8a5a2b 0%, #503116 60%, #241407 100%); }
+  .photo.barrels { background: radial-gradient(60% 55% at 45% 30%, #a04a52 0%, transparent 55%), linear-gradient(185deg, #6d2f38 0%, #3d1a22 60%, #1d0d12 100%); }
+  .card .body { padding: 22px 24px 26px; text-align: center; }
+  .card h3 { font-weight: 500; font-size: 21px; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .card p { font-family: var(--sans); font-size: 13.5px; color: var(--ink-2); line-height: 1.6; margin-bottom: 16px; }
+  .card .more { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.16em; color: var(--gold-deep); border-bottom: 1px solid var(--gold); padding-bottom: 3px; }
+  .card .more:hover { color: var(--ink); }
+
+  /* ---------- footer ---------- */
+  footer.site { background: var(--charcoal); color: rgba(243, 234, 216, 0.8); font-family: var(--sans); }
+  .foot-inner { max-width: 1200px; margin: 0 auto; padding: 54px 26px 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 34px; }
+  .foot-inner h4 { font-family: var(--serif); color: var(--cream); font-weight: 500; letter-spacing: 0.12em; font-size: 15px; margin-bottom: 14px; }
+  .foot-inner li { margin-bottom: 8px; font-size: 13px; }
+  .foot-inner a:hover { color: var(--gold); }
+  .legal { border-top: 1px solid var(--line-dark); padding: 16px 26px; text-align: center; font-size: 11.5px; color: rgba(243, 234, 216, 0.45); }
+
+  @media (prefers-reduced-motion: reduce) { .slide { transition: none; } }
+  @media (max-width: 720px) {
+    .masthead { flex-direction: column; gap: 12px; }
+    .booking form { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+  <div class="mock-ribbon">MOCKUP</div>
+
+  <div class="topbar">
+    <div class="social">
+      <a href="#">Facebook</a><a href="#">Instagram</a><a href="#">X</a><a href="#">YouTube</a><a href="#">TripAdvisor</a>
+    </div>
+    <div>+1 242 302 9150</div>
+  </div>
+
+  <header class="site">
+    <div class="masthead">
+      <div class="wordmark">
+        <div class="name">GRAYCLIFF</div>
+        <div class="sub">HOTEL · RESTAURANT · NASSAU</div>
+      </div>
+      <a class="book-btn" href="#booking">BOOK YOUR STAY</a>
+    </div>
+    <nav class="main" aria-label="Primary">
+      <ul>
+        <li><a class="active" href="#">Home</a></li>
+        <li><a href="#">Hotel</a></li>
+        <li><a href="#">Cuisine</a></li>
+        <li><a href="#">Experiences</a></li>
+        <li><a href="#">Celebrations</a></li>
+        <li><a href="#">Events &amp; Groups</a></li>
+        <li><a href="#">News</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="hero" aria-label="Highlights">
+    <div class="slide on">
+      <div class="art mansion"></div><div class="vignette"></div>
+      <div class="caption">
+        <div class="kicker">A LANDMARK SINCE 1740</div>
+        <h1>The grand old mansion of West Hill Street</h1>
+      </div>
+    </div>
+    <div class="slide">
+      <div class="art cellar"></div><div class="vignette"></div>
+      <div class="caption">
+        <div class="kicker">THE WINE CELLAR</div>
+        <h1>A quarter-million bottles beneath Nassau</h1>
+      </div>
+    </div>
+    <div class="slide">
+      <div class="art pool"></div><div class="vignette"></div>
+      <div class="caption">
+        <div class="kicker">STAY WITH US</div>
+        <h1>Garden rooms and island evenings</h1>
+      </div>
+    </div>
+    <div class="dots" role="tablist" aria-label="Slides">
+      <button class="on" aria-label="Slide 1"></button>
+      <button aria-label="Slide 2"></button>
+      <button aria-label="Slide 3"></button>
+    </div>
+  </section>
+
+  <section class="booking" id="booking" aria-label="Reserve">
+    <form onsubmit="return false">
+      <div class="field"><label>ARRIVAL</label><input type="date"></div>
+      <div class="field"><label>NIGHTS</label><select><option>1</option><option>2</option><option selected>3</option><option>5</option><option>7</option></select></div>
+      <div class="field"><label>ADULTS</label><select><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+      <div class="field"><label>CHILDREN</label><select><option selected>0</option><option>1</option><option>2</option></select></div>
+      <div class="field"><label>ROOMS</label><select><option selected>1</option><option>2</option><option>3</option></select></div>
+      <div class="field"><label>PROMO CODE</label><input type="text" placeholder="Optional"></div>
+      <button class="go" type="submit">CHECK AVAILABILITY</button>
+    </form>
+  </section>
+
+  <section class="statement">
+    <div class="rule"></div>
+    <h2>An eighteenth-century estate, a five-star table</h2>
+    <p>
+      Set above old Nassau on West Hill Street, Graycliff pairs heritage rooms and
+      tropical gardens with the Caribbean's storied first five-star restaurant, a
+      legendary wine cellar, a working cigar atelier, and a chocolate factory of its
+      own. This page is a layout mockup used to prototype the Graycliff AI concierge
+      in place.
+    </p>
+  </section>
+
+  <section class="grid-section" aria-label="Discover Graycliff">
+    <div class="cards">
+      <article class="card">
+        <div class="photo hotel"></div>
+        <div class="body">
+          <h3>Hotel</h3>
+          <p>Twenty individually styled rooms and cottages amid mahogany, marble, and garden shade.</p>
+          <a class="more" href="#">DISCOVER</a>
+        </div>
+      </article>
+      <article class="card">
+        <div class="photo restaurant"></div>
+        <div class="body">
+          <h3>Restaurant</h3>
+          <p>Continental and Bahamian fine dining, served in the mansion since 1973.</p>
+          <a class="more" href="#">DINE</a>
+        </div>
+      </article>
+      <article class="card">
+        <div class="photo weddings"></div>
+        <div class="body">
+          <h3>Weddings</h3>
+          <p>Garden ceremonies and candlelit receptions in the heart of old Nassau.</p>
+          <a class="more" href="#">CELEBRATE</a>
+        </div>
+      </article>
+      <article class="card">
+        <div class="photo chocolatier"></div>
+        <div class="body">
+          <h3>Chocolatier</h3>
+          <p>Single-origin chocolate crafted on the estate — tastings and workshops daily.</p>
+          <a class="more" href="#">TASTE</a>
+        </div>
+      </article>
+      <article class="card">
+        <div class="photo cigars"></div>
+        <div class="body">
+          <h3>Cigars</h3>
+          <p>Hand-rolled at the Graycliff Cigar Company by master torcedores.</p>
+          <a class="more" href="#">VISIT</a>
+        </div>
+      </article>
+      <article class="card">
+        <div class="photo barrels"></div>
+        <div class="body">
+          <h3>Bahama Barrels</h3>
+          <p>The islands' own barrel-aging project — tour, blend, and bottle your own.</p>
+          <a class="more" href="#">EXPLORE</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer class="site">
+    <div class="foot-inner">
+      <div>
+        <h4>GRAYCLIFF</h4>
+        <ul>
+          <li>West Hill Street</li>
+          <li>P.O. Box N10246</li>
+          <li>Nassau, Bahamas</li>
+          <li>+1 242 302 9150</li>
+        </ul>
+      </div>
+      <div>
+        <h4>EXPLORE</h4>
+        <ul>
+          <li><a href="#">Hotel &amp; Rooms</a></li>
+          <li><a href="#">Restaurant</a></li>
+          <li><a href="#">Wine Cellar</a></li>
+          <li><a href="#">Experiences</a></li>
+          <li><a href="#">Celebrations</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>FOLLOW</h4>
+        <ul>
+          <li><a href="#">Facebook</a></li>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">X</a></li>
+          <li><a href="#">YouTube</a></li>
+          <li><a href="#">TripAdvisor</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      Layout mockup for PythaFlow integration prototyping — not affiliated with or published by Graycliff.
+    </div>
+  </footer>
+
+  <script>
+    // hero slider
+    (function () {
+      const slides = document.querySelectorAll(".slide");
+      const dots = document.querySelectorAll(".dots button");
+      let i = 0, timer;
+      function show(n) {
+        slides[i].classList.remove("on"); dots[i].classList.remove("on");
+        i = n % slides.length;
+        slides[i].classList.add("on"); dots[i].classList.add("on");
+      }
+      function auto() { timer = setInterval(() => show(i + 1), 5200); }
+      dots.forEach((d, n) => d.addEventListener("click", () => { clearInterval(timer); show(n); auto(); }));
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) auto();
+    })();
+  </script>
+
+  <!-- ===== The entire PythaFlow integration: one script tag ===== -->
+  <script async src="./concierge.js" data-restaurant="graycliff" data-api="http://localhost:8000"></script>
+</body>
+</html>
