@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from . import models  # noqa: F401 — register tables
 from .database import Base, SessionLocal, engine
@@ -28,11 +30,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", "http://127.0.0.1:5173",
-        # website-mockup prototype host
-        "http://localhost:8080", "http://127.0.0.1:8080",
-    ],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -52,3 +50,10 @@ app.include_router(knowledge.router)
 @app.get("/api/health")
 def health():
     return {"status": "ok", "platform": "PythaFlow Graycliff demo"}
+
+
+# The graycliff.com mockup (with the embedded concierge widget) is served
+# by the backend itself at /site — same origin as the API, no extra server.
+_MOCKUP_DIR = Path(__file__).resolve().parent.parent.parent / "website-mockup"
+if _MOCKUP_DIR.exists():
+    app.mount("/site", StaticFiles(directory=_MOCKUP_DIR, html=True), name="site")

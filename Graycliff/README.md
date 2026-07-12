@@ -8,18 +8,22 @@ QR-Menu with AI Upsell.
 Runs entirely on a realistic **synthetic dataset** (12 months of seasonal
 Nassau fine-dining POS history) until the client shares real data.
 
-## Quick start (local dev)
+## Quick start (local dev) — one command
 
 ```bash
-# 1. Generate the dataset (only needed once, or after changing the generator)
-../.venv/bin/python data/generate_graycliff_data.py
-
-# 2. Backend — http://localhost:8000 (docs at /docs)
-cd backend && ../../.venv/bin/uvicorn app.main:app --port 8000
-
-# 3. Frontend — http://localhost:5173
-cd frontend && npm install && npm run dev
+./dev.sh
 ```
+
+Starts everything with hot-reload; Ctrl+C stops it all. Endpoints:
+
+| URL | What |
+|---|---|
+| `http://localhost:8000/site` | graycliff.com mockup with the embedded concierge widget |
+| `http://localhost:5173` | guest menu · `/dashboard` · `/knowledge` · `/voice` · `/marketing` |
+| `http://localhost:8000/docs` | API reference |
+
+First run only: `cd frontend && npm install`, and regenerate seed data if
+needed with `../.venv/bin/python data/generate_graycliff_data.py`.
 
 First backend boot seeds `backend/graycliff.db` (SQLite) from `data/seed/`.
 Delete that file to reset the demo to a clean state.
