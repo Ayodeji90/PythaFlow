@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import models  # noqa: F401 — register tables
 from .database import Base, SessionLocal, engine
-from .routers import (dashboard, forecast_pricing, guests, marketing, menu,
-                      misc, orders, recommendations, voice)
-from .seed import seed_if_empty
+from .routers import (dashboard, forecast_pricing, guests, knowledge,
+                      marketing, menu, misc, orders, recommendations, voice)
+from .seed import seed_if_empty, seed_knowledge_if_empty
 
 
 @asynccontextmanager
@@ -15,6 +15,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
         seed_if_empty(db)
+        seed_knowledge_if_empty(db)
     yield
 
 
@@ -45,6 +46,7 @@ app.include_router(forecast_pricing.router)
 app.include_router(recommendations.router)
 app.include_router(voice.router)
 app.include_router(marketing.router)
+app.include_router(knowledge.router)
 
 
 @app.get("/api/health")

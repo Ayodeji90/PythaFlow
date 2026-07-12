@@ -3,7 +3,26 @@ from pydantic import BaseModel, Field
 
 class OrderItemIn(BaseModel):
     item_id: int
-    qty: int = Field(ge=1, default=1)
+    qty: int = Field(ge=1, le=12, default=1)
+
+
+class KnowledgeIn(BaseModel):
+    category: str = Field(pattern="^(property|hours|dining|services|policies|faq)$")
+    topic: str = Field(min_length=2, max_length=60)
+    question: str = ""
+    content: str = Field(min_length=5)
+    keywords: str = ""
+    priority: int = Field(ge=1, le=10, default=5)
+    verified: bool = False
+
+
+class KnowledgePatch(BaseModel):
+    question: str | None = None
+    content: str | None = Field(default=None, min_length=5)
+    keywords: str | None = None
+    priority: int | None = Field(default=None, ge=1, le=10)
+    verified: bool | None = None
+    active: bool | None = None
 
 
 class OrderIn(BaseModel):

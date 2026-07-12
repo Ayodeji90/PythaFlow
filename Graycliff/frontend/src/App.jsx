@@ -13,6 +13,7 @@ export default function App() {
           <NavLink to="/dashboard">Dashboard</NavLink>
           <NavLink to="/voice">Voice</NavLink>
           <NavLink to="/marketing">Marketing</NavLink>
+          <NavLink to="/knowledge">Knowledge</NavLink>
         </nav>
       </header>
       <Outlet />

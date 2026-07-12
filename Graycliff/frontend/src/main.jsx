@@ -7,6 +7,7 @@ import MenuPage from "./pages/MenuPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import VoicePage from "./pages/VoicePage.jsx";
 import MarketingPage from "./pages/MarketingPage.jsx";
+import KnowledgePage from "./pages/KnowledgePage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
       { path: "voice", element: <VoicePage /> },
       { path: "marketing", element: <MarketingPage /> },
+      { path: "knowledge", element: <KnowledgePage /> },
     ],
   },
 ]);

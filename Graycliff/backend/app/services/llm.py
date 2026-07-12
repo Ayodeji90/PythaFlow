@@ -24,31 +24,42 @@ def _extract_json(text: str) -> dict:
 # Voice intent extraction
 # ---------------------------------------------------------------------------
 
-def interpret_voice(transcript: str, menu_names: list[str], today: str) -> dict:
+def interpret_voice(transcript: str, menu_names: list[str], today: str,
+                    knowledge: str = "") -> dict:
     svc = get_llm_service()
     if svc.available():
         try:
-            return _interpret_with_llm(svc, transcript, menu_names, today)
+            return _interpret_with_llm(svc, transcript, menu_names, today, knowledge)
         except Exception:
             pass  # fall through to the rule-based parser
     return _interpret_rule_based(transcript, menu_names, today)
 
 
-def _interpret_with_llm(svc, transcript: str, menu_names: list[str], today: str) -> dict:
+def _interpret_with_llm(svc, transcript: str, menu_names: list[str], today: str,
+                        knowledge: str = "") -> dict:
+    knowledge_block = (
+        f"\nProperty knowledge (answer questions ONLY from this — if the "
+        f"answer isn't here, say you'll check with the team):\n{knowledge}\n"
+        if knowledge else ""
+    )
     prompt = f"""You are the voice concierge for Graycliff Restaurant, Nassau.
 Today's date is {today}. The menu items are:
 {chr(10).join('- ' + n for n in menu_names)}
-
+{knowledge_block}
 Interpret the guest's utterance and respond with ONLY a JSON object:
-{{"intent": "order" | "reservation" | "unknown",
+{{"intent": "order" | "reservation" | "question" | "unknown",
   "items": [{{"name": "<exact menu item name from the list>", "qty": <int>}}],
   "party_size": <int or null>, "date": "<YYYY-MM-DD or null>", "time": "<HH:MM or null>",
   "guest_name": "<name if stated, else null>",
-  "reply": "<one graceful spoken sentence confirming what you understood>"}}
+  "reply": "<one graceful spoken sentence — confirm what you understood, or
+            answer the question from the property knowledge>"}}
 
 Rules: map dishes to the closest menu item name from the list. Resolve
 relative dates ("tomorrow", "Friday") against today's date. If they want
-a table, intent is "reservation". Keep the reply short and warm.
+a table, intent is "reservation". If they are asking about the property,
+menu, hours, or policies rather than ordering, intent is "question" and
+the reply IS the answer, grounded in the property knowledge above. Keep
+the reply short and warm; never invent facts.
 
 Guest said: "{transcript}"
 """
@@ -57,10 +68,28 @@ Guest said: "{transcript}"
     return data
 
 
+ORDER_VERBS = re.compile(
+    r"\b(i'?d like|i would like|can i (?:get|have)|could i (?:get|have)|"
+    r"may i have|we'?ll have|i'?ll (?:have|take)|order|bring me|bring us|"
+    r"give me|get me|send up)\b")
+QUESTION_OPENERS = re.compile(
+    r"^(what|when|where|who|why|how|is|are|do|does|did|can you tell|"
+    r"could you tell|tell me about|is there|are there)\b")
+
+
 def _interpret_rule_based(transcript: str, menu_names: list[str], today: str) -> dict:
-    """Keyword parser — keeps the demo alive without an API key."""
-    lower = transcript.lower()
+    """Keyword parser — keeps the demo alive without an API key.
+
+    Intent precedence matters: reservation keywords, then explicit order
+    verbs, then question shape, then bare dish mentions. Question must
+    outrank bare mentions so "what pairs with the lobster?" is answered,
+    not cooked.
+    """
+    lower = transcript.lower().strip()
     is_reservation = bool(re.search(r"\b(book|reserve|reservation|table for)\b", lower))
+    is_order_phrase = bool(ORDER_VERBS.search(lower))
+    is_question = (not is_reservation and not is_order_phrase
+                   and bool(QUESTION_OPENERS.match(lower) or "?" in lower))
 
     # How many menu items each significant word appears in — a word that is
     # unique to one dish ("thermidor", "wagyu") can identify it alone.
@@ -71,29 +100,34 @@ def _interpret_rule_based(transcript: str, menu_names: list[str], today: str) ->
                 word_freq[w] = word_freq.get(w, 0) + 1
 
     items = []
-    for name in menu_names:
-        simple = name.lower().replace("'", "")
-        words = [w for w in re.split(r"[^a-z0-9]+", simple) if len(w) > 3]
-        hits = [w for w in words if w in lower]
-        unique_hit = any(len(w) >= 5 and word_freq.get(w, 0) == 1 for w in hits)
-        if not (simple in lower or len(hits) >= 2
-                or (len(words) == 1 and hits) or unique_hit):
-            continue
-        anchor = hits[0] if hits else words[0]
-        qty_match = re.search(r"(\d+|two|three|four)\s+(?:\w+\s+){0,3}" + re.escape(anchor), lower)
-        qty_map = {"two": 2, "three": 3, "four": 4}
-        qty = 1
-        if qty_match:
-            token = qty_match.group(1)
-            qty = qty_map.get(token, int(token) if token.isdigit() else 1)
-        items.append({"name": name, "qty": qty})
-    if not items:
-        # fuzzy last resort against distinctive words
+    if not is_question:
         for name in menu_names:
-            key = name.lower().split()[0]
-            if len(key) > 4 and difflib.get_close_matches(key, lower.split(), cutoff=0.85):
-                items.append({"name": name, "qty": 1})
-                break
+            simple = name.lower().replace("'", "")
+            words = [w for w in re.split(r"[^a-z0-9]+", simple) if len(w) > 3]
+            hits = [w for w in words if w in lower]
+            unique_hit = any(len(w) >= 5 and word_freq.get(w, 0) == 1 for w in hits)
+            if not (simple in lower or len(hits) >= 2
+                    or (len(words) == 1 and hits) or unique_hit):
+                continue
+            anchor = hits[0] if hits else words[0]
+            # qty sits directly before the dish words; a bare year like
+            # "2015 margaux" must not read as quantity — cap at 12.
+            qty_match = re.search(r"\b(\d{1,2}|two|three|four|five|six)\s+(?:\w+\s+){0,3}"
+                                  + re.escape(anchor), lower)
+            qty_map = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+            qty = 1
+            if qty_match:
+                token = qty_match.group(1)
+                qty = qty_map.get(token, int(token) if token.isdigit() else 1)
+                qty = max(1, min(qty, 12))
+            items.append({"name": name, "qty": qty})
+        if not items and not is_reservation:
+            # fuzzy last resort against distinctive words
+            for name in menu_names:
+                key = name.lower().split()[0]
+                if len(key) > 4 and difflib.get_close_matches(key, lower.split(), cutoff=0.85):
+                    items.append({"name": name, "qty": 1})
+                    break
 
     party = None
     m = re.search(r"(?:table for|party of|for)\s+(\d+|two|three|four|five|six)", lower)
@@ -109,24 +143,39 @@ def _interpret_rule_based(transcript: str, menu_names: list[str], today: str) ->
         when_date = base.isoformat()
 
     when_time = None
-    tm = re.search(r"(\d{1,2})(?::(\d{2}))?\s*(pm|p\.m\.|am|a\.m\.)?", lower)
-    if tm and (tm.group(3) or tm.group(2)):
-        hour = int(tm.group(1)) % 12 + (12 if "p" in (tm.group(3) or "") else 0)
+    # First number carrying am/pm or minutes wins — "table for 4 at 8pm"
+    # must read the 8, not the 4.
+    for tm in re.finditer(r"(\d{1,2})(?::(\d{2}))?\s*(pm|p\.m\.|am|a\.m\.)", lower):
+        hour = int(tm.group(1)) % 12 + (12 if "p" in tm.group(3) else 0)
         when_time = f"{hour:02d}:{tm.group(2) or '00'}"
+        break
+    if when_time is None:
+        at = re.search(r"\bat\s+(\d{1,2})(?::(\d{2}))?\b", lower)
+        if at:
+            hour = int(at.group(1))
+            if 1 <= hour <= 11:      # bare "at 8" at a dinner house means evening
+                hour += 12
+            when_time = f"{hour:02d}:{at.group(2) or '00'}"
 
     if is_reservation:
+        intent = "reservation"
         reply = f"Certainly — a table for {party or 2}"
         reply += f" on {when_date}" if when_date else ""
         reply += f" at {when_time}" if when_time else ""
         reply += ". We look forward to welcoming you."
+    elif is_question:
+        intent = "question"
+        reply = ""  # the voice router fills this from the knowledge base
     elif items:
+        intent = "order"
         listed = ", ".join(f"{i['qty']} {i['name']}" for i in items)
         reply = f"With pleasure — {listed}. The kitchen has been notified."
     else:
-        reply = "I'm sorry, I didn't quite catch that. Could you name the dish or say 'book a table'?"
+        intent = "unknown"
+        reply = "I'm sorry, I didn't quite catch that. Could you name the dish, ask about the house, or say 'book a table'?"
 
     return {
-        "intent": "reservation" if is_reservation else ("order" if items else "unknown"),
+        "intent": intent,
         "items": items, "party_size": party, "date": when_date, "time": when_time,
         "guest_name": None, "reply": reply, "engine": "rules",
     }

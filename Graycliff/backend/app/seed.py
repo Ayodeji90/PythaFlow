@@ -1,6 +1,7 @@
 """Load the synthetic Graycliff CSVs into SQLite on first startup."""
 
 import csv
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -8,7 +9,25 @@ from sqlalchemy.orm import Session
 
 from . import models
 
-SEED_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "seed"
+DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
+SEED_DIR = DATA_DIR / "seed"
+KNOWLEDGE_FILE = DATA_DIR / "knowledge" / "graycliff.json"
+
+
+def seed_knowledge_if_empty(db: Session) -> None:
+    """Knowledge pack loads independently, so existing demo DBs pick it up."""
+    if db.query(models.KnowledgeEntry).first() or not KNOWLEDGE_FILE.exists():
+        return
+    pack = json.loads(KNOWLEDGE_FILE.read_text())
+    for e in pack["entries"]:
+        db.add(models.KnowledgeEntry(
+            restaurant_id=pack.get("restaurant_id", "graycliff"),
+            category=e["category"], topic=e["topic"],
+            question=e.get("question", ""), content=e["content"],
+            keywords=e.get("keywords", ""), priority=int(e.get("priority", 5)),
+            verified=1 if e.get("verified") else 0,
+        ))
+    db.commit()
 
 
 def _rows(name: str):

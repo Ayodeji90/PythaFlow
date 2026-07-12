@@ -104,6 +104,28 @@ class PriceSuggestion(Base):
     item: Mapped["MenuItem"] = relationship()
 
 
+class KnowledgeEntry(Base):
+    """One fact, policy, or FAQ the concierge may draw on.
+
+    Multi-tenant by restaurant_id. `verified=0` marks placeholder content
+    that must be confirmed with the client before go-live — surfaced in
+    the dashboard editor so onboarding has a checklist.
+    """
+
+    __tablename__ = "knowledge_entries"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    restaurant_id: Mapped[str] = mapped_column(String(40), default="graycliff", index=True)
+    category: Mapped[str] = mapped_column(String(30), index=True)   # property|hours|dining|services|policies|faq
+    topic: Mapped[str] = mapped_column(String(60), index=True)
+    question: Mapped[str] = mapped_column(String(200), default="")
+    content: Mapped[str] = mapped_column(Text)
+    keywords: Mapped[str] = mapped_column(String(300), default="")
+    priority: Mapped[int] = mapped_column(Integer, default=5)       # 10 = always in the prompt digest
+    verified: Mapped[int] = mapped_column(Integer, default=0)
+    active: Mapped[int] = mapped_column(Integer, default=1)
+    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class MarketingDraft(Base):
     __tablename__ = "marketing_drafts"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

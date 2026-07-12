@@ -42,6 +42,14 @@ export const api = {
   drafts: () => request("/api/marketing/drafts"),
   updateDraft: (id, payload) =>
     request(`/api/marketing/drafts/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  // Knowledge base
+  knowledge: () => request("/api/knowledge"),
+  createKnowledge: (payload) =>
+    request("/api/knowledge", { method: "POST", body: JSON.stringify(payload) }),
+  updateKnowledge: (id, payload) =>
+    request(`/api/knowledge/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteKnowledge: (id) =>
+    fetch(`${API}/api/knowledge/${id}`, { method: "DELETE" }),
 };
 
 export default api;

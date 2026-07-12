@@ -1,0 +1,267 @@
+{
+  "restaurant_id": "graycliff",
+  "note": "Knowledge pack for the voice concierge. Entries with verified=false carry plausible placeholder values and MUST be confirmed with the client during onboarding. All text is original phrasing.",
+  "entries": [
+    {
+      "category": "property",
+      "topic": "about",
+      "question": "Tell me about Graycliff",
+      "content": "Graycliff is a historic mansion estate on West Hill Street in old Nassau, dating to the 1740s. Today it is a boutique hotel and fine-dining destination, celebrated as the Caribbean's first five-star restaurant, with a famous wine cellar, an on-site cigar company, a chocolate factory, and its own barrel-aging wine project.",
+      "keywords": "about,history,story,mansion,heritage,who,what is",
+      "priority": 9,
+      "verified": true
+    },
+    {
+      "category": "property",
+      "topic": "address_contact",
+      "question": "Where are you located and how do I contact you?",
+      "content": "We are at West Hill Street, Nassau, The Bahamas (P.O. Box N10246), a short walk uphill from downtown and Government House. Telephone: +1 242 302 9150.",
+      "keywords": "address,location,where,phone,contact,directions,find",
+      "priority": 10,
+      "verified": true
+    },
+    {
+      "category": "property",
+      "topic": "getting_here",
+      "question": "How do I get to Graycliff from the cruise port or airport?",
+      "content": "From the cruise port at Prince George Wharf it is roughly a ten-minute walk up through downtown Nassau. From Lynden Pindling International Airport, a taxi takes about twenty-five minutes. Ask your driver for Graycliff on West Hill Street, beside Government House.",
+      "keywords": "cruise,port,airport,taxi,walk,directions,transfer,get there",
+      "priority": 6,
+      "verified": true
+    },
+    {
+      "category": "property",
+      "topic": "parking",
+      "question": "Is parking available?",
+      "content": "Complimentary on-site parking is available for restaurant and hotel guests, with the entrance off West Hill Street. [Placeholder — confirm arrangement with the property.]",
+      "keywords": "parking,car,drive,valet",
+      "priority": 4,
+      "verified": false
+    },
+    {
+      "category": "hours",
+      "topic": "dinner_hours",
+      "question": "What are your dinner hours?",
+      "content": "Dinner is served nightly from 6:00 pm, with last seating at 9:30 pm. [Placeholder hours — confirm current schedule with the property before going live.]",
+      "keywords": "hours,open,dinner,time,close,when,tonight",
+      "priority": 10,
+      "verified": false
+    },
+    {
+      "category": "hours",
+      "topic": "lunch_hours",
+      "question": "Do you serve lunch?",
+      "content": "Lunch is served Monday through Saturday from 12:00 noon to 3:00 pm. [Placeholder hours — confirm with the property.]",
+      "keywords": "lunch,noon,midday,hours,open",
+      "priority": 8,
+      "verified": false
+    },
+    {
+      "category": "hours",
+      "topic": "bar_hours",
+      "question": "When is the bar open?",
+      "content": "The bar and humidor lounge welcome guests from late morning until the last dinner guests depart. [Placeholder — confirm with the property.]",
+      "keywords": "bar,drinks,cocktails,lounge,humidor,open",
+      "priority": 5,
+      "verified": false
+    },
+    {
+      "category": "dining",
+      "topic": "dress_code",
+      "question": "Is there a dress code?",
+      "content": "Evenings at Graycliff call for elegant resort attire: collared shirts and long trousers for gentlemen; no beachwear, sleeveless shirts, or flip-flops at dinner. Lunch is smart casual. [Confirm exact policy with the property.]",
+      "keywords": "dress,code,attire,wear,shorts,jacket,formal,casual",
+      "priority": 9,
+      "verified": false
+    },
+    {
+      "category": "dining",
+      "topic": "reservations_policy",
+      "question": "Do I need a reservation?",
+      "content": "Reservations are strongly recommended for dinner, especially in high season (December through April). I can book a table for you right now — just tell me the date, time, and party size.",
+      "keywords": "reservation,book,table,walk-in,availability,need",
+      "priority": 10,
+      "verified": true
+    },
+    {
+      "category": "dining",
+      "topic": "dietary",
+      "question": "Can you accommodate dietary restrictions?",
+      "content": "Yes. The kitchen accommodates vegetarian, pescatarian, gluten-free, and allergy-aware dining with advance notice. Tell me any restrictions when you book and the chef will prepare accordingly.",
+      "keywords": "vegetarian,vegan,gluten,allergy,dietary,pescatarian,restrictions,shellfish",
+      "priority": 8,
+      "verified": true
+    },
+    {
+      "category": "dining",
+      "topic": "children",
+      "question": "Are children welcome?",
+      "content": "Families are welcome. For the formal dining room in the evening we gently suggest children twelve and over; younger guests are delightful company at lunch and on the garden terraces. [Confirm policy with the property.]",
+      "keywords": "children,kids,family,child,age",
+      "priority": 6,
+      "verified": false
+    },
+    {
+      "category": "dining",
+      "topic": "private_dining",
+      "question": "Do you offer private dining?",
+      "content": "Private dining is available in the wine cellar and in dedicated salons of the mansion — a signature setting for anniversaries, proposals, and small corporate dinners. Ask me to note it on your reservation and our events team will follow up.",
+      "keywords": "private,cellar dinner,event,group,celebration,proposal,anniversary",
+      "priority": 7,
+      "verified": true
+    },
+    {
+      "category": "dining",
+      "topic": "large_parties",
+      "question": "Can you seat large groups?",
+      "content": "Parties of seven or more are arranged with our events team to guarantee the right room and menu. I can take your details and have them confirm within the day. A deposit may be requested for large bookings. [Confirm threshold and deposit policy.]",
+      "keywords": "group,large,party,event,banquet,deposit,seven,eight,ten",
+      "priority": 6,
+      "verified": false
+    },
+    {
+      "category": "services",
+      "topic": "wine_cellar",
+      "question": "Can I visit the wine cellar?",
+      "content": "The Graycliff cellar holds on the order of a quarter-million bottles — among the largest private collections anywhere — and cellar visits or sommelier-led tastings can be arranged around your dinner. Ask when booking and we will reserve a moment below.",
+      "keywords": "wine,cellar,tour,tasting,sommelier,bottles,collection,visit",
+      "priority": 8,
+      "verified": true
+    },
+    {
+      "category": "services",
+      "topic": "cigar_company",
+      "question": "Can I see cigars being rolled?",
+      "content": "The Graycliff Cigar Company rolls by hand on the estate, and guests are welcome to watch the torcedores at work, enjoy the humidor lounge, and take boxes home. Rolling demonstrations are best in the daytime. [Confirm demonstration times.]",
+      "keywords": "cigar,humidor,rolling,torcedor,smoke,factory,tour",
+      "priority": 7,
+      "verified": false
+    },
+    {
+      "category": "services",
+      "topic": "chocolatier",
+      "question": "Do you have a chocolate factory?",
+      "content": "Yes — Graycliff Chocolatier crafts chocolate on the property, with tastings and hands-on workshops available most days. Boxes travel well and make a favourite island gift. [Confirm workshop schedule.]",
+      "keywords": "chocolate,chocolatier,workshop,tasting,factory,gift",
+      "priority": 7,
+      "verified": false
+    },
+    {
+      "category": "services",
+      "topic": "bahama_barrels",
+      "question": "What is Bahama Barrels?",
+      "content": "Bahama Barrels is the estate's own barrel-aging wine project — tour the barrel room, join a blending session, and bottle your own to take home.",
+      "keywords": "barrels,bahama barrels,blend,barrel,winery,bottle",
+      "priority": 5,
+      "verified": true
+    },
+    {
+      "category": "services",
+      "topic": "hotel_rooms",
+      "question": "Can I stay overnight?",
+      "content": "The hotel offers twenty individually styled rooms and cottages across the mansion and gardens. Room reservations are handled by the front desk at +1 242 302 9150; I handle the restaurant, and I'd be glad to book your dinner during your stay.",
+      "keywords": "hotel,room,stay,suite,cottage,overnight,accommodation",
+      "priority": 7,
+      "verified": true
+    },
+    {
+      "category": "services",
+      "topic": "weddings",
+      "question": "Do you host weddings?",
+      "content": "Graycliff hosts garden ceremonies and candlelit receptions throughout the estate. Our celebrations team tailors each event; I can take your details and have them reach out with dates and menus.",
+      "keywords": "wedding,ceremony,reception,celebrate,event,honeymoon",
+      "priority": 5,
+      "verified": true
+    },
+    {
+      "category": "policies",
+      "topic": "cancellation",
+      "question": "What is your cancellation policy?",
+      "content": "Table reservations may be cancelled without charge up to 24 hours before your seating; late cancellations for large parties or cellar dinners may forfeit any deposit. [Placeholder — confirm exact policy with the property.]",
+      "keywords": "cancel,cancellation,policy,no-show,refund,deposit,change",
+      "priority": 8,
+      "verified": false
+    },
+    {
+      "category": "policies",
+      "topic": "payment",
+      "question": "What payment methods do you accept?",
+      "content": "Major credit cards and cash (Bahamian and US dollars are used interchangeably at par) are accepted. A service charge of 15% is added to restaurant bills, as is customary in the Bahamas. [Confirm service-charge percentage.]",
+      "keywords": "payment,card,cash,visa,amex,gratuity,tip,service charge,currency",
+      "priority": 6,
+      "verified": false
+    },
+    {
+      "category": "policies",
+      "topic": "smoking",
+      "question": "Is smoking allowed?",
+      "content": "Cigars and smoking are welcomed in the humidor lounge and designated outdoor areas — fitting for the home of the Graycliff Cigar Company — and not in the dining rooms.",
+      "keywords": "smoking,cigar,smoke,humidor,lounge,vape",
+      "priority": 5,
+      "verified": true
+    },
+    {
+      "category": "policies",
+      "topic": "corkage",
+      "question": "Can I bring my own wine?",
+      "content": "With a cellar of our depth we hope you'll explore our list, but outside bottles may be accommodated with a corkage fee at the sommelier's discretion. [Placeholder — confirm corkage policy and fee.]",
+      "keywords": "corkage,byob,bring wine,own bottle",
+      "priority": 3,
+      "verified": false
+    },
+    {
+      "category": "policies",
+      "topic": "accessibility",
+      "question": "Is the property wheelchair accessible?",
+      "content": "The mansion is a historic building; ground-floor dining and garden areas are accessible, and our team gladly assists with steps elsewhere. Tell me of any mobility needs when booking and we will seat you comfortably. [Confirm accessible routes with the property.]",
+      "keywords": "wheelchair,accessible,accessibility,mobility,stairs,disabled",
+      "priority": 6,
+      "verified": false
+    },
+    {
+      "category": "policies",
+      "topic": "privacy",
+      "question": "How is my information handled?",
+      "content": "Conversations with this concierge are transcribed to fulfil your booking or order and to improve service; audio is not retained. Your details are shared only with the restaurant. You may request deletion of your data at any time through the restaurant.",
+      "keywords": "privacy,data,recording,gdpr,delete,information,policy",
+      "priority": 7,
+      "verified": true
+    },
+    {
+      "category": "faq",
+      "topic": "signature_dishes",
+      "question": "What should I order?",
+      "content": "Guests return for the Grilled Bahamian Lobster Thermidor, the Pan-Seared Grouper, and the tableside classics; the Chef's Five-Course Tasting with sommelier pairings is the fullest tour of the kitchen. The Graycliff Chocolate Soufflé is the celebrated finish.",
+      "keywords": "signature,best,famous,recommend,popular,must,order,dish",
+      "priority": 8,
+      "verified": true
+    },
+    {
+      "category": "faq",
+      "topic": "takeaway_gifts",
+      "question": "Can I buy cigars or chocolate to take home?",
+      "content": "Yes — hand-rolled cigars from the estate factory and boxed chocolates from the chocolatier are available to purchase, and both travel well.",
+      "keywords": "buy,shop,gift,take home,souvenir,cigars,chocolate",
+      "priority": 4,
+      "verified": true
+    },
+    {
+      "category": "faq",
+      "topic": "occasions",
+      "question": "Can you help with a special occasion?",
+      "content": "With pleasure — anniversaries, proposals, and birthdays are a Graycliff specialty. Tell me the occasion when you book and we will arrange the details, from cellar toasts to the soufflé with a message.",
+      "keywords": "birthday,anniversary,proposal,occasion,surprise,celebrate,special",
+      "priority": 6,
+      "verified": true
+    },
+    {
+      "category": "faq",
+      "topic": "concierge_scope",
+      "question": "What can you help me with?",
+      "content": "I can book and answer questions about the restaurant: tables, hours, the menu and wine pairings, dietary needs, the cellar, cigars, chocolate, and our policies. For hotel room bookings, please call the front desk at +1 242 302 9150.",
+      "keywords": "help,what can you do,assistant,concierge,scope",
+      "priority": 5,
+      "verified": true
+    }
+  ]
+}

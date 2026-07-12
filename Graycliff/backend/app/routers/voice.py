@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import Guest, MenuItem, Order, Reservation
 from ..schemas import OrderIn, OrderItemIn, VoiceUtterance
-from ..services import llm
+from ..services import knowledge, llm
 from .orders import create_order
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
@@ -18,15 +18,35 @@ def interpret(payload: VoiceUtterance, db: Session = Depends(get_db)):
     by_name = {m.name.lower(): m for m in menu}
     today = db.query(func.max(Order.service_date)).scalar()
 
-    result = llm.interpret_voice(payload.transcript, names, today)
+    # The concierge's memory: always-relevant facts + entries retrieved
+    # for this utterance, handed to the LLM as grounding.
+    know_ctx = knowledge.core_digest(db)
+    retrieved = knowledge.retrieved_context(db, payload.transcript)
+    if retrieved:
+        know_ctx += "\n" + retrieved
+
+    result = llm.interpret_voice(payload.transcript, names, today, knowledge=know_ctx)
     action: dict = {"type": "none"}
+
+    if result["intent"] == "question":
+        answer = knowledge.answer_question(db, payload.transcript)
+        # LLM engines answer in `reply` themselves (grounded on know_ctx);
+        # the rule engine leaves reply empty and speaks the KB verbatim.
+        if not result.get("reply"):
+            result["reply"] = answer["reply"]
+        action = {"type": "info", "source": answer["source"],
+                  "matched": answer["matched"]}
 
     if result["intent"] == "order" and result.get("items"):
         lines = []
         for entry in result["items"]:
-            item = by_name.get(entry["name"].lower())
+            item = by_name.get(str(entry.get("name", "")).lower())
             if item:
-                lines.append(OrderItemIn(item_id=item.id, qty=max(1, int(entry.get("qty", 1)))))
+                try:
+                    qty = int(entry.get("qty", 1))
+                except (TypeError, ValueError):
+                    qty = 1
+                lines.append(OrderItemIn(item_id=item.id, qty=max(1, min(qty, 12))))
         if lines:
             order = create_order(OrderIn(
                 items=lines, guest_id=payload.guest_id,
