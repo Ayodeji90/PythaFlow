@@ -130,7 +130,8 @@
   function agentSay(text) { return bubble("agent", text); }
 
   function actionCard(action) {
-    if (!action || action.type === "none") return;
+    // Only actions with a card renderer; "info" answers are just the reply bubble.
+    if (!action || (action.type !== "reservation" && action.type !== "order")) return;
     var el = document.createElement("div");
     el.className = "card";
     var html = "";

@@ -1,0 +1,568 @@
+<title>Graycliff Voice Concierge — Architecture</title>
+<style>
+  :root {
+    --bg: #100e0c;
+    --surface: #1c1a17;
+    --surface2: #242019;
+    --ink: #f2ecdd;
+    --ink2: #c0b8a5;
+    --muted: #8d8778;
+    --line: rgba(242, 236, 221, 0.14);
+    --gold: #d4a537;
+    --gold-ink: #16130c;
+    --chip: rgba(212, 165, 55, 0.12);
+    --swap: #6ea8ef;
+    --swap-bg: rgba(110, 168, 239, 0.10);
+    --good: #63b873;
+    --good-bg: rgba(99, 184, 115, 0.10);
+    --seg1: #d4a537; --seg2: #b98f2e; --seg3: #9e7a26; --seg4: #83651f; --seg5: #685018;
+    --font-display: Georgia, "Times New Roman", serif;
+    --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f3eee2;
+      --surface: #fbf8f0;
+      --surface2: #ece5d3;
+      --ink: #221e16;
+      --ink2: #56503f;
+      --muted: #877f6b;
+      --line: rgba(34, 30, 22, 0.18);
+      --gold: #8a6d1c;
+      --gold-ink: #fbf8f0;
+      --chip: rgba(138, 109, 28, 0.10);
+      --swap: #1c5cab;
+      --swap-bg: rgba(28, 92, 171, 0.08);
+      --good: #2e7d3a;
+      --good-bg: rgba(46, 125, 58, 0.08);
+      --seg1: #8a6d1c; --seg2: #9d7f2b; --seg3: #b0913c; --seg4: #c2a455; --seg5: #d2b872;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #100e0c; --surface: #1c1a17; --surface2: #242019;
+    --ink: #f2ecdd; --ink2: #c0b8a5; --muted: #8d8778;
+    --line: rgba(242, 236, 221, 0.14);
+    --gold: #d4a537; --gold-ink: #16130c; --chip: rgba(212, 165, 55, 0.12);
+    --swap: #6ea8ef; --swap-bg: rgba(110, 168, 239, 0.10);
+    --good: #63b873; --good-bg: rgba(99, 184, 115, 0.10);
+    --seg1: #d4a537; --seg2: #b98f2e; --seg3: #9e7a26; --seg4: #83651f; --seg5: #685018;
+  }
+  :root[data-theme="light"] {
+    --bg: #f3eee2; --surface: #fbf8f0; --surface2: #ece5d3;
+    --ink: #221e16; --ink2: #56503f; --muted: #877f6b;
+    --line: rgba(34, 30, 22, 0.18);
+    --gold: #8a6d1c; --gold-ink: #fbf8f0; --chip: rgba(138, 109, 28, 0.10);
+    --swap: #1c5cab; --swap-bg: rgba(28, 92, 171, 0.08);
+    --good: #2e7d3a; --good-bg: rgba(46, 125, 58, 0.08);
+    --seg1: #8a6d1c; --seg2: #9d7f2b; --seg3: #b0913c; --seg4: #c2a455; --seg5: #d2b872;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font-ui); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 52px 26px 90px; }
+
+  /* ---------- header ---------- */
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 14px;
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 500; font-size: clamp(30px, 4.6vw, 44px);
+    line-height: 1.12; margin: 0 0 14px; letter-spacing: 0.01em; text-wrap: balance;
+  }
+  .lede { color: var(--ink2); max-width: 62ch; margin: 0 0 18px; font-size: 16px; }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    font-family: var(--font-mono); font-size: 11.5px; color: var(--muted);
+  }
+  .meta .dot { color: var(--gold); }
+
+  /* ---------- section headings ---------- */
+  section { margin-top: 58px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
+  h2 {
+    font-family: var(--font-display); font-weight: 500; font-size: 24px;
+    margin: 0; letter-spacing: 0.01em;
+  }
+  .sec-note { color: var(--muted); font-size: 13px; }
+  .sec-sub { color: var(--ink2); font-size: 14px; max-width: 70ch; margin: 4px 0 22px; }
+
+  /* ---------- diagram bands ---------- */
+  .band {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px 18px 18px;
+  }
+  .band-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .band-title {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink2);
+  }
+  .band-title strong { color: var(--ink); font-weight: 600; }
+  .pill {
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em;
+    padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .pill.stable { color: var(--good); border: 1px solid var(--good); background: var(--good-bg); }
+  .pill.swappable { color: var(--swap); border: 1px dashed var(--swap); background: var(--swap-bg); }
+  .pill.external { color: var(--muted); border: 1px solid var(--line); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .comp {
+    position: relative; background: var(--surface2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .comp h4 { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; color: var(--ink); padding-right: 26px; }
+  .comp p { margin: 0; font-size: 12.5px; color: var(--ink2); line-height: 1.45; }
+  .comp .tech {
+    display: block; margin-top: 7px; font-family: var(--font-mono);
+    font-size: 10.5px; color: var(--muted); letter-spacing: 0.02em;
+  }
+  .comp.swap { border-style: dashed; border-color: var(--swap); background: var(--swap-bg); }
+  .comp.swap .swaptag {
+    display: inline-block; margin-top: 7px; font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--swap); border: 1px dashed var(--swap); border-radius: 999px; padding: 1px 8px;
+  }
+  .comp.ghost { border-style: dashed; opacity: 0.75; }
+  .comp .n {
+    position: absolute; top: 9px; right: 9px; width: 21px; height: 21px; border-radius: 50%;
+    background: var(--gold); color: var(--gold-ink); font-family: var(--font-mono);
+    font-size: 11.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .subpanel {
+    border: 1px solid var(--gold); border-radius: 12px; padding: 12px 14px 14px;
+    background: var(--chip); margin-top: 10px;
+  }
+  .subpanel-title {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+  }
+
+  /* ---------- connectors ---------- */
+  .conn { display: flex; flex-direction: column; align-items: center; padding: 4px 0; }
+  .conn .stem {
+    width: 2px; height: 22px;
+    background: linear-gradient(var(--gold), var(--gold));
+  }
+  .conn .head {
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-top: 8px solid var(--gold);
+  }
+  .conn .note {
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+    margin: 6px 0 2px; text-align: center; padding: 0 12px;
+  }
+  .conn .note b { color: var(--ink2); font-weight: 600; }
+
+  /* ---------- legend ---------- */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    margin: 0 0 18px; font-size: 12.5px; color: var(--ink2);
+  }
+  .legend .n {
+    width: 19px; height: 19px; border-radius: 50%; background: var(--gold); color: var(--gold-ink);
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; margin-right: 6px;
+  }
+  .legend .key { display: inline-flex; align-items: center; }
+
+  /* ---------- lifecycle ---------- */
+  .lifecycle { overflow-x: auto; }
+  .states {
+    display: flex; align-items: center; gap: 14px; min-width: 620px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px 24px 8px;
+  }
+  .state {
+    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.08em;
+    border: 1.5px solid var(--gold); color: var(--gold); border-radius: 999px;
+    padding: 8px 18px; white-space: nowrap;
+  }
+  .state small { display: block; font-family: var(--font-ui); letter-spacing: 0; color: var(--ink2); font-size: 11.5px; margin-top: 2px; }
+  .arrow { color: var(--gold); font-size: 18px; flex-shrink: 0; }
+  .bargein {
+    min-width: 620px; margin-top: -1px;
+    border: 1px dashed var(--gold); border-top: none; border-radius: 0 0 14px 14px;
+    padding: 10px 24px 12px; font-size: 12.5px; color: var(--ink2);
+    background: var(--chip);
+  }
+  .bargein b { color: var(--gold); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; }
+
+  /* ---------- latency ---------- */
+  .lat-bar {
+    display: flex; height: 40px; border-radius: 9px; overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .lat-bar div { height: 100%; }
+  .lat-bar .s1 { background: var(--seg1); }
+  .lat-bar .s2 { background: var(--seg2); }
+  .lat-bar .s3 { background: var(--seg3); }
+  .lat-bar .s4 { background: var(--seg4); }
+  .lat-bar .s5 { background: var(--seg5); }
+  .lat-labels {
+    display: grid; grid-template-columns: 20.5% 15.4% 33.3% 20.5% 10.3%;
+    margin-top: 10px; font-size: 11.5px; color: var(--ink2);
+  }
+  .lat-labels div { padding-right: 10px; }
+  .lat-labels b { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .lat-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 16px 0 8px; gap: 12px; flex-wrap: wrap;
+  }
+  .lat-total .figure { font-family: var(--font-display); font-size: 30px; color: var(--gold); }
+  .lat-total .cap { color: var(--muted); font-size: 12.5px; }
+
+  /* ---------- code ---------- */
+  pre {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; overflow-x: auto; margin: 0;
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.6; color: var(--ink2);
+  }
+  pre .g { color: var(--gold); }
+  pre .k { color: var(--ink); }
+
+  /* ---------- decisions & rollout ---------- */
+  .rows { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: grid; grid-template-columns: 30px 220px 1fr; gap: 14px; align-items: baseline;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .row .mark { font-size: 15px; }
+  .row .mark.yes { color: var(--good); }
+  .row .mark.no { color: var(--muted); }
+  .row .mark.opt { color: var(--swap); }
+  .row h4 { margin: 0; font-size: 13.5px; }
+  .row p { margin: 0; font-size: 12.5px; color: var(--ink2); }
+
+  .phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 10px; }
+  .phase {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  }
+  .phase .tag {
+    font-family: var(--font-mono); font-size: 11px; color: var(--gold); letter-spacing: 0.1em;
+    display: block; margin-bottom: 6px;
+  }
+  .phase h4 { margin: 0 0 4px; font-size: 13.5px; }
+  .phase p { margin: 0; font-size: 12.5px; color: var(--ink2); }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 11.5px; color: var(--muted);
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+
+  @media (max-width: 700px) {
+    .row { grid-template-columns: 24px 1fr; }
+    .row p { grid-column: 1 / -1; }
+    .lat-labels { font-size: 10px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">PythaFlow × Graycliff · Engineering Design</div>
+    <h1>The Voice Concierge, on their own website</h1>
+    <p class="lede">
+      A real-time conversational agent — streaming speech in, intelligent tool-using
+      reasoning in the middle, a branded voice out — embedded into graycliff.com with a
+      single script tag. No separate platform. No app. The guest just talks to the house.
+    </p>
+    <div class="meta">
+      <span>v1 · 2026-07-10</span><span class="dot">◆</span>
+      <span>target ≈ 0.9 s voice-to-voice</span><span class="dot">◆</span>
+      <span>full spec: Graycliff/docs/Voice_Agent_Architecture.md</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>System architecture</h2><span class="sec-note">five layers · one swappable</span></div>
+    <p class="sec-sub">
+      Gold numbers trace one complete audio round-trip. Every stable layer is
+      vendor-blind; only the provider layer knows a vendor's name — switching AI vendors
+      or models is a config change, never an application change.
+    </p>
+
+    <div class="legend">
+      <span class="key"><span class="n">1</span>…<span class="n" style="margin-left:6px">9</span>&nbsp; the audio round-trip, in order</span>
+      <span class="pill stable">STABLE</span>
+      <span class="pill swappable">SWAPPABLE ⇄ .env</span>
+    </div>
+
+    <!-- LAYER 1 -->
+    <div class="band">
+      <div class="band-head">
+        <span class="band-title">Layer 1 · <strong>Guest's browser — graycliff.com</strong> (their existing site, any CMS)</span>
+        <span class="pill external">HOST PAGE — UNTOUCHED</span>
+      </div>
+      <div class="cards">
+        <div class="comp">
+          <h4>Graycliff web pages</h4>
+          <p>WordPress or custom — we never modify their stack. One script tag in the template footer.</p>
+        </div>
+      </div>
+      <div class="subpanel">
+        <div class="subpanel-title">PythaFlow Concierge widget · Shadow-DOM isolated · ~40 KB</div>
+        <div class="cards">
+          <div class="comp"><span class="n">1</span>
+            <h4>Mic capture</h4>
+            <p>AudioWorklet streams 16 kHz PCM frames while the guest speaks.</p>
+            <span class="tech">getUserMedia · AudioWorklet</span>
+          </div>
+          <div class="comp"><span class="n">9</span>
+            <h4>Streaming playback</h4>
+            <p>Plays TTS chunks as they arrive; live captions for accessibility.</p>
+            <span class="tech">Web Audio · chunk queue</span>
+          </div>
+          <div class="comp">
+            <h4>On-device VAD</h4>
+            <p>Detects end-of-speech and interruptions locally — no server round-trip to know the guest is talking.</p>
+            <span class="tech">Silero VAD (WASM) · barge-in signal</span>
+          </div>
+          <div class="comp">
+            <h4>Text-chat fallback</h4>
+            <p>No mic permission, noisy dining room, or accessibility need — same agent, typed.</p>
+            <span class="tech">progressive degradation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="note"><b>session JWT</b> from Token API — origin-allowlisted (graycliff.com), rate-limited, no keys in the browser</div>
+      <div class="stem"></div><div class="head"></div>
+      <div class="note"><b>2</b> · audio frames ↓ &nbsp;·&nbsp; audio chunks ↑ <b>8</b> &nbsp;·&nbsp; over WebSocket (v1) / WebRTC (v1.1)</div>
+    </div>
+
+    <!-- LAYER 2 -->
+    <div class="band">
+      <div class="band-head">
+        <span class="band-title">Layer 2 · <strong>Voice Gateway</strong> — async session orchestrator (new service)</span>
+        <span class="pill stable">STABLE</span>
+      </div>
+      <div class="cards">
+        <div class="comp">
+          <h4>Transport adapters</h4>
+          <p>WebSocket today, WebRTC next; each is an adapter into the same session.</p>
+          <span class="tech">ws (v1) · webrtc (v1.1)</span>
+        </div>
+        <div class="comp"><span class="n">4</span>
+          <h4>Turn state machine</h4>
+          <p>LISTENING → THINKING → SPEAKING per session. Barge-in cancels the LLM stream and flushes TTS in ~20 ms.</p>
+          <span class="tech">asyncio · per-session task graph</span>
+        </div>
+        <div class="comp">
+          <h4>Conversation memory</h4>
+          <p>Rolling transcript, filled slots (date, party, name), guest context.</p>
+          <span class="tech">Redis · TTL sessions</span>
+        </div>
+        <div class="comp ghost">
+          <h4>Phone line inlet — Phase 3</h4>
+          <p>Twilio Media Streams: the same concierge answers the restaurant's phone after hours.</p>
+          <span class="tech">twilio adapter · same brain</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="stem"></div><div class="head"></div>
+      <div class="note"><b>3</b> · PCM → streaming STT (partials ~200 ms) &nbsp;·&nbsp; <b>5</b> · user turn → agent &nbsp;·&nbsp; <b>7</b> · reply sentences → streaming TTS</div>
+    </div>
+
+    <!-- LAYER 3 -->
+    <div class="band">
+      <div class="band-head">
+        <span class="band-title">Layer 3 · <strong>Agent Core</strong> — vendor-blind (extends the existing LLMService)</span>
+        <span class="pill stable">STABLE</span>
+      </div>
+      <div class="cards">
+        <div class="comp">
+          <h4>Prompt assembly</h4>
+          <p>Graycliff persona + knowledge pack (hours, dress code, cellar story) + live context (date, availability).</p>
+          <span class="tech">per-restaurant · editable from dashboard</span>
+        </div>
+        <div class="comp">
+          <h4>LLMService interface</h4>
+          <p>The stable seam we already built — now with streaming and tool-use. App code never names a vendor.</p>
+          <span class="tech">generate_stream(prompt, tools, tier)</span>
+        </div>
+        <div class="comp"><span class="n">6</span>
+          <h4>Tool router</h4>
+          <p>Executes the agent's function calls against the Actions API; returns results into the conversation.</p>
+          <span class="tech">check_availability · create_reservation · …</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="stem"></div><div class="head"></div>
+      <div class="note">every vendor sits behind a wrapper — the only layer that changes when an SDK changes</div>
+    </div>
+
+    <!-- LAYER 4 -->
+    <div class="band">
+      <div class="band-head">
+        <span class="band-title">Layer 4 · <strong>Provider wrappers</strong> — services/providers/*</span>
+        <span class="pill swappable">SWAPPABLE ⇄ .env</span>
+      </div>
+      <div class="cards">
+        <div class="comp swap">
+          <h4>STT · speech in</h4>
+          <p>Streaming transcription with partials; tuned vocabulary ("Graycliff", "conch", "Junkanoo").</p>
+          <span class="swaptag">Deepgram ▸ AssemblyAI ▸ Whisper-rt</span>
+        </div>
+        <div class="comp swap">
+          <h4>LLM · the brain</h4>
+          <p>Fast tier for spoken turns, quality tier for prose. Our existing wrappers, streaming.</p>
+          <span class="swaptag">Anthropic ▸ OpenAI-compatible ▸ …</span>
+        </div>
+        <div class="comp swap">
+          <h4>TTS · the brand voice</h4>
+          <p>A cloned, licensed voice that sounds like Graycliff — warm, unhurried. First audio in ~200 ms.</p>
+          <span class="swaptag">Cartesia ▸ ElevenLabs ▸ Azure</span>
+        </div>
+        <div class="comp swap ghost">
+          <h4>Realtime speech-to-speech</h4>
+          <p>Optional single-vendor path (e.g. OpenAI Realtime) behind the same session interface — A/B it, never depend on it.</p>
+          <span class="swaptag">optional · collapses STT+LLM+TTS</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <div class="stem"></div><div class="head"></div>
+      <div class="note">tool calls land as plain REST on our existing backend</div>
+    </div>
+
+    <!-- LAYER 5 -->
+    <div class="band">
+      <div class="band-head">
+        <span class="band-title">Layer 5 · <strong>Restaurant Actions API + data</strong> — the platform we already built, hardened</span>
+        <span class="pill stable">STABLE</span>
+      </div>
+      <div class="cards">
+        <div class="comp">
+          <h4>Availability &amp; reservations</h4>
+          <p>Capacity rules; always offers alternatives, never a bare "no".</p>
+          <span class="tech">FastAPI · existing endpoints</span>
+        </div>
+        <div class="comp">
+          <h4>Menu · pairings · recommender</h4>
+          <p>Dietary answers, wine pairings from the cellar, the hybrid recommender.</p>
+          <span class="tech">existing module</span>
+        </div>
+        <div class="comp">
+          <h4>Orders / room-service</h4>
+          <p>Voice ordering lands in the same order pipeline as the QR menu.</p>
+          <span class="tech">phase 2</span>
+        </div>
+        <div class="comp">
+          <h4>Knowledge pack + handoff</h4>
+          <p>Per-restaurant facts &amp; FAQs; when unsure, SMS the host desk with the transcript.</p>
+          <span class="tech">multi-tenant: restaurant_id</span>
+        </div>
+        <div class="comp">
+          <h4>Data &amp; insight</h4>
+          <p>Postgres (bookings, orders) · transcripts &amp; outcomes → dashboard: voice bookings, containment rate, latency, cost per conversation.</p>
+          <span class="tech">PostgreSQL · analytics → manager dashboard</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>A turn, in one breath</h2><span class="sec-note">why it feels human</span></div>
+    <div class="lifecycle">
+      <div class="states">
+        <span class="state">LISTENING<small>VAD watches for end of speech</small></span>
+        <span class="arrow">→</span>
+        <span class="state">THINKING<small>STT final → LLM streams, tools fire</small></span>
+        <span class="arrow">→</span>
+        <span class="state">SPEAKING<small>sentence-chunked TTS streams out</small></span>
+        <span class="arrow">↻</span>
+      </div>
+      <div class="bargein">
+        <b>BARGE-IN</b> — the guest talks over the agent → VAD fires → gateway cancels the
+        LLM stream and flushes the TTS queue within one audio frame (~20 ms). The agent
+        stops talking when interrupted; that single behavior is most of what makes it feel human.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Latency budget</h2><span class="sec-note">p50 targets, guest stops speaking → agent audio begins</span></div>
+    <div class="lat-total">
+      <span class="figure">≈ 0.9 s</span>
+      <span class="cap">voice-to-voice · natural turn-taking territory · region pinned close to the Bahamas (us-east)</span>
+    </div>
+    <div class="lat-bar" role="img" aria-label="Latency budget: VAD 200 ms, STT final 150 ms, LLM first token 325 ms, TTS first audio 200 ms, network 100 ms — about 975 ms total">
+      <div class="s1" style="width:20.5%"></div>
+      <div class="s2" style="width:15.4%"></div>
+      <div class="s3" style="width:33.3%"></div>
+      <div class="s4" style="width:20.5%"></div>
+      <div class="s5" style="width:10.3%"></div>
+    </div>
+    <div class="lat-labels">
+      <div><b>200 ms</b>end-of-speech (on-device VAD)</div>
+      <div><b>150 ms</b>STT final</div>
+      <div><b>325 ms</b>LLM first token (fast tier)</div>
+      <div><b>200 ms</b>TTS first audio</div>
+      <div><b>100 ms</b>network</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Integration</h2><span class="sec-note">the entire ask of Graycliff's web team</span></div>
+    <pre><code>&lt;script <span class="k">async</span> <span class="k">src</span>=<span class="g">"https://cdn.pythaflow.com/concierge.js"</span>
+        <span class="k">data-restaurant</span>=<span class="g">"graycliff"</span>&gt;&lt;/script&gt;</code></pre>
+    <p class="sec-sub" style="margin-top:14px">
+      Shadow DOM so no styles bleed either way · themed to Graycliff's charcoal &amp; gold ·
+      explicit mic-consent UI, audio never stored (transcripts are, with a deletion endpoint) ·
+      if our gateway is ever unreachable the widget shows the phone number and reservation
+      link — it can never break the host page.
+    </p>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Build vs. buy</h2><span class="sec-note">decision record</span></div>
+    <div class="rows">
+      <div class="row">
+        <span class="mark yes">✓</span>
+        <h4>Cascaded streaming pipeline, our gateway</h4>
+        <p>Full control of brand voice, prompt, tools, and data; each stage swappable; ~3–6× cheaper per session than managed platforms; the same gateway later answers the phone line.</p>
+      </div>
+      <div class="row">
+        <span class="mark no">✕</span>
+        <h4>Managed voice-agent platforms (Vapi, Retell, Bland)</h4>
+        <p>Lock-in at the whole-agent level — the exact dependency we just architected away. Per-minute pricing erodes margin; guest audio transits a third party.</p>
+      </div>
+      <div class="row">
+        <span class="mark opt">◆</span>
+        <h4>Realtime speech-to-speech APIs</h4>
+        <p>Kept as one more provider wrapper behind the same session interface. We can A/B it for latency; we never depend on it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Rollout</h2><span class="sec-note">each phase ships value on its own</span></div>
+    <div class="phases">
+      <div class="phase"><span class="tag">V1 · ~2–3 WKS</span><h4>Concierge on graycliff.com</h4><p>Reservations + property &amp; menu Q&amp;A, text fallback, analytics. ≈ $0.10–0.15 per conversation against a $200+ booking.</p></div>
+      <div class="phase"><span class="tag">V1.1 · ~1 WK</span><h4>WebRTC + languages</h4><p>Echo cancellation, packet-loss resilience; Spanish &amp; French for tourist guests.</p></div>
+      <div class="phase"><span class="tag">V2 · ~2 WKS</span><h4>Voice ordering</h4><p>Room-service and pre-orders into the existing order pipeline; returning-guest recognition (opt-in).</p></div>
+      <div class="phase"><span class="tag">V3 · ~2 WKS</span><h4>The phone line</h4><p>Twilio number → same gateway. The concierge books the 2 a.m. table the house would have lost.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>PythaFlow · Graycliff Voice Concierge · engineering design v1</span>
+    <span>KPIs: containment ≥ 70% · p50 ≤ 0.9 s · cost/booking ≤ $0.30</span>
+  </footer>
+</div>
