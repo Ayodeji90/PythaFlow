@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PythaFlow — The AI concierge for restaurants &amp; hotels</title>
+<meta name="description" content="PythaFlow is the AI concierge for restaurants and hotels that never sleeps. Answer every guest, book every reservation, and support your team 24/7 — even after closing hours.">
+<meta name="theme-color" content="#F3F4F1">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="PythaFlow — The AI concierge that never sleeps">
+<meta property="og:description" content="Answer every guest, book every reservation, and support your team 24/7 — even after closing hours. Built for restaurants, hotels, and resorts.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============================ SVG SPRITE ============================ -->
+<svg width="0" height="0" class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="pf-mark" viewBox="0 0 48 32">
+    <path class="pf-loop"  pathLength="100" fill="none" stroke-linecap="round" stroke-linejoin="round"
+          d="M24 16 C24 9 18 9 14 12.5 C10 16 10 16 14 19.5 C18 23 24 23 24 16 C24 9 30 9 34 12.5 C38 16 38 16 34 19.5 C30 23 24 23 24 16 Z"/>
+    <path class="pf-pulse" pathLength="100" fill="none" stroke-linecap="round"
+          d="M24 16 C24 9 18 9 14 12.5 C10 16 10 16 14 19.5 C18 23 24 23 24 16 C24 9 30 9 34 12.5 C38 16 38 16 34 19.5 C30 23 24 23 24 16 Z"/>
+    <circle class="pf-node" cx="24" cy="16" r="2.3"/>
+  </symbol>
+</svg>
+
+<!-- ============================ HEADER ============================ -->
+<header class="site-header" id="header">
+  <div class="wrap">
+    <nav class="nav" id="nav">
+      <a class="brand" href="#top" aria-label="PythaFlow home">
+        <svg class="mark" width="40" height="27" viewBox="0 0 48 32" aria-hidden="true"><use href="#pf-mark"/></svg>
+        <span class="brand-name"><b>Pytha</b>Flow</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#capabilities">What it does</a></li>
+        <li><a href="#inaction">See it in action</a></li>
+        <li><a href="#how">How it works</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="#contact" class="btn btn-primary">Book a walkthrough <span class="arw">→</span></a>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#capabilities">What it does</a>
+      <a href="#inaction">See it in action</a>
+      <a href="#how">How it works</a>
+      <a href="#contact" class="btn btn-primary">Book a walkthrough →</a>
+    </div>
+  </div>
+</header>
+
+<span id="top"></span>
+
+<!-- ============================ HERO ============================ -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"><span class="hero-aura"></span></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy hero-in">
+        <span class="eyebrow">AI concierge · built for hospitality</span>
+        <h1>The AI concierge<br>for restaurants &amp; hotels<br><span class="muted">that never sleeps.</span></h1>
+        <p class="lede">Answer every guest, book every reservation, and support your team 24/7 — even after closing hours.</p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn btn-primary">Book a walkthrough <span class="arw">→</span></a>
+          <a href="#inaction" class="btn btn-ghost">See it in action</a>
+        </div>
+        <div class="hero-proof">
+          <span class="pill"><span class="dot"></span> Answering now</span>
+          <span>For restaurants, hotels &amp; resorts — in <b>every language</b> your guests speak.</span>
+        </div>
+      </div>
+
+      <div class="hero-visual hero-in-late">
+        <div class="console chat wa" aria-hidden="true">
+          <div class="wa-top">
+            <span class="wa-avatar"><svg viewBox="0 0 48 32" aria-hidden="true"><use href="#pf-mark"/></svg></span>
+            <span class="wa-id">
+              <b>PythaFlow Concierge</b>
+              <i><span class="live-dot"></span> online · typically replies in ~4s</i>
+            </span>
+            <span class="wa-badge">
+              <svg class="wa-glyph" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a9.7 9.7 0 0 0-8.3 14.8L2.3 22l5.4-1.4A9.7 9.7 0 1 0 12 2Zm5.1 13.6c-.2.6-1.2 1.1-1.7 1.2-.5.1-1 .1-3.1-.8-2.6-1.1-4.2-3.7-4.4-3.9-.1-.2-1-1.3-1-2.5s.6-1.7.8-2c.2-.2.5-.3.7-.3h.5c.1 0 .4 0 .5.4l.8 1.8c.1.1.1.3 0 .5l-.4.5c-.1.2-.3.3-.1.6.1.3.7 1.1 1.4 1.7.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l1.7.8c.3.1.4.2.5.3.1.3.1.8-.1 1.3Z"/></svg>
+              WhatsApp
+            </span>
+          </div>
+          <div class="chat-body wa-body" id="chat"></div>
+          <div class="wa-input">
+            <span class="wa-field">Message</span>
+            <span class="wa-mic" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PROOF BAR ============================ -->
+<section class="valuebar" aria-label="What PythaFlow does for you">
+  <div class="wrap">
+    <div class="vb-item"><span class="vk">✓</span><span>Never miss a <b>booking</b></span></div>
+    <div class="vb-item"><span class="vk">✓</span><span>Recover <b>after-hours revenue</b></span></div>
+    <div class="vb-item"><span class="vk">✓</span><span>Every guest answered — <b>20+ languages</b></span></div>
+    <div class="vb-item"><span class="vk">✓</span><span>Works with <b>your booking system</b></span></div>
+  </div>
+</section>
+
+<!-- ============================ PAIN STRIP ============================ -->
+<section class="truths" id="problem">
+  <div class="wrap">
+    <div class="truth reveal">
+      <div class="hair"></div>
+      <div class="n">After hours</div>
+      <p>The phone still rings after you close — and no one's there to answer. That booking goes to the place down the street.</p>
+    </div>
+    <div class="truth reveal">
+      <div class="hair"></div>
+      <div class="n">At the rush</div>
+      <p>Your team is heads-down with a full room. The caller on hold gives up — and you never even knew they tried.</p>
+    </div>
+    <div class="truth reveal">
+      <div class="hair"></div>
+      <div class="n">All night</div>
+      <p>“Open Sunday? Any vegan options?” Simple questions sit unanswered till morning — after the guest has booked elsewhere.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ MANIFESTO ============================ -->
+<section class="section manifesto">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Meet your concierge</span>
+      <h2>A concierge that works alongside your team — and never clocks out.</h2>
+      <p>PythaFlow answers the phone, texts, and web chats the moment a guest reaches out — booking tables and rooms, answering questions, and passing the details straight to your staff. It sounds like your brand, works in every language, and hands off to a human the instant it should. Your team, extended to every hour.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CAPABILITIES ============================ -->
+<section class="section" id="capabilities" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">What it does</span>
+      <h2>Every guest, looked after. Every hour.</h2>
+      <p>Not a chatbot bolted to your website — a concierge that handles the real work of hospitality, day and night.</p>
+    </div>
+    <div class="cap-grid reveal">
+      <div class="cap">
+        <div class="ci">◎</div>
+        <h3>Never miss a reservation</h3>
+        <p>Books tables and rooms by phone, text, and web chat — at 2pm or 2am — and syncs straight into the system you already use.</p>
+        <span class="out">Every booking captured →</span>
+      </div>
+      <div class="cap">
+        <div class="ci">↑</div>
+        <h3>Recover revenue from missed calls</h3>
+        <p>Answers every call your team can't reach. After-hours and peak-time callers become bookings instead of lost business.</p>
+        <span class="out">Turn missed calls into covers →</span>
+      </div>
+      <div class="cap">
+        <div class="ci">✦</div>
+        <h3>Answer guest questions instantly</h3>
+        <p>Hours, menu, dietary needs, parking, policies — accurate answers in seconds, in any language your guests speak.</p>
+        <span class="out">No question left waiting →</span>
+      </div>
+      <div class="cap">
+        <div class="ci">≈</div>
+        <h3>Support your staff at peak</h3>
+        <p>Takes the overflow during the rush so your team can stay present with the guests right in front of them.</p>
+        <span class="out">Relief when it's busiest →</span>
+      </div>
+      <div class="cap">
+        <div class="ci">✎</div>
+        <h3>Upsell every visit, gracefully</h3>
+        <p>Suggests pairings, add-ons, and experiences at just the right moment — always in your voice, never pushy.</p>
+        <span class="out">A bigger check, politely →</span>
+      </div>
+      <div class="cap" style="background:var(--ink);color:var(--smoke)">
+        <div class="ci" style="background:rgba(111,208,200,0.15);color:#6fd0c8">☾</div>
+        <h3 style="color:var(--smoke)">Premium service, every hour</h3>
+        <p style="color:rgba(243,244,241,0.68)">Concierge-grade attention at any time of night, so every guest feels genuinely looked after — never like they reached a machine.</p>
+        <span class="out" style="color:#6fd0c8">Hospitality that never sleeps →</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SEE IT IN ACTION ============================ -->
+<section class="section" id="inaction" style="background:var(--smoke-2);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">See it in action</span>
+      <h2>A Tuesday night you didn't have to staff.</h2>
+      <p>While your doors were closed, your concierge kept working. Here's a typical night — nothing dropped, every guest handled.</p>
+    </div>
+    <div class="proof-grid">
+      <div class="proof-body reveal">
+        <ul class="timeline">
+          <li><span class="tl-time">11:42pm</span><p>A guest texts for a table for four on Friday. <b>Booked and confirmed</b> in seconds.</p></li>
+          <li><span class="tl-time">12:15am</span><p>“Do you cater to nut allergies?” <b>Answered</b> — and the note flagged to your kitchen.</p></li>
+          <li><span class="tl-time">1:03am</span><p>A missed call, <b>returned by text</b>. The reservation is saved instead of lost.</p></li>
+          <li><span class="tl-time">7:30am</span><p>Your manager opens the morning summary. <b>Every guest handled</b>, nothing missed.</p></li>
+        </ul>
+      </div>
+      <div class="proof-card-wrap reveal">
+        <div class="console summary-card" aria-hidden="true">
+          <div class="console-top">
+            <div class="t"><span class="dot"></span> Overnight summary</div>
+            <div class="clock">while you were closed</div>
+          </div>
+          <div class="sum-grid">
+            <div class="sum-cell"><div class="sum-n"><span class="count" data-count="7">7</span></div><div class="sum-l">reservations booked</div></div>
+            <div class="sum-cell"><div class="sum-n"><span class="count" data-count="12">12</span></div><div class="sum-l">questions answered</div></div>
+            <div class="sum-cell"><div class="sum-n"><span class="count" data-count="3">3</span></div><div class="sum-l">missed calls recovered</div></div>
+            <div class="sum-cell"><div class="sum-n">0</div><div class="sum-l">guests left waiting</div></div>
+          </div>
+          <div class="console-foot">
+            <span>Illustrative night</span>
+            <span class="up">nothing dropped</span>
+          </div>
+        </div>
+        <p class="sample-note">Sample data shown to illustrate the concierge. Your numbers, your brand, your booking system.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ HOW IT WORKS / TRUST ============================ -->
+<section class="section anchor" id="how">
+  <div class="wrap">
+    <div class="intro">
+      <div class="reveal">
+        <span class="eyebrow">How it works</span>
+        <h2>Powerful help. Always on your terms.</h2>
+      </div>
+      <p class="reveal">An AI concierge only earns a place on your team if guests trust it and you stay in control. So that's built in from the very first call.</p>
+    </div>
+    <div class="principles">
+      <div class="principle reveal">
+        <div class="p-n">01</div>
+        <h3>Works with your team, not instead of it</h3>
+        <p>It handles the routine and the after-hours, and hands off to a human the moment a guest needs one.</p>
+      </div>
+      <div class="principle reveal">
+        <div class="p-n">02</div>
+        <h3>Sounds like your brand</h3>
+        <p>Trained on your menu, rooms, and policies. Guests feel your hospitality — never a generic bot.</p>
+      </div>
+      <div class="principle reveal">
+        <div class="p-n">03</div>
+        <h3>Fits how you already work</h3>
+        <p>Connects to your phone line, booking system, and POS. Nothing to rip out or relearn.</p>
+      </div>
+      <div class="principle reveal">
+        <div class="p-n">04</div>
+        <h3>You're always in control</h3>
+        <p>Every booking and reply can require staff approval. You see everything and can adjust it anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ GETTING STARTED ============================ -->
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Getting started</span>
+      <h2>Live in days, not months.</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><div class="s-n">1</div><h3>We listen in</h3><p>A quick look at the calls, questions, and bookings you're missing today — after hours and at the peak.</p></div>
+      <div class="step reveal"><div class="s-n">2</div><h3>We make it sound like you</h3><p>We train the concierge on your menu, rooms, policies, and tone, so it speaks with your brand's voice.</p></div>
+      <div class="step reveal"><div class="s-n">3</div><h3>Go live</h3><p>Connect your phone and booking system and switch it on — starting with just after-hours, if you prefer.</p></div>
+      <div class="step reveal"><div class="s-n">4</div><h3>Watch bookings land</h3><p>See the reservations recovered and the questions handled — from the very first night.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CTA ============================ -->
+<section class="section cta" id="contact">
+  <div class="wrap reveal">
+    <span class="eyebrow" style="justify-content:center">Let's talk</span>
+    <h2>See what your concierge<br>would have booked last night.</h2>
+    <p>Tell us where guests fall through the cracks — after hours, on hold, or in another language. We'll show you how PythaFlow catches them, in about 20 minutes.</p>
+    <div class="cta-actions">
+      <a href="mailto:hello@pythaflow.com?subject=PythaFlow%20walkthrough" class="btn btn-primary">Book a walkthrough <span class="arw">→</span></a>
+      <a href="#inaction" class="btn btn-ghost">See it in action</a>
+    </div>
+    <p class="cta-mail">Or email us directly — <a href="mailto:hello@pythaflow.com">hello@pythaflow.com</a></p>
+  </div>
+</section>
+
+<!-- ============================ FOOTER ============================ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="#top" aria-label="PythaFlow home">
+          <svg class="mark" width="38" height="25" viewBox="0 0 48 32" aria-hidden="true"><use href="#pf-mark"/></svg>
+          <span class="brand-name"><b>Pytha</b>Flow</span>
+        </a>
+        <p class="tag">The AI concierge for restaurants, hotels, and resorts — answering, booking, and caring for guests around the clock.</p>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-col">
+          <h4>Concierge</h4>
+          <a href="#capabilities">What it does</a>
+          <a href="#inaction">See it in action</a>
+          <a href="#how">How it works</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#contact">Book a walkthrough</a>
+          <a href="mailto:hello@pythaflow.com">hello@pythaflow.com</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-base">
+      <span>© <span id="year">2026</span> PythaFlow. All rights reserved.</span>
+      <span>The AI concierge that never sleeps.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
