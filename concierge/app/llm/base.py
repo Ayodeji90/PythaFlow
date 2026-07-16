@@ -1,0 +1,45 @@
+"""Types + the provider-wrapper contract. This module has no vendor imports."""
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+
+
+@dataclass
+class LLMMessage:
+    role: str  # "system" | "user" | "assistant"
+    content: str
+
+
+@dataclass
+class LLMResult:
+    text: str
+    model: str
+    usage: dict = field(default_factory=dict)
+
+
+class LLMProvider(ABC):
+    """AI Provider Wrapper — one thin adapter per vendor API shape.
+
+    Implementations live in `app/llm/providers/`. They are the *only* place a
+    vendor SDK is imported. Adding a vendor whose API is not OpenAI-shaped
+    (e.g. Anthropic) means adding one new subclass here — nothing else changes.
+    """
+
+    name: str = "base"
+
+    @abstractmethod
+    async def generate(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        model: str,
+        system: str | None = None,
+        temperature: float = 0.4,
+        max_tokens: int = 1024,
+    ) -> LLMResult:
+        ...
+
+    async def aclose(self) -> None:  # pragma: no cover - default no-op
+        return None
