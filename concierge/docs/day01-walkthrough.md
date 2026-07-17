@@ -104,11 +104,11 @@ docker compose up -d db redis
 docker compose ps                       # both should be "healthy"
 
 # prove pgvector is installed
-docker exec concierge-db-1 psql -U concierge -d concierge -tAc \
+docker compose exec db psql -U concierge -d concierge -tAc \
   "SELECT extname FROM pg_extension WHERE extname='vector';"    # -> vector
 
 # prove redis is alive
-docker exec concierge-redis-1 redis-cli ping                    # -> PONG
+docker compose exec redis redis-cli ping                        # -> PONG
 
 # full stack (build + run the api too)
 docker compose up --build                # ctrl-C to stop
@@ -348,5 +348,6 @@ uv run python scripts/check_llm.py                         # ✓ nvidia replied:
 #   http://localhost:8000/docs
 ```
 
-**Day-1 is "done" when:** `/health` is `ok` with `db` and `redis` both `true`,
-and `check_llm.py` prints `PONG`.
+**Day-1 is "done" when:** `/health` is `ok` with `db` and `redis` both `true`.
+The LLM smoke test (`check_llm.py` → `PONG`) is the optional, credentialed
+verification — it needs an API key and does not block infrastructure readiness.

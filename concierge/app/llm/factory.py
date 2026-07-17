@@ -29,7 +29,10 @@ def build_llm_service(settings: Settings | None = None) -> LLMService:
                 f"LLM_PROVIDER={provider_key!r} requires LLM_BASE_URL to be set."
             )
         provider = OpenAICompatibleProvider(
-            api_key=s.LLM_API_KEY, base_url=base_url, name=provider_key
+            api_key=s.LLM_API_KEY,
+            base_url=base_url,
+            name=provider_key,
+            timeout=s.LLM_TIMEOUT,
         )
     else:
         raise ValueError(

@@ -18,6 +18,10 @@ dist/
 *.db
 *.sqlite3
 
+# Graphify output — generated cache; embeds machine-specific absolute paths and
+# local files, so it must not be committed. Regenerate locally with /graphify.
+graphify-out/
+
 # OS / editor
 .DS_Store
 .vscode/

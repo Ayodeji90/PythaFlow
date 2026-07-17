@@ -2,8 +2,14 @@
 environment directly, so the app has one typed source of truth."""
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# The committed dev defaults — throwaway credentials that must never be used
+# outside a development/test environment (see the fail-closed guard below).
+_DEV_DB_DEFAULT = "postgresql+asyncpg://concierge:concierge@localhost:5432/concierge"
+_DEV_REDIS_DEFAULT = "redis://localhost:6379/0"
+_DEV_ENVS = {"dev", "development", "local", "test"}
 
 
 class Settings(BaseSettings):
@@ -17,10 +23,16 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # --- infra ---
-    DATABASE_URL: str = (
-        "postgresql+asyncpg://concierge:concierge@localhost:5432/concierge"
-    )
-    REDIS_URL: str = "redis://localhost:6379/0"
+    DATABASE_URL: str = _DEV_DB_DEFAULT
+    REDIS_URL: str = _DEV_REDIS_DEFAULT
+
+    # --- timeouts (seconds) — keep a slow/unreachable dependency from hanging
+    #     startup, health checks, or request work ---
+    DB_CONNECT_TIMEOUT: float = 5.0
+    HEALTH_PROBE_TIMEOUT: float = 3.0
+    REDIS_CONNECT_TIMEOUT: float = 3.0
+    REDIS_SOCKET_TIMEOUT: float = 3.0
+    LLM_TIMEOUT: float = 30.0
 
     # --- LLM orchestration (provider-agnostic) ---
     LLM_PROVIDER: str = "nvidia"          # nvidia | openai | groq | mistral | openai_compatible
@@ -40,6 +52,46 @@ class Settings(BaseSettings):
     @classmethod
     def _strip(cls, v: object) -> object:
         return v.strip() if isinstance(v, str) else v
+
+    @field_validator("LLM_TEMPERATURE")
+    @classmethod
+    def _check_temperature(cls, v: float) -> float:
+        if not 0.0 <= v <= 2.0:
+            raise ValueError("LLM_TEMPERATURE must be between 0.0 and 2.0")
+        return v
+
+    @field_validator(
+        "LLM_MAX_TOKENS",
+        "EMBED_DIM",
+        "DB_CONNECT_TIMEOUT",
+        "HEALTH_PROBE_TIMEOUT",
+        "REDIS_CONNECT_TIMEOUT",
+        "REDIS_SOCKET_TIMEOUT",
+        "LLM_TIMEOUT",
+    )
+    @classmethod
+    def _check_positive(cls, v: float, info) -> float:
+        if v <= 0:
+            raise ValueError(f"{info.field_name} must be greater than 0")
+        return v
+
+    @model_validator(mode="after")
+    def _fail_closed_outside_dev(self) -> "Settings":
+        """Refuse to boot a non-dev environment on the committed throwaway
+        credentials — surfaces a misconfigured deploy immediately instead of
+        silently running on `concierge:concierge` / unauthenticated Redis."""
+        if self.ENV.lower() not in _DEV_ENVS:
+            problems = []
+            if self.DATABASE_URL == _DEV_DB_DEFAULT or "concierge:concierge@" in self.DATABASE_URL:
+                problems.append("DATABASE_URL still uses the dev default / throwaway credentials")
+            if self.REDIS_URL == _DEV_REDIS_DEFAULT:
+                problems.append("REDIS_URL still uses the dev default")
+            if problems:
+                raise ValueError(
+                    f"ENV={self.ENV!r} requires real infrastructure settings: "
+                    + "; ".join(problems)
+                )
+        return self
 
 
 @lru_cache

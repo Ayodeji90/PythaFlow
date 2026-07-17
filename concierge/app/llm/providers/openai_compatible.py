@@ -11,15 +11,25 @@ from ..base import LLMMessage, LLMProvider, LLMResult
 
 
 class OpenAICompatibleProvider(LLMProvider):
-    def __init__(self, *, api_key: str, base_url: str, name: str = "openai_compatible") -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        base_url: str,
+        name: str = "openai_compatible",
+        timeout: float | None = None,
+    ) -> None:
         # Imported lazily so the module (and the app) load even if the SDK is
         # absent until dependencies are installed.
         from openai import AsyncOpenAI
 
         self.name = name
         # api_key is a placeholder when unset — we never call the API without a
-        # real key (the smoke test and callers guard on that).
-        self._client = AsyncOpenAI(api_key=api_key or "not-set", base_url=base_url)
+        # real key (the smoke test and callers guard on that). `timeout` bounds
+        # request duration so a slow/unreachable provider can't stall our work.
+        self._client = AsyncOpenAI(
+            api_key=api_key or "not-set", base_url=base_url, timeout=timeout
+        )
 
     async def generate(
         self,

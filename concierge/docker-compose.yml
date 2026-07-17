@@ -29,7 +29,10 @@ services:
   api:
     build: .
     env_file:
-      - .env
+      # Optional: a fresh checkout has no .env (it's gitignored). The compose
+      # environment below still supplies the infra URLs; .env just adds secrets.
+      - path: .env
+        required: false
     environment:
       # Override the host-oriented defaults so the container reaches the
       # sibling services by their compose names.

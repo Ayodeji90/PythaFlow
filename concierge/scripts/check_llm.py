@@ -38,8 +38,9 @@ async def main() -> int:
         )
         return 1
 
-    svc = build_llm_service(s)
+    svc = None
     try:
+        svc = build_llm_service(s)  # construction can raise too — keep it inside
         reply = await svc.generate(
             "Reply with exactly the single word: PONG",
             tier="fast",
@@ -51,7 +52,8 @@ async def main() -> int:
         print(f"✗ LLM call failed: {type(e).__name__}: {e}")
         return 2
     finally:
-        await svc.aclose()
+        if svc is not None:
+            await svc.aclose()
 
 
 if __name__ == "__main__":
