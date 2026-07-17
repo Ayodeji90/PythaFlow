@@ -67,3 +67,37 @@ Notes / decisions:
   structurally impossible on tool retries.
 - pgvector HNSW index is raw SQL in the migration + filtered from autogenerate via
   `include_object` in `alembic/env.py` (access methods don't round-trip).
+
+## Day 3 — Canonical Message + orchestrator skeleton + web-chat echo
+- **Canonical contract** (`app/schemas/message.py`): `InboundMessage` / `OutboundChunk`
+  — wire DTOs, deliberately separate from the persisted `Message` row.
+- **Orchestrator seam**: `Orchestrator` Protocol + `EchoOrchestrator`. Streaming
+  (`AsyncIterator`) from day one so Day 4's tokens need no interface change;
+  `redis` threaded through unused for the same reason.
+- **Channel layer**: `ChannelAdapter` + a **shared, channel-agnostic pipeline**
+  (`handle_inbound`) that resolves tenant → resolves/creates Conversation →
+  persists the guest turn → runs the orchestrator → persists the assistant turn.
+  The only channel-specific code is `WebChatAdapter.to_inbound()`.
+- **Endpoints**: `WS /ws/chat`, `POST /api/chat`, and a **dev-only** `GET /dev/chat`
+  test page (mounted only when ENV is dev).
+- Docs: `docs/canonical-message.md`.
+
+**Verified ✅ (Day 3 DONE):**
+- Real WebSocket round-trip: `action(connected) → typing → message → done`,
+  echo returned correctly.
+- Both turns persisted under the right tenant + conversation (`guest` then
+  `assistant`), confirmed via psql.
+- `pytest` → 6 passed (echo+persistence, thread reuse → one conversation,
+  unknown tenant raises, REST endpoint 200 + 404). `ruff` clean.
+
+Notes / decisions:
+- Guest turn is committed **before** the orchestrator runs — a failure mid-think
+  never loses what the guest said.
+- `guest_id` stays NULL for anonymous web chat (Day 2 made it nullable); guest
+  identity/memory is Day 11.
+- Did **not** wire the marketing-site hero chat — it's a scripted prop, not a
+  client. A dev-only page keeps product and marketing separate.
+- WS uses a short-lived DB session per turn so a long-lived socket never pins a
+  connection open.
+- ruff: `Depends()` in defaults is the FastAPI idiom → configured bugbear's
+  `extend-immutable-calls` instead of contorting the code (B008 false positive).

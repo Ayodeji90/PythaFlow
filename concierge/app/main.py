@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from .config import get_settings
 from .db import engine, ping_db
-from .routers import health
+from .routers import health, webchat
 from .services.redis import get_redis_client, ping_redis
 
 settings = get_settings()
@@ -32,6 +32,12 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(health.router)
+    app.include_router(webchat.router)
+    # The manual test page is a development affordance only — never exposed
+    # outside a dev/test environment.
+    if settings.ENV.lower() in {"dev", "development", "local", "test"}:
+        app.include_router(webchat.dev_router)
+        log.info("dev chat page mounted at /dev/chat")
     return app
 
 
