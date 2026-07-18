@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from .config import get_settings
 from .db import engine, ping_db
-from .routers import health, webchat
+from .routers import health, knowledge, webchat
 from .services.redis import get_redis_client, ping_redis
 
 settings = get_settings()
@@ -31,8 +31,14 @@ def create_app() -> FastAPI:
         version=settings.APP_VERSION,
         lifespan=lifespan,
     )
+    # The active brain. Tests override app.state.orchestrator with the echo or a
+    # fake, so they never touch the network.
+    from .orchestrator.engine import LLMOrchestrator
+
+    app.state.orchestrator = LLMOrchestrator()
     app.include_router(health.router)
     app.include_router(webchat.router)
+    app.include_router(knowledge.router)
     # The manual test page is a development affordance only — never exposed
     # outside a dev/test environment.
     if settings.ENV.lower() in {"dev", "development", "local", "test"}:

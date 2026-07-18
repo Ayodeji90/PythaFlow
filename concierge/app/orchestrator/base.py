@@ -1,23 +1,31 @@
 """The orchestrator contract.
 
-Routers depend on this Protocol, never on a concrete implementation — so Day 4
-swaps `EchoOrchestrator` for the LLM one without touching a single caller.
+Routers depend on this Protocol, never on a concrete implementation — so swapping
+`EchoOrchestrator` for `LLMOrchestrator` is a one-line change.
 
-Note the signature is streaming (`AsyncIterator`) from day one even though the
-echo has nothing to stream: Day 4's token streaming then needs no interface
-change. `redis` is threaded through unused for the same reason (Day 4 hot state).
-
-`handle` is declared as a plain `def` returning an `AsyncIterator` because an
+The signature is streaming (`AsyncIterator`) so token streaming needs no interface
+change. `handle` is a plain `def` returning an `AsyncIterator` because an
 async-generator function returns its iterator immediately (no await).
 """
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..models import Conversation, Tenant
 from ..schemas.message import InboundMessage, OutboundChunk
+
+
+@dataclass
+class TurnContext:
+    """What the pipeline already resolved for this turn. Passed in so the
+    orchestrator doesn't re-query the tenant/conversation on every message."""
+
+    tenant: Tenant
+    conversation: Conversation
 
 
 class Orchestrator(Protocol):
@@ -27,6 +35,7 @@ class Orchestrator(Protocol):
         self,
         msg: InboundMessage,
         *,
+        ctx: TurnContext,
         db: AsyncSession,
         redis: Any,
     ) -> AsyncIterator[OutboundChunk]: ...

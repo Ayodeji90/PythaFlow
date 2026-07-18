@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
 
 
@@ -40,6 +40,30 @@ class LLMProvider(ABC):
         max_tokens: int = 1024,
     ) -> LLMResult:
         ...
+
+    async def stream(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        model: str,
+        system: str | None = None,
+        temperature: float = 0.4,
+        max_tokens: int = 1024,
+    ) -> AsyncIterator[str]:
+        """Yield the reply in fragments as they arrive.
+
+        Default implementation falls back to a single non-streamed call, so a
+        vendor without streaming still works through the same interface — it just
+        arrives in one piece.
+        """
+        result = await self.generate(
+            messages,
+            model=model,
+            system=system,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        yield result.text
 
     async def aclose(self) -> None:  # pragma: no cover - default no-op
         return None

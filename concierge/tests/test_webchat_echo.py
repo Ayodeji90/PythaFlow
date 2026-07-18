@@ -127,14 +127,21 @@ async def live_tenant():
 
 
 async def test_api_chat_endpoint(live_tenant):
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        r = await client.post("/api/chat", json={"tenant": live_tenant, "content": "ping"})
-        assert r.status_code == 200
-        body = r.json()
-        assert body["reply"] == "You said: ping"
-        assert body["conversation_ref"]
+    # Force the echo orchestrator so this exercises the HTTP plumbing +
+    # persistence deterministically, without a live LLM call.
+    prev = app.state.orchestrator
+    app.state.orchestrator = EchoOrchestrator()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            r = await client.post("/api/chat", json={"tenant": live_tenant, "content": "ping"})
+            assert r.status_code == 200
+            body = r.json()
+            assert body["reply"] == "You said: ping"
+            assert body["conversation_ref"]
 
-        # unknown tenant -> 404
-        r404 = await client.post("/api/chat", json={"tenant": "nope-nope", "content": "x"})
-        assert r404.status_code == 404
+            # unknown tenant -> 404
+            r404 = await client.post("/api/chat", json={"tenant": "nope-nope", "content": "x"})
+            assert r404.status_code == 404
+    finally:
+        app.state.orchestrator = prev

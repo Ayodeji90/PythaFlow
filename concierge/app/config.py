@@ -42,11 +42,24 @@ class Settings(BaseSettings):
     LLM_MODEL_QUALITY: str = "meta/llama-3.3-70b-instruct"
     LLM_TEMPERATURE: float = 0.4
     LLM_MAX_TOKENS: int = 1024
+    # Tier for guest-facing chat replies. Default 'quality' — for a concierge,
+    # instruction-following and brand voice matter more than a few hundred ms.
+    CHAT_TIER: str = "quality"
 
-    # --- embeddings (wired in from Day 5) ---
+    # --- embeddings + retrieval (RAG) ---
     EMBED_PROVIDER: str = "nvidia"
     EMBED_MODEL: str = "nvidia/nv-embedqa-e5-v5"
     EMBED_DIM: int = 1024
+    RAG_TOP_K: int = 6
+    # Cosine-distance floor for pgvector's `<=>` (0 = identical … 2 = opposite).
+    # A chunk further than this is treated as "not relevant" → no context is
+    # injected and the concierge says it'll check with the team, rather than
+    # answering from a bad match.
+    #
+    # Calibrated against nv-embedqa-e5-v5 on real venue Q&A: genuine matches land
+    # ~0.54–0.65, genuine misses ~0.72+, so 0.68 sits cleanly in the gap. Retune
+    # per embedding model / venue if that distribution shifts.
+    RAG_MAX_DISTANCE: float = 0.68
 
     @field_validator("LLM_API_KEY", "LLM_BASE_URL", "LLM_PROVIDER", mode="before")
     @classmethod
@@ -63,6 +76,7 @@ class Settings(BaseSettings):
     @field_validator(
         "LLM_MAX_TOKENS",
         "EMBED_DIM",
+        "RAG_TOP_K",
         "DB_CONNECT_TIMEOUT",
         "HEALTH_PROBE_TIMEOUT",
         "REDIS_CONNECT_TIMEOUT",

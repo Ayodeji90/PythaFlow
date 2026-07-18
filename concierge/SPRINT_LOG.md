@@ -101,3 +101,73 @@ Notes / decisions:
   connection open.
 - ruff: `Depends()` in defaults is the FastAPI idiom → configured bugbear's
   `extend-immutable-calls` instead of contorting the code (B008 false positive).
+
+## Day 4 — LLM in the loop (streaming, stateful, ungrounded)
+- **Streaming added to the seam**: `LLMProvider.stream()` (OpenAI-compatible impl
+  yields `delta.content`; base has a non-streaming fallback) + `LLMService.stream()`.
+  NVIDIA streaming works through the same call — zero new vendor code.
+- **Conversation state** (`orchestrator/state.py`): history read fresh from
+  **Postgres** (source of truth), last ~20 turns, mapped to LLM messages, with a
+  summarisation hook stubbed.
+- **Redis earns its keep** (`services/locks.py`): a per-conversation turn lock that
+  **serialises** turns (waits, doesn't drop) so a double-send can't interleave
+  two replies. No-op when redis is None.
+- **LLMOrchestrator** (`orchestrator/engine.py`): persona from `Tenant` fields
+  (`prompt.py`), streams `token` chunks, persists nothing (the Day-3 pipeline
+  concatenates + writes the assistant turn). Wired via `app.state.orchestrator`
+  so tests swap in echo/fakes — no network in CI.
+- **Model tier**: guest chat defaults to `CHAT_TIER=quality` (llama-3.3-70b) —
+  instruction-following/persona matter more than latency for a concierge.
+
+**Verified ✅ (Day 4 DONE):**
+- Live NVIDIA over the real WebSocket: turn 1 streamed in **50 token chunks**,
+  in-persona ("…celebrate with us at Demo Bistro"), model=llama-3.3-70b.
+- Multi-turn: turn 2 recalled "Amara" + "anniversary" → PASS. All 4 turns
+  persisted (2 guest / 2 assistant), confirmed via psql.
+- `pytest` → 8 passed (fake-provider streaming/persona/multi-turn, + Day 1-3
+  suite). `ruff` clean.
+
+Notes / decisions:
+- **Overrode the spec on Redis**: no history cache (staleness risk = model forgets
+  the last turn). Postgres stays truth; Redis does the turn lock instead.
+- Day-4 **honesty rail** in the system prompt ("do not invent hours/prices/menu")
+  — a stopgap until real grounding (Day 5) + guardrails (Day 6). Confirmed the
+  model refrained from inventing specifics.
+- Orchestrator swap was the promised **one line** (`app.state.orchestrator`),
+  proving the Day-3 seam.
+
+## Day 5 — Knowledge base + RAG (grounded answers)
+- **Embeddings seam** (`llm/embeddings.py`): mirrors the LLM seam; NVIDIA
+  `nv-embedqa-e5-v5` via the OpenAI-compatible client, with correct
+  query/passage `input_type` asymmetry.
+- **Structure-first chunking** (`knowledge/chunk.py`): splits on headings/blank
+  lines into small titled units (one fact each), packing only long sections.
+- **Ingestion** (`knowledge/ingest.py`, `scripts/ingest_kb.py`, `POST /api/kb`):
+  chunk → embed → **upsert** (re-ingesting a source replaces its chunks).
+- **Retrieval** (`knowledge/retrieve.py`): tenant-scoped pgvector cosine search
+  on the HNSW index + the **similarity floor** — matches worse than
+  `RAG_MAX_DISTANCE` are dropped so the concierge defers instead of guessing.
+- **Grounded orchestrator**: retrieves per turn, injects tagged CONTEXT, and the
+  prompt enforces "answer only from CONTEXT, else check with the team." `done`
+  metadata carries `grounded`.
+
+**Verified ✅ (Day 5 DONE):**
+- Ingested a real Demo Bistro fact sheet → 6 titled chunks (real NVIDIA embeddings).
+- Retrieval (real embeddings): 5/5 known questions HIT, 3/3 unknowns deferred.
+- Live end-to-end: "opening hours?" → grounded, correct ("5–11pm, Tue–Sun, closed
+  Mondays, kitchen 10:15pm"); "vegan?" → "six vegan dishes"; "wifi password?" /
+  "swimming pool?" → defers to team (no invention). `grounded` flag matched.
+- `pytest` → 13 passed; `ruff` clean.
+
+Notes / decisions:
+- **Floor calibration is a real finding**: the initial 0.55 rejected valid
+  questions. Measured real distances — genuine matches ~0.54–0.65, misses ~0.72+
+  — and set the floor to **0.68** (in the gap). Documented; retune per model.
+- **Compound-question dilution**: a two-intent query ("open Mondays AND vegan?")
+  blends into one embedding and can miss one intent; the model then *defers* on
+  the un-retrieved part rather than inventing (safe). Query decomposition / higher
+  top-k is a later refinement, not a Day-5 need.
+- **NVIDIA free tier rate-limits the 70b** (visible `Retrying request…`), so live
+  turns can be slow; the RAG core was verified deterministically to avoid that.
+- Test fixture now uses `join_transaction_mode="create_savepoint"` so app-code
+  `commit()`s (ingest) roll back cleanly.

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import Channel, Conversation, Message, Tenant
 from ..models.enums import ChannelType, MessageRole
-from ..orchestrator.base import Orchestrator
+from ..orchestrator.base import Orchestrator, TurnContext
 from ..schemas.message import InboundMessage, OutboundChunk
 
 
@@ -104,9 +104,10 @@ async def handle_inbound(
     )
     await db.commit()
 
+    ctx = TurnContext(tenant=tenant, conversation=conv)
     parts: list[str] = []
     try:
-        async for chunk in orchestrator.handle(msg, db=db, redis=redis):
+        async for chunk in orchestrator.handle(msg, ctx=ctx, db=db, redis=redis):
             if chunk.content and chunk.type in ("token", "message"):
                 parts.append(chunk.content)
             yield chunk

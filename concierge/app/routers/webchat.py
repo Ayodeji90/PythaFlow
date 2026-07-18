@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +18,7 @@ from ..channels.base import TenantNotFound, handle_inbound
 from ..channels.webchat import WebChatAdapter
 from ..db import SessionLocal
 from ..deps import get_db
-from ..orchestrator.echo import EchoOrchestrator
+from ..orchestrator.base import Orchestrator
 from ..schemas.message import OutboundChunk
 from ..services.redis import get_redis_client
 
@@ -26,8 +26,11 @@ log = logging.getLogger("concierge.webchat")
 router = APIRouter()
 dev_router = APIRouter()
 
-# Day 4 swaps this one line for the LLM orchestrator — nothing else changes.
-ORCHESTRATOR = EchoOrchestrator()
+
+def _orchestrator(app) -> Orchestrator:
+    """The active orchestrator lives on app.state (set in create_app), so tests
+    can swap in the echo or a fake without touching the network."""
+    return app.state.orchestrator
 
 
 class ChatRequest(BaseModel):
@@ -42,7 +45,9 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/api/chat", response_model=ChatResponse)
-async def post_chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResponse:
+async def post_chat(
+    req: ChatRequest, request: Request, db: AsyncSession = Depends(get_db)
+) -> ChatResponse:
     conv_ref = req.conversation_ref or uuid4().hex
     msg = WebChatAdapter.to_inbound(
         tenant_slug=req.tenant, conversation_ref=conv_ref, content=req.content
@@ -50,7 +55,7 @@ async def post_chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> Cha
     parts: list[str] = []
     try:
         async for chunk in handle_inbound(
-            msg, db=db, redis=get_redis_client(), orchestrator=ORCHESTRATOR
+            msg, db=db, redis=get_redis_client(), orchestrator=_orchestrator(request.app)
         ):
             if chunk.content and chunk.type in ("token", "message"):
                 parts.append(chunk.content)
@@ -95,7 +100,7 @@ async def ws_chat(websocket: WebSocket) -> None:
             async with SessionLocal() as db:
                 try:
                     async for chunk in handle_inbound(
-                        msg, db=db, redis=redis, orchestrator=ORCHESTRATOR
+                        msg, db=db, redis=redis, orchestrator=_orchestrator(websocket.app)
                     ):
                         await websocket.send_json(chunk.model_dump(exclude_none=True))
                 except TenantNotFound as e:
@@ -145,15 +150,25 @@ function add(text, cls){
   d.textContent = text;
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+  return d;
 }
 const ws = new WebSocket(`ws://${location.host}/ws/chat?tenant=${encodeURIComponent(tenant)}`);
 ws.onopen = () => add('socket open', 'sys');
 ws.onclose = () => add('socket closed', 'sys');
+let botEl = null;   // the bubble the current streamed reply is growing into
 ws.onmessage = (e) => {
   const c = JSON.parse(e.data);
-  if (c.type === 'message' || c.type === 'token') add(c.content, 'bot');
-  else if (c.type === 'error') add('error: ' + c.content, 'sys');
-  else if (c.type === 'action') {
+  if (c.type === 'token') {
+    if (!botEl) botEl = add('', 'bot');   // one bubble per reply; tokens append
+    botEl.textContent += c.content;
+    log.scrollTop = log.scrollHeight;
+  } else if (c.type === 'message') {
+    add(c.content, 'bot');
+  } else if (c.type === 'done') {
+    botEl = null;                          // next reply starts a fresh bubble
+  } else if (c.type === 'error') {
+    add('error: ' + c.content, 'sys'); botEl = null;
+  } else if (c.type === 'action') {
     add(c.content + ' (' + (c.metadata?.conversation_ref || '') + ')', 'sys');
   }
 };

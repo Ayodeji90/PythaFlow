@@ -5,7 +5,7 @@ It maps a quality *tier* to a concrete model and delegates to whatever provider
 wrapper is configured. Swapping vendors never touches a single caller."""
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 
 from .base import LLMMessage, LLMProvider
 
@@ -53,6 +53,28 @@ class LLMService:
             max_tokens=self._max_tokens if max_tokens is None else max_tokens,
         )
         return result.text
+
+    async def stream(
+        self,
+        messages: str | Sequence[LLMMessage],
+        *,
+        tier: str = "quality",
+        system: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> AsyncIterator[str]:
+        """Stream the reply in fragments. Same contract as `generate`, but the
+        caller can forward each fragment straight to the guest."""
+        if isinstance(messages, str):
+            messages = [LLMMessage(role="user", content=messages)]
+        async for fragment in self._provider.stream(
+            messages,
+            model=self.model_for(tier),
+            system=system,
+            temperature=self._temperature if temperature is None else temperature,
+            max_tokens=self._max_tokens if max_tokens is None else max_tokens,
+        ):
+            yield fragment
 
     async def aclose(self) -> None:
         await self._provider.aclose()
