@@ -74,10 +74,12 @@ def build_embedding_service(settings: Settings | None = None) -> EmbeddingServic
             f"Unknown EMBED_PROVIDER {s.EMBED_PROVIDER!r}. "
             f"Supported: {', '.join(_EMBED_BASE_URLS)}."
         )
-    # Reuse the LLM key/base-url when the embedding provider is the same vendor.
     base_url = _EMBED_BASE_URLS[key] or s.LLM_BASE_URL
     if not base_url:
         raise ValueError(f"EMBED_PROVIDER={key!r} needs a base URL.")
+    # Own key, falling back to the LLM key when it's the same vendor — so the LLM
+    # and embeddings can be different providers (fast Groq LLM + NVIDIA embeddings).
+    api_key = s.EMBED_API_KEY or s.LLM_API_KEY
     return OpenAICompatibleEmbeddings(
-        api_key=s.LLM_API_KEY, base_url=base_url, model=s.EMBED_MODEL, dim=s.EMBED_DIM
+        api_key=api_key, base_url=base_url, model=s.EMBED_MODEL, dim=s.EMBED_DIM
     )

@@ -18,9 +18,11 @@ from ..knowledge.retrieve import format_context, retrieve
 from ..llm.embeddings import EmbeddingService
 from ..llm.factory import build_llm_service
 from ..llm.service import LLMService
+from ..models.enums import ConversationStatus
 from ..schemas.message import InboundMessage, OutboundChunk
 from ..services.locks import conversation_turn_lock
 from .base import TurnContext
+from .guardrails import GuardrailAction, check_inbound
 from .prompt import build_system_prompt
 from .state import load_history
 
@@ -58,6 +60,32 @@ class LLMOrchestrator:
                     type="error",
                     content="Still finishing the previous reply — please resend in a moment.",
                 )
+                return
+
+            # Guardrails (Day 6): rules are instant; the LLM moderator only runs on
+            # borderline input. Refuse/Escalate short-circuit before we ever ask the
+            # LLM to answer.
+            guard = await check_inbound(msg.content, llm=self._llm, settings=get_settings())
+            if guard.action is GuardrailAction.refuse:
+                yield OutboundChunk(
+                    type="message",
+                    content=guard.message,
+                    metadata={"guardrail": "refuse", "reason": guard.reason},
+                )
+                yield OutboundChunk(type="done", metadata={"guardrail": "refuse"})
+                return
+            if guard.action is GuardrailAction.escalate:
+                ctx.conversation.status = ConversationStatus.human
+                await db.commit()
+                yield OutboundChunk(
+                    type="action", content="escalated", metadata={"reason": guard.reason}
+                )
+                yield OutboundChunk(
+                    type="message",
+                    content=guard.message,
+                    metadata={"guardrail": "escalate"},
+                )
+                yield OutboundChunk(type="done", metadata={"guardrail": "escalate"})
                 return
 
             yield OutboundChunk(type="typing")

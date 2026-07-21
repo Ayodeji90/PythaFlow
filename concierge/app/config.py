@@ -32,7 +32,13 @@ class Settings(BaseSettings):
     HEALTH_PROBE_TIMEOUT: float = 3.0
     REDIS_CONNECT_TIMEOUT: float = 3.0
     REDIS_SOCKET_TIMEOUT: float = 3.0
-    LLM_TIMEOUT: float = 30.0
+    LLM_TIMEOUT: float = 60.0   # free-tier 70b can take ~30s to first token
+
+    # --- guardrails (Day 6) ---
+    # Hybrid: rules always run (instant); the LLM moderator only runs on input the
+    # rules flag as borderline. Turn the LLM layer off for pure-rules / offline.
+    GUARDRAILS_LLM_MODERATION: bool = True
+    GUARDRAILS_MODERATION_TIMEOUT: float = 12.0
 
     # --- LLM orchestration (provider-agnostic) ---
     LLM_PROVIDER: str = "nvidia"          # nvidia | openai | groq | mistral | openai_compatible
@@ -50,6 +56,9 @@ class Settings(BaseSettings):
     EMBED_PROVIDER: str = "nvidia"
     EMBED_MODEL: str = "nvidia/nv-embedqa-e5-v5"
     EMBED_DIM: int = 1024
+    # Its own key so the LLM and embeddings can be different vendors (e.g. Groq
+    # LLM + NVIDIA embeddings). Blank falls back to LLM_API_KEY (same vendor).
+    EMBED_API_KEY: str = ""
     RAG_TOP_K: int = 6
     # Cosine-distance floor for pgvector's `<=>` (0 = identical … 2 = opposite).
     # A chunk further than this is treated as "not relevant" → no context is
@@ -61,7 +70,10 @@ class Settings(BaseSettings):
     # per embedding model / venue if that distribution shifts.
     RAG_MAX_DISTANCE: float = 0.68
 
-    @field_validator("LLM_API_KEY", "LLM_BASE_URL", "LLM_PROVIDER", mode="before")
+    @field_validator(
+        "LLM_API_KEY", "LLM_BASE_URL", "LLM_PROVIDER", "EMBED_API_KEY", "EMBED_PROVIDER",
+        mode="before",
+    )
     @classmethod
     def _strip(cls, v: object) -> object:
         return v.strip() if isinstance(v, str) else v
@@ -82,6 +94,7 @@ class Settings(BaseSettings):
         "REDIS_CONNECT_TIMEOUT",
         "REDIS_SOCKET_TIMEOUT",
         "LLM_TIMEOUT",
+        "GUARDRAILS_MODERATION_TIMEOUT",
     )
     @classmethod
     def _check_positive(cls, v: float, info) -> float:

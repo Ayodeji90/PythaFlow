@@ -7,11 +7,12 @@ from fastapi import FastAPI
 
 from .config import get_settings
 from .db import engine, ping_db
+from .logging import configure_logging
 from .routers import health, knowledge, webchat
 from .services.redis import get_redis_client, ping_redis
 
 settings = get_settings()
-logging.basicConfig(level=settings.LOG_LEVEL)
+configure_logging(settings.LOG_LEVEL)  # PII-redacting logs (Day 6)
 log = logging.getLogger("concierge")
 
 

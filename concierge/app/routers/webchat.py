@@ -155,18 +155,26 @@ function add(text, cls){
 const ws = new WebSocket(`ws://${location.host}/ws/chat?tenant=${encodeURIComponent(tenant)}`);
 ws.onopen = () => add('socket open', 'sys');
 ws.onclose = () => add('socket closed', 'sys');
-let botEl = null;   // the bubble the current streamed reply is growing into
+let botEl = null;    // the bubble the current streamed reply is growing into
+let thinkEl = null;  // "thinking…" indicator shown while we wait on the model
+function clearThink(){ if (thinkEl) { thinkEl.remove(); thinkEl = null; } }
 ws.onmessage = (e) => {
   const c = JSON.parse(e.data);
-  if (c.type === 'token') {
+  if (c.type === 'typing') {
+    if (!thinkEl) thinkEl = add('💭 thinking…', 'sys');   // model can be slow on free tiers
+  } else if (c.type === 'token') {
+    clearThink();
     if (!botEl) botEl = add('', 'bot');   // one bubble per reply; tokens append
     botEl.textContent += c.content;
     log.scrollTop = log.scrollHeight;
   } else if (c.type === 'message') {
+    clearThink();
     add(c.content, 'bot');
   } else if (c.type === 'done') {
+    clearThink();
     botEl = null;                          // next reply starts a fresh bubble
   } else if (c.type === 'error') {
+    clearThink();
     add('error: ' + c.content, 'sys'); botEl = null;
   } else if (c.type === 'action') {
     add(c.content + ' (' + (c.metadata?.conversation_ref || '') + ')', 'sys');
