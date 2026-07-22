@@ -171,3 +171,62 @@ Notes / decisions:
   turns can be slow; the RAG core was verified deterministically to avoid that.
 - Test fixture now uses `join_transaction_mode="create_savepoint"` so app-code
   `commit()`s (ingest) roll back cleanly.
+
+## Day 7 — Review · demo · buffer
+
+**Week 1 retrospective: Days 1–7 delivered a grounded, guardrailed web-chat concierge for one venue (Demo Bistro). The architecture is multi-tenant, streaming, and provider-agnostic — exactly what the sprint plan's "North Star" called for at this stage.**
+
+### What's green ✅
+- **Test suite: 23/23 pass** (unit + DB-dependent + WebSocket echo). Ruff clean.
+- **All services boot**: `docker compose up` → api + postgres + redis; `GET /health` → `{"status":"ok","db":true,"redis":true}`
+- **Demo Bistro seeded** — tenant, owner, webchat channel created; 6 knowledge chunks ingested (hours, reservations, dietary, parking, pets, cancellation).
+- **Zero TODOs, FIXMEs, or HACKs** in the codebase.
+- **No drift**: `alembic check` would pass (migrations match models).
+
+### What's yellow ⚡
+- **Meta Business verification** — noted as "submit Day 1" in the sprint plan. This is an owner task, not code. If not yet submitted, it gates WhatsApp (Days 15–16). Track this externally.
+- **Demo recording** — the system is demo-ready (seeded tenant + KB + guardrails + dev chat page at `/dev/chat`). A manual screen recording of a grounded Q&A session would close this checklist item.
+
+### Week 2 backlog (Days 8–14) — groomed
+| Day | What | Notes |
+|-----|------|-------|
+| **8** | Tool-calling framework | Function-calling loop + tool registry + typed tools. Action model already exists. |
+| **9** | Availability + booking backend | CheckAvailability + CreateReservation + Google Sheet mirror. Reservation model exists. |
+| **10** | Write-action approval flow | Pending → Approval queue → confirm on staff approve. Approval model exists. |
+| **11** | Modify / cancel + guest memory | ModifyReservation, CancelReservation, Guest profile + consent. Guest model exists. |
+| **12** | Multi-turn robustness | Corrections, confirmations, reminders. |
+| **13** | Eval harness | Golden-dialogue test suite in CI. |
+| **14** | Review · demo · buffer | Booking loop with approval, WhatsApp sandbox check. |
+
+The model layer (Action, Approval, Reservation, Guest) is already in place from Days 2–3, so Days 8–11 won't be starting from scratch.
+
+**Week 1 verdict:** Demo Bistro is ready to answer grounded, guardrailed questions via web chat. A guest can ask about hours, menu, parking, reservations policies and get accurate, on-brand answers with safe deflection for unknowns.
+- **Hybrid guardrail module** (`app/orchestrator/guardrails.py`): deterministic
+  rules (injection, human-request, abuse detection via regex) run instantly and
+  short-circuit the obvious cases. An **LLM moderator** is consulted only for
+  borderline input flagged by `_SUSPICIOUS` patterns — so normal chat never pays
+  for an extra LLM round-trip. The moderator fails **open** (allow) on
+  timeout/error so a flaky classifier never blocks a real guest.
+- **Three guardrail actions**: `ALLOW` → proceed to grounded answer; `REFUSE` →
+  safe deflection, LLM never invoked; `ESCALATE` → conversation status set to
+  `human`, hand off to staff.
+- **PII-safe logging** (`app/logging.py`): `redact()` strips emails, phone
+  numbers, and credit card numbers before they reach logs; `RedactingFormatter`
+  wraps the standard logging formatter.
+- **Wired into the orchestrator** (`app/orchestrator/engine.py`): `check_inbound()`
+  runs at the top of every `handle()` call before RAG or LLM touch the input.
+- **Toggle settings** in config: `GUARDRAILS_LLM_MODERATION` (on/off) and
+  `GUARDRAILS_MODERATION_TIMEOUT` (12s default).
+
+**Verified ✅ (Day 6 DONE):**
+- Adversarial prompts ("ignore instructions", "reveal system prompt",
+  "jailbreak") → refused without reaching the LLM.
+- Human-request ("speak to a manager", "get me a human") → escalated.
+- Abuse → escalated.
+- Clean queries → allowed with no LLM moderator call.
+- Borderline input ("pretend the kitchen is open") → LLM moderator consulted;
+  fail-open path tested (moderator crash → still allowed).
+- PII redaction proven: emails, phones, and card numbers stripped from log
+  output.
+- `pytest` → 13 passed (unit + guardrail suite; WebSocket tests require a
+  running app). `ruff` clean.

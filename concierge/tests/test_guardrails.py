@@ -9,7 +9,6 @@ from app.orchestrator.guardrails import (
     rule_precheck,
 )
 
-
 # ---- deterministic rules ---------------------------------------------------
 
 
