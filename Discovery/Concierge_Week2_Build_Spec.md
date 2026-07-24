@@ -17,16 +17,62 @@ developer and they can start.*
 | RAG grounding + similarity floor | `app/knowledge/retrieve.py` |
 | Guardrails (rules + LLM moderator) | `app/orchestrator/guardrails.py` |
 | Per-conversation turn lock | `app/services/locks.py` |
+| Channels: web chat **and email** | `app/channels/webchat.py`, `app/channels/email.py` |
 | **Empty tables waiting for this week** | `Reservation`, `Action`, `Approval`, `Guest` (Day 2) |
 
 **The Week-2 thesis:** Week 1 built a concierge that *talks*. Week 2 makes it
-**act** — and makes every action auditable and human-approved. That approval loop
-is the product's core promise ("your staff confirms every booking"), so it is
-built as *infrastructure*, not a feature flag.
+**act** — and makes every action a structured, auditable, human-approved
+work item. That approval loop is the product's core promise ("your staff confirms
+every booking"), so it is built as *infrastructure*, not a feature flag.
 
-**Standing constraints:** every tool call is tenant-scoped; nothing writes to a
-"real" booking store without an `Approval`; all new work keeps `ruff` clean and
-`alembic check` drift-free.
+## The Request model — the spine of Week 2
+
+The concierge is a **team of staff** for the venue: it handles communication on
+every channel, then turns each conversation into **structured work** a human can
+accept or decline. A `Request` is that work item — the thing a manager actually
+reads in a queue.
+
+```
+LAYER 1 · COMMUNICATION            (built)
+  email · web chat · WhatsApp · IG/FB · SMS · voice
+  every channel → InboundMessage → one brain answers (grounded, guarded)
+                     │
+LAYER 2 · REQUEST STRUCTURING      (Week 2 — the new spine)
+  ├─ draft_* tools    LLM drafts a typed Request mid-conversation (high confidence)
+  └─ extractor        post-turn fallback catches what no tool covered
+                     │
+                     ▼
+              Request(needs_review)   type · payload · summary · confidence
+                     │
+LAYER 3 · HUMAN IN THE LOOP        (Week 2)
+  staff queue → accept / edit / decline        ← Approval records the decision
+                     │
+LAYER 4 · FULFILMENT + REPLY BACK  (Week 2)
+  approved → fulfilment handler runs the WRITE (create_reservation, …)
+           → artifact (Reservation/Order)
+           → outbox: confirm the guest, notify the team
+                     │
+              Request(completed)
+```
+
+**The rule that makes this safe:** during conversation the LLM may only call
+**read-only** tools (`get_hours`, `check_availability`). **Every write lives
+behind fulfilment**, reachable only from an approved Request. A booking that
+skipped a human is not "unlikely" — it is *unreachable by construction*.
+
+**Five objects, five jobs** (keep these boundaries clean and the system stays simple):
+
+| Object | Answers |
+|---|---|
+| `Message` | what was **said** (raw) |
+| **`Request`** | what the customer **wants** (typed, queued, lifecycle) |
+| `Action` | what the AI **did** (tool-call audit, immutable) |
+| `Approval` | the human **decision event** on a Request |
+| `Reservation` / `Order` | the **artifact** produced on fulfilment |
+
+**Standing constraints:** every tool call and query is tenant-scoped; no write
+reaches a booking store without an approved `Request`; all new work keeps `ruff`
+clean and `alembic check` drift-free.
 
 ---
 
@@ -45,9 +91,18 @@ built as *infrastructure*, not a feature flag.
       name: str                        # snake_case, matches the LLM function name
       description: str                 # shown to the model
       args_model: type[BaseModel]      # pydantic = the JSON schema AND the validator
-      requires_approval: bool          # True for guarded writes (Day 10)
+      kind: ToolKind                   # read_only | draft | fulfilment
       async def run(self, args: BaseModel, *, ctx: ToolContext, db: AsyncSession) -> dict: ...
   ```
+  **`ToolKind` is the safety boundary, not a label:**
+  - `read_only` — callable by the LLM mid-conversation (`get_hours`, `check_availability`)
+  - `draft` — callable by the LLM; creates a `Request`, never a booking (`draft_reservation`)
+  - `fulfilment` — **not exposed to the LLM at all**; only the fulfilment worker
+    may run it, and only for an approved Request (`create_reservation`)
+
+  `registry.schemas_for(tenant)` must expose **only** `read_only` + `draft` tools
+  to the model. Add a test asserting no `fulfilment` tool ever appears in a
+  generated schema — that assertion is the guarantee behind "no unapproved writes".
   `registry.py`: `register(tool)`, `get(name)`, `schemas_for(tenant)` →
   OpenAI-style `tools=[{"type":"function", ...}]` generated from `args_model`.
 - **Why pydantic-as-schema:** one definition produces both the model-facing JSON
@@ -84,9 +139,46 @@ built as *infrastructure*, not a feature flag.
   `status=failed`, return the validation message **to the model** as the tool
   result so it can retry with correct args — never crash the turn.
 
-### W2-D8-5 · First tool + tests
+### W2-D8-5 · The `Request` model + migration  ★ (Day 9 depends on this)
+- **Files:** `app/models/request.py`, `app/models/__init__.py`, `app/models/enums.py`,
+  new Alembic revision
+- **Detail:** the work item at the centre of Layers 2–4.
+  ```python
+  class Request(UUIDMixin, TenantMixin, TimestampMixin, Base):
+      __tablename__ = "requests"
+      conversation_id: UUID   # FK conversations, SET NULL
+      guest_id:        UUID?  # FK guests, SET NULL
+      channel_type:    ChannelType          # denormalised: where it arrived
+      type:            RequestType          # see enum below
+      status:          RequestStatus        # see enum below
+      priority:        RequestPriority      # normal | high (complaints, big parties)
+      summary:         str                  # ONE human line staff actually read
+      payload:         JSONB                # structured extraction {date,time,party_size,…}
+      confidence:      float                # 0–1; low ⇒ forced human review
+      assigned_to:     UUID?                # FK users, SET NULL
+      resolution:      JSONB                # what was done / why declined
+      decided_by:      UUID?                # FK users
+      decided_at:      datetime?
+  ```
+  New enums (VARCHAR + CHECK, per the Day-2 convention):
+  ```
+  RequestType     reservation | modification | cancellation | order
+                  | enquiry | complaint | callback | other
+  RequestStatus   new | needs_review | approved | rejected
+                  | in_progress | completed | failed | cancelled
+  RequestPriority normal | high
+  ```
+  Indexes: `(tenant_id, status)` — the queue query — and `(conversation_id)`.
+  Add `request_id` (FK, SET NULL) to `Approval` so a decision hangs off the Request.
+- **Scope discipline:** ship `reservation`, `enquiry`, `other` end-to-end first.
+  The other types exist in the enum (cheap, no migration later) but nothing routes
+  to them until a pilot venue asks.
+- **Done:** `alembic upgrade head` from scratch builds `requests`; `alembic check`
+  clean; tenant-isolation test for `requests` mirrors the Day-2 test.
+
+### W2-D8-6 · First tool + tests
 - **Files:** `app/tools/get_hours.py`, `tests/test_tools.py`
-- **Detail:** `get_hours` reads `Tenant.hours` — trivial, read-only, `requires_approval=False`.
+- **Detail:** `get_hours` reads `Tenant.hours` — trivial, `kind=read_only`.
 - **Done:**
   - [ ] LLM invokes `get_hours` and an `Action` row is written with `status=executed`
   - [ ] Invalid args (e.g. `party_size="four"`) → `status=failed`, model gets the
@@ -122,12 +214,19 @@ built as *infrastructure*, not a feature flag.
   Return `AvailabilityResult{available: bool, alternatives: list[time]}` — the
   alternatives are what make the concierge feel competent ("8:00 is full, 8:30?").
 
-### W2-D9-3 · `check_availability` + `create_reservation` tools
-- **Files:** `app/tools/check_availability.py`, `app/tools/create_reservation.py`
-- **Detail:** `create_reservation` has `requires_approval=True` and writes
-  `status=pending`. **Idempotency:** key = `sha256(tenant_id|conversation_id|date|time|party_size)`
-  → the Day-2 unique `(tenant_id, idempotency_key)` makes a retry return the
-  *existing* row instead of a duplicate.
+### W2-D9-3 · `check_availability` (read-only) + `draft_reservation` (draft)
+- **Files:** `app/tools/check_availability.py`, `app/tools/draft_reservation.py`
+- **Detail:**
+  - `check_availability` — `kind=read_only`. The LLM calls it freely mid-chat so it
+    can say "8:00 is full, 8:30 works?" without touching any write path.
+  - `draft_reservation` — `kind=draft`. Creates a **`Request`**
+    (`type=reservation`, `status=needs_review`, `confidence=0.95`, structured
+    `payload`, one-line `summary`). It creates **no `Reservation` row** — the
+    booking itself only exists after approval (W2-D10-4).
+- **Idempotency:** key = `sha256(tenant_id|conversation_id|date|time|party_size)`
+  stored on the Request payload; re-drafting the same booking **updates the existing
+  open Request** instead of stacking duplicates in the staff queue. The Day-2 unique
+  `(tenant_id, idempotency_key)` on `Reservation` then guards the fulfilment write.
 - **Note:** natural-language dates ("tomorrow", "Friday 8pm") resolve in the tool
   using `Tenant.timezone`, not in the prompt — models are unreliable at date math.
 
@@ -141,56 +240,118 @@ built as *infrastructure*, not a feature flag.
 - **Files:** `tests/test_booking.py`
 - **Done:**
   - [ ] Chat can check availability and draft a booking
-  - [ ] `Reservation` row created with `status=pending` (+ Sheet mirror attempted)
-  - [ ] **Same request twice → one row** (idempotency proven)
+  - [ ] A `Request(type=reservation, status=needs_review)` is created with a
+        readable `summary` and structured `payload` — and **no `Reservation` row yet**
+  - [ ] **Same booking drafted twice → one open Request** (no duplicate queue noise)
   - [ ] Full slot → `available=false` with alternatives offered
+  - [ ] No `fulfilment`-kind tool appears in the schema handed to the LLM
 
-> **Maps to Day 9 checklist:** draft booking · pending row + Sheet · no double-booking.
+> **Maps to Day 9 checklist:** draft booking · structured pending work item + Sheet
+> (on fulfilment) · no double-booking.
 
 ---
 
-# Day 10 — Write-action approval flow
+# Day 10 — Request queue + approval + fulfilment
 
-**Objective:** nothing hits the real store without a human.
+**Objective:** every conversation becomes structured work a human accepts or
+declines — and only then does anything get written or sent.
 
-### W2-D10-1 · Approval service
+*This is the day the "team of staff" model becomes real: Layers 2→4 in one loop.*
+
+### W2-D10-1 · Request service (create · dedupe · transition)
+- **Files:** `app/requests/service.py`
+- **Detail:**
+  ```python
+  async def open_request(db, *, ctx, type, payload, summary, confidence,
+                         priority=normal) -> Request        # dedupes on open key
+  async def transition(db, request_id, *, to: RequestStatus,
+                       user_id=None, resolution=None) -> Request
+  ```
+  Legal transitions only (`new|needs_review → approved|rejected`,
+  `approved → in_progress → completed|failed`); an illegal transition raises rather
+  than silently corrupting the queue. Low `confidence` (< `REQUEST_REVIEW_CONFIDENCE`)
+  or `priority=high` can never auto-advance, whatever the tenant config says.
+
+### W2-D10-2 · The extractor (fallback classifier)
+- **Files:** `app/requests/extractor.py`
+- **Detail:** runs **after** the assistant turn is streamed (never blocking the
+  guest's reply — the free-tier latency lesson from Week 1). If the turn already
+  produced a Request via a `draft_*` tool, it does nothing. Otherwise it makes one
+  cheap **`fast`-tier** call classifying the exchange:
+  ```json
+  {"type":"complaint","summary":"Cold starter on Friday, wants follow-up",
+   "payload":{"visit_date":"2026-07-17"},"confidence":0.72,"priority":"high"}
+  ```
+  Returning `type: none` is a first-class answer — a pure FAQ ("do you have
+  parking?") that the KB already answered creates **no** Request. Anything it
+  can't classify becomes `type=other, confidence<0.5` → straight to human review.
+- **Why a fallback exists at all:** the `draft_*` tools only cover request types
+  we've built. The extractor is what stops *"can I book the terrace for 30 people
+  in December?"* — the most valuable message of the week — from being answered
+  politely and then vanishing.
+
+### W2-D10-3 · Approval = the decision event
 - **Files:** `app/approvals/service.py`
 - **Detail:**
   ```python
-  async def request_approval(db, *, action, reservation=None) -> Approval   # status=pending
-  async def decide(db, approval_id, *, decision, user_id, note=None) -> Approval
+  async def decide(db, request_id, *, decision, user_id, note=None) -> Approval
   ```
-  On **approve**: reservation → `confirmed`, `Action.status=executed`, booking
-  store `create()` committed, guest confirmation queued.
-  On **reject**: reservation → `rejected`, guest told politely, conversation flagged.
-  Per-tenant config `Tenant.config["auto_approve"]` (default **false**) allows a
-  trusting venue to skip the gate later — the default is always human-in-the-loop.
+  Writes an `Approval` row (`request_id`, `status`, `decided_by`, `decided_at`) and
+  transitions the Request. Approvals are **append-only** — a reversal is a new row,
+  never an edit, so the audit trail can't be rewritten.
+  `Tenant.config["auto_approve"]` (default **false**) may auto-approve *specific
+  low-risk types only* (e.g. `enquiry`), never `reservation`/`order`, and never
+  below the confidence floor.
 
-### W2-D10-2 · Staff approvals API
-- **Files:** `app/routers/approvals.py`
+### W2-D10-4 · Fulfilment worker (the only path that writes)
+- **Files:** `app/requests/fulfilment.py`, `app/tools/create_reservation.py`
+- **Detail:** on approval → `in_progress` → dispatch by `Request.type` to a
+  `fulfilment`-kind handler:
+  | Request type | Handler | Artifact |
+  |---|---|---|
+  | `reservation` | `create_reservation` → `BookingStore.create()` + Sheet mirror | `Reservation(confirmed)` |
+  | `modification` / `cancellation` | `modify` / `cancel` (Day 11) | updated `Reservation` |
+  | `enquiry` / `complaint` | no write — staff reply, logged | — |
+  Then `completed` (or `failed` + reason, staying visible in the queue — a silent
+  failure is worse than a loud one). Every handler logs an `Action`.
+
+### W2-D10-5 · Staff API (the queue the console will render)
+- **Files:** `app/routers/requests.py`
 - **Endpoints:**
-  - `GET /api/approvals?tenant=<slug>&status=pending` → queue for the Week-3 console
-  - `POST /api/approvals/{id}/approve` `{user_id, note?}`
-  - `POST /api/approvals/{id}/reject` `{user_id, reason}`
-- **Detail:** auth is a temporary shared-secret header (`X-Staff-Token` from
-  `Tenant.config`) — real auth is Week 3/Day 24. **Document the stopgap loudly.**
+  - `GET  /api/requests?tenant=<slug>&status=needs_review` → the work queue
+  - `GET  /api/requests/{id}` → detail + originating conversation transcript
+  - `PATCH /api/requests/{id}` → staff **edit** before approving (fix the party size
+    the AI misheard) — the edit is recorded in `resolution`
+  - `POST /api/requests/{id}/approve` `{user_id, note?}`
+  - `POST /api/requests/{id}/reject` `{user_id, reason}`
+- **Detail:** queue rows return `summary`, `type`, `priority`, `channel_type`, age
+  and guest name — everything a manager needs to decide in ~3 seconds. Auth is the
+  temporary `X-Staff-Token` shared secret; **real auth is Week 3 / Day 24 — document
+  the stopgap loudly in the router docstring.**
 
-### W2-D10-3 · Guest-side confirmation on approve
-- **Files:** `app/approvals/notify.py`
-- **Detail:** on approval, push a message into the guest's conversation
-  (persisted as `role=assistant`) so the guest sees "Confirmed — table for 4 at
-  8:30pm." Delivery to a live channel is Day 12's `SendMessage`.
+### W2-D10-6 · Guest + team notification
+- **Files:** `app/requests/notify.py`
+- **Detail:** on `completed`, write an assistant message into the originating
+  conversation ("Confirmed — table for 4 at 8:30pm") and queue a team notification.
+  Actual delivery goes through Day 12's outbox, so the same code path later serves
+  WhatsApp/email without change.
 
-### W2-D10-4 · Tests
-- **Files:** `tests/test_approvals.py`
+### W2-D10-7 · Tests
+- **Files:** `tests/test_requests.py`, `tests/test_approvals.py`
 - **Done:**
-  - [ ] A chat booking creates a **pending** `Approval`
+  - [ ] A chat booking creates `Request(needs_review)` — and **no `Reservation`**
   - [ ] Guest is **not** told "confirmed" before approval
-  - [ ] After approve → reservation `confirmed` + guest message written
-  - [ ] `Approval.decided_by` / `decided_at` recorded (audit trail)
-  - [ ] Reject path → `rejected` + polite guest message
+  - [ ] Approve → fulfilment runs → `Reservation(confirmed)` + guest message + `completed`
+  - [ ] `Approval.decided_by` / `decided_at` recorded; reversal appends a second row
+  - [ ] Reject → `rejected` + polite guest message, no artifact written
+  - [ ] Staff `PATCH` edit before approve is honoured and recorded
+  - [ ] Extractor: FAQ turn → **no** Request; unclassifiable turn → `other`, low
+        confidence, `needs_review`
+  - [ ] **Nothing can write without an approved Request** (attempt fulfilment on a
+        `needs_review` Request → raises)
 
-> **Maps to Day 10 checklist:** pending approval · confirm only after approval · audit trail.
+> **Maps to Day 10 checklist:** pending work item · confirm only after approval ·
+> audit trail — now with classification and fulfilment closing the loop.
 
 ---
 
@@ -200,9 +361,12 @@ built as *infrastructure*, not a feature flag.
 
 ### W2-D11-1 · `modify_reservation` / `cancel_reservation` tools
 - **Files:** `app/tools/modify_reservation.py`, `app/tools/cancel_reservation.py`
-- **Detail:** both `requires_approval=True`. Lookup is **scoped to this guest /
-  conversation** — a guest must never modify someone else's booking (test it).
-  Modify re-checks availability for the new slot before drafting.
+- **Detail:** the LLM-facing halves are `kind=draft` → they open a
+  `Request(type=modification|cancellation)`; the writes are `kind=fulfilment`
+  handlers that run only after approval (same split as Day 9/10). Lookup is
+  **scoped to this guest / conversation** — a guest must never modify someone
+  else's booking (test it). Modify re-checks availability for the new slot before
+  drafting the Request.
 
 ### W2-D11-2 · Guest identity + memory
 - **Files:** `app/guests/identity.py`, update `app/channels/base.py`
@@ -286,7 +450,8 @@ built as *infrastructure*, not a feature flag.
     - guest: "table for 2 friday 8pm?"
       expect: { tool_called: check_availability, confirm_back: true }
     - guest: "yes please"
-      expect: { tool_called: create_reservation, reservation_status: pending }
+      expect: { tool_called: draft_reservation, request_type: reservation,
+                request_status: needs_review, reservation_created: false }
   ```
   Runner drives the real orchestrator against a **fixture tenant + KB**, with the
   LLM either live (`--live`) or replayed from recorded responses (default, so CI
@@ -323,9 +488,13 @@ idempotency · cross-guest access denial.
 ### W2-D14-1 · End-to-end demo
 - **Files:** `docs/demo_week2.md` (+ recording)
 - **Script:** guest asks hours (grounded) → asks for a table → concierge checks
-  availability, offers an alternative, confirms back → guest says yes → **pending**
-  approval → staff approves via `POST /api/approvals/{id}/approve` → guest sees
-  "Confirmed" → reservation `confirmed` in psql + Sheet.
+  availability, offers an alternative, confirms back → guest says yes →
+  **`Request(needs_review)` appears in the queue** (`GET /api/requests`) → staff
+  approves via `POST /api/requests/{id}/approve` → fulfilment writes the booking →
+  guest sees "Confirmed" → `Reservation(confirmed)` in psql + Sheet + `Request(completed)`.
+- **Also demo the wedge:** an off-tool message ("can I book the terrace for 30 in
+  December?") producing a `type=other` Request in the same queue — that's the
+  moment a venue owner understands what they're buying.
 
 ### W2-D14-2 · WhatsApp BSP sandbox — **critical long-lead check**
 - **Done:** sandbox access confirmed and a test message sent. If still blocked,
@@ -345,21 +514,64 @@ idempotency · cross-guest access denial.
 ## New config keys introduced this week
 
 ```
-TOOLS_MAX_STEPS=4            # hard cap on the agent loop
-AUTO_APPROVE=false           # per-tenant override in Tenant.config
-SHEET_ID=                    # Google Sheet mirror (optional; blank disables)
-SHEET_CREDENTIALS_JSON=      # service-account JSON path
+TOOLS_MAX_STEPS=4                 # hard cap on the agent loop
+AUTO_APPROVE=false                # per-tenant override in Tenant.config; never
+                                  # applies to reservation/order types
+REQUEST_EXTRACTOR_ENABLED=true    # post-turn fallback classifier
+REQUEST_EXTRACTOR_TIER=fast       # cheap model — it's a classification, not prose
+REQUEST_REVIEW_CONFIDENCE=0.75    # below this ⇒ always human review
+SHEET_ID=                         # Google Sheet mirror (optional; blank disables)
+SHEET_CREDENTIALS_JSON=           # service-account JSON path
 REMINDER_LEAD_HOURS=24
-STAFF_TOKEN_HEADER=X-Staff-Token   # stopgap auth until Week 3/Day 24
+STAFF_TOKEN_HEADER=X-Staff-Token  # stopgap auth until Week 3/Day 24
 ```
 
 ## What Week 2 deliberately excludes
-Real channels (WhatsApp = Day 15) · staff console UI (Days 17–20) · real POS/PMS
-integration (Day 26 — the adapter seam is built, the connector isn't) · real staff
-auth (Day 24) · voice (Phase 1).
+Real channels (WhatsApp = Day 15) · staff console **UI** (Days 17–20 — Week 2 ships
+the API the console renders) · real POS/PMS integration (Day 26 — the adapter seam
+is built, the connector isn't) · real staff auth (Day 24) · voice (Phase 1).
 
-## The Week-2 risk to watch
-**Tool-calling reliability on small/free models.** Day 1 showed llama-3.1-8b
+## For the designer — the staff queue screen
+
+`GET /api/requests?status=needs_review` returns everything this screen needs. The
+mock doubles as the **walk-in demo asset** (it's the screen an owner will actually
+live in), and it becomes the Day 17–20 console spec — so the design work is
+never throwaway.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Needs your attention  (3)                    Demo Bistro ▾  │
+├──────────────────────────────────────────────────────────────┤
+│ ⬤ HIGH  🍽 RESERVATION            via WhatsApp · 4 min ago    │
+│   Table for 4 — Fri 8:30pm, window seat                      │
+│   Chidera A.  ·  "anniversary dinner"                        │
+│                        [ View chat ]  [ Decline ]  [ Accept ]│
+├──────────────────────────────────────────────────────────────┤
+│ ⬤ HIGH  ⚠ OTHER                   via Email · 1 hr ago       │
+│   Private terrace booking, 30 guests, December               │
+│                        [ View chat ]  [ Decline ]  [ Accept ]│
+├──────────────────────────────────────────────────────────────┤
+│         💬 ENQUIRY                via Instagram · 2 hr ago   │
+│   Asked about vegan options — answered from menu ✓           │
+│                                            [ View chat ]     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Design notes that matter: the **one-line summary** is the whole product (a manager
+decides in ~3 seconds); the **channel badge** shows the concierge covers every
+surface; **Accept/Decline** must feel weightless (this is the human-in-the-loop
+promise made tangible); and an *answered* enquiry with no action needed proves the
+AI is filtering noise rather than adding it.
+
+## The Week-2 risks to watch
+
+**1. Misclassification is the failure mode that matters.** A wrong `type` is
+recoverable (staff re-type it); a request that *silently disappears* is not. Hence
+the rules: unclassifiable → `other` at low confidence, never dropped; low
+confidence → forced human review; `type: none` is only legitimate when the KB
+already answered a pure FAQ. Add an eval dialogue for each.
+
+**2. Tool-calling reliability on small/free models.** Day 1 showed llama-3.1-8b
 following instructions loosely; tool-calling is stricter still. If `quality`-tier
 tool calls prove flaky on the free tier, the mitigation is provider-swap (the seam
 already supports it — Groq/OpenAI have solid tool support), *not* rewriting the

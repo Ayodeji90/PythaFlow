@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from .config import get_settings
 from .db import engine, ping_db
 from .logging import configure_logging
+from .routers import email as email_router
 from .routers import health, knowledge, webchat
 from .services.redis import get_redis_client, ping_redis
 
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(webchat.router)
     app.include_router(knowledge.router)
+    app.include_router(email_router.router)
     # The manual test page is a development affordance only — never exposed
     # outside a dev/test environment.
     if settings.ENV.lower() in {"dev", "development", "local", "test"}:

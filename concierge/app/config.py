@@ -34,6 +34,15 @@ class Settings(BaseSettings):
     REDIS_SOCKET_TIMEOUT: float = 3.0
     LLM_TIMEOUT: float = 60.0   # free-tier 70b can take ~30s to first token
 
+    # --- email channel (optional — only needed when email adapter is used) ---
+    EMAIL_SENDER: str = "smtp"          # "smtp" | "sendgrid"
+    EMAIL_SMTP_HOST: str = ""
+    EMAIL_SMTP_PORT: int = 587
+    EMAIL_SMTP_USERNAME: str = ""
+    EMAIL_SMTP_PASSWORD: str = ""
+    EMAIL_FROM_ADDRESS: str = "concierge@localhost"
+    EMAIL_FROM_NAME: str = "Concierge"
+
     # --- guardrails (Day 6) ---
     # Hybrid: rules always run (instant); the LLM moderator only runs on input the
     # rules flag as borderline. Turn the LLM layer off for pure-rules / offline.

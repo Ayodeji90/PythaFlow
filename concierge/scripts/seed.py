@@ -20,8 +20,37 @@ async def main() -> None:
         existing = (
             await s.execute(select(Tenant).where(Tenant.slug == "demo"))
         ).scalar_one_or_none()
+
         if existing:
-            print(f"tenant 'demo' already exists ({existing.id}) — nothing to do")
+            # Idempotent: ensure the email channel exists even on re-run.
+            email_channel = (
+                await s.execute(
+                    select(Channel).where(
+                        Channel.tenant_id == existing.id,
+                        Channel.type == ChannelType.email,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not email_channel:
+                s.add(
+                    Channel(
+                        tenant_id=existing.id,
+                        type=ChannelType.email,
+                        external_id="demo-bistro@pythaflow.local",
+                        active=True,
+                        config={
+                            "display_name": "Demo Bistro Concierge",
+                            "forward_to": "owner@demo.test",
+                        },
+                    )
+                )
+                await s.commit()
+                print(
+                    f"✓ added email channel for tenant '{existing.slug}' "
+                    f"(demo-bistro@pythaflow.local)"
+                )
+            else:
+                print(f"tenant '{existing.slug}' already fully seeded — nothing to do")
             return
 
         tenant = Tenant(
@@ -48,10 +77,23 @@ async def main() -> None:
                     external_id="demo-web",
                     active=True,
                 ),
+                Channel(
+                    tenant_id=tenant.id,
+                    type=ChannelType.email,
+                    external_id="demo-bistro@pythaflow.local",
+                    active=True,
+                    config={
+                        "display_name": "Demo Bistro Concierge",
+                        "forward_to": "owner@demo.test",
+                    },
+                ),
             ]
         )
         await s.commit()
-        print(f"✓ seeded tenant {tenant.id} (slug='demo') + owner + webchat channel")
+        print(
+            f"✓ seeded tenant {tenant.id} (slug='demo')"
+            f" + owner + webchat channel + email channel"
+        )
 
 
 if __name__ == "__main__":
