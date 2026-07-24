@@ -19,6 +19,23 @@ class LLMResult:
     usage: dict = field(default_factory=dict)
 
 
+from typing import Optional
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass
+class LLMToolResult:
+    text: Optional[str]
+    tool_calls: Optional[list[ToolCall]]
+
 class LLMProvider(ABC):
     """AI Provider Wrapper — one thin adapter per vendor API shape.
 
