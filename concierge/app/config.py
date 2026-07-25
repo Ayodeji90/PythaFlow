@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     # --- tool calling loop ---
     TOOLS_MAX_STEPS: int = 4
 
+    # --- sheet mirror (pilot booking "system") ---
+    SHEET_ID: str = ""
+    SHEET_CREDENTIALS_JSON: str = ""  # path to service-account JSON key
+
     # --- embeddings + retrieval (RAG) ---
     EMBED_PROVIDER: str = "nvidia"
     EMBED_MODEL: str = "nvidia/nv-embedqa-e5-v5"
