@@ -43,6 +43,9 @@ class Approval(UUIDMixin, TenantMixin, TimestampMixin, Base):
     reservation_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("reservations.id", ondelete="CASCADE"), nullable=True
     )
+    request_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("requests.id", ondelete="CASCADE"), nullable=True
+    )
     status: Mapped[ApprovalStatus] = mapped_column(
         pg_enum(ApprovalStatus, "approval_status"),
         default=ApprovalStatus.pending,

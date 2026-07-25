@@ -56,6 +56,33 @@ class ApprovalStatus(enum.StrEnum):
     rejected = "rejected"
 
 
+class RequestType(enum.StrEnum):
+    reservation = "reservation"
+    modification = "modification"
+    cancellation = "cancellation"
+    order = "order"
+    enquiry = "enquiry"
+    complaint = "complaint"
+    callback = "callback"
+    other = "other"
+
+
+class RequestStatus(enum.StrEnum):
+    new = "new"
+    needs_review = "needs_review"
+    approved = "approved"
+    rejected = "rejected"
+    in_progress = "in_progress"
+    completed = "completed"
+    failed = "failed"
+    cancelled = "cancelled"
+
+
+class RequestPriority(enum.StrEnum):
+    normal = "normal"
+    high = "high"
+
+
 def pg_enum(enum_cls: type[enum.Enum], name: str) -> SAEnum:
     """VARCHAR-backed enum: stores the value, validates via a CHECK constraint."""
     return SAEnum(

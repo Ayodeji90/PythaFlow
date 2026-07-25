@@ -6,6 +6,7 @@ from .channel import Channel
 from .conversation import Conversation, Message
 from .guest import Guest
 from .knowledge import KnowledgeChunk
+from .request import Request
 from .reservation import Reservation
 from .tenant import Tenant, User
 
@@ -21,6 +22,7 @@ __all__ = [
     "Conversation",
     "Message",
     "Reservation",
+    "Request",
     "Action",
     "Approval",
     "KnowledgeChunk",

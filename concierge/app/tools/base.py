@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+import enum
 from abc import abstractmethod
-from enum import Enum
-from typing import Protocol, Any
+from typing import Any, Protocol
 from uuid import UUID
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class ToolKind(str, enum.StrEnum):
+class ToolKind(enum.StrEnum):
     read_only = "read_only"
     draft = "draft"
     fulfilment = "fulfilment"
