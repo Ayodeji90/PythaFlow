@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Sequence
 
-from .base import LLMMessage, LLMProvider
+from .base import LLMMessage, LLMProvider, LLMToolResult, ToolDefinition
 
 
 class LLMService:
@@ -75,6 +75,31 @@ class LLMService:
             max_tokens=self._max_tokens if max_tokens is None else max_tokens,
         ):
             yield fragment
+
+    async def generate_with_tools(
+        self,
+        messages: str | Sequence[LLMMessage],
+        *,
+        tools: list[ToolDefinition] | None = None,
+        tier: str = "quality",
+        system: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> LLMToolResult:
+        """Generate a completion with tool calling.
+
+        Returns LLMToolResult which may contain text, tool_calls, or both.
+        """
+        if isinstance(messages, str):
+            messages = [LLMMessage(role="user", content=messages)]
+        return await self._provider.generate_with_tools(
+            messages,
+            model=self.model_for(tier),
+            tools=tools or [],
+            system=system,
+            temperature=self._temperature if temperature is None else temperature,
+            max_tokens=self._max_tokens if max_tokens is None else max_tokens,
+        )
 
     async def aclose(self) -> None:
         await self._provider.aclose()

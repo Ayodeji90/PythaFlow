@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     # instruction-following and brand voice matter more than a few hundred ms.
     CHAT_TIER: str = "quality"
 
+    # --- tool calling loop ---
+    TOOLS_MAX_STEPS: int = 4
+
     # --- embeddings + retrieval (RAG) ---
     EMBED_PROVIDER: str = "nvidia"
     EMBED_MODEL: str = "nvidia/nv-embedqa-e5-v5"

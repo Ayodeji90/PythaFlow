@@ -4,11 +4,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
 class LLMMessage:
-    role: str  # "system" | "user" | "assistant"
+    role: str  # "system" | "user" | "assistant" | "tool"
     content: str
 
 
@@ -19,9 +20,13 @@ class LLMResult:
     usage: dict = field(default_factory=dict)
 
 
-from typing import Optional
-from dataclasses import dataclass
-from typing import Any
+@dataclass
+class ToolDefinition:
+    """Schema for a tool the LLM may call — mirrors the OpenAI tools parameter."""
+
+    name: str
+    description: str
+    parameters: dict[str, Any]  # JSON Schema object
 
 
 @dataclass
@@ -33,8 +38,18 @@ class ToolCall:
 
 @dataclass
 class LLMToolResult:
-    text: Optional[str]
-    tool_calls: Optional[list[ToolCall]]
+    """Result of a generate_with_tools call: either text, tool calls, or both."""
+
+    text: str | None = None
+    tool_calls: list[ToolCall] | None = None
+
+
+class ToolsUnsupportedError(NotImplementedError):
+    """Raised by providers that don't support tool calling."""
+
+    def __init__(self, provider: str = "this provider") -> None:
+        super().__init__(f"{provider} does not support tool calling")
+
 
 class LLMProvider(ABC):
     """AI Provider Wrapper — one thin adapter per vendor API shape.
@@ -57,6 +72,23 @@ class LLMProvider(ABC):
         max_tokens: int = 1024,
     ) -> LLMResult:
         ...
+
+    async def generate_with_tools(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        model: str,
+        tools: list[ToolDefinition],
+        system: str | None = None,
+        temperature: float = 0.4,
+        max_tokens: int = 1024,
+    ) -> LLMToolResult:
+        """Generate a completion with tool calling.
+
+        The default raises ToolsUnsupportedError — providers that support tool
+        calling (OpenAI-shaped) override this method.
+        """
+        raise ToolsUnsupportedError(self.name)
 
     async def stream(
         self,

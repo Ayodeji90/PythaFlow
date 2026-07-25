@@ -7,7 +7,14 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Sequence
 
-from ..base import LLMMessage, LLMProvider, LLMResult
+from ..base import (
+    LLMMessage,
+    LLMProvider,
+    LLMResult,
+    LLMToolResult,
+    ToolCall,
+    ToolDefinition,
+)
 
 
 class OpenAICompatibleProvider(LLMProvider):
@@ -39,6 +46,20 @@ class OpenAICompatibleProvider(LLMProvider):
         payload.extend({"role": m.role, "content": m.content} for m in messages)
         return payload
 
+    @staticmethod
+    def _tool_schema(tools: list[ToolDefinition]) -> list[dict]:
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.parameters,
+                },
+            }
+            for t in tools
+        ]
+
     async def generate(
         self,
         messages: Sequence[LLMMessage],
@@ -57,6 +78,39 @@ class OpenAICompatibleProvider(LLMProvider):
         text = (resp.choices[0].message.content or "").strip()
         usage = resp.usage.model_dump() if resp.usage else {}
         return LLMResult(text=text, model=model, usage=usage)
+
+    async def generate_with_tools(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        model: str,
+        tools: list[ToolDefinition],
+        system: str | None = None,
+        temperature: float = 0.4,
+        max_tokens: int = 1024,
+    ) -> LLMToolResult:
+        import json
+
+        resp = await self._client.chat.completions.create(
+            model=model,
+            messages=self._payload(messages, system),
+            tools=self._tool_schema(tools) if tools else None,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        msg = resp.choices[0].message
+        text = (msg.content or "").strip() or None
+        tool_calls: list[ToolCall] | None = None
+        if msg.tool_calls:
+            tool_calls = [
+                ToolCall(
+                    id=tc.id,
+                    name=tc.function.name,
+                    arguments=json.loads(tc.function.arguments),
+                )
+                for tc in msg.tool_calls
+            ]
+        return LLMToolResult(text=text, tool_calls=tool_calls or None)
 
     async def stream(
         self,
