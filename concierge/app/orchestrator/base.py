@@ -27,6 +27,16 @@ class TurnContext:
     tenant: Tenant
     conversation: Conversation
 
+    def to_tool_context(self) -> Any:
+        """Convert to the ToolContext expected by tools."""
+        from ..tools.base import ToolContext
+
+        return ToolContext(
+            tenant_id=self.tenant.id,
+            conversation_id=self.conversation.id,
+            guest_id=None,
+        )
+
 
 class Orchestrator(Protocol):
     name: str

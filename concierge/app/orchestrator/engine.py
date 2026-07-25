@@ -25,6 +25,7 @@ from .base import TurnContext
 from .guardrails import GuardrailAction, check_inbound
 from .prompt import build_system_prompt
 from .state import load_history
+from .tools_loop import run_tool_loop
 
 log = logging.getLogger("concierge.orchestrator")
 
@@ -106,18 +107,29 @@ class LLMOrchestrator:
             system = build_system_prompt(ctx.tenant, context=context)
             history = await load_history(db, ctx.conversation.id)
 
+            # Tool-calling loop (Phase 1.3): runs up to TOOLS_MAX_STEPS turns,
+            # executing any tool calls the LLM makes and yielding the final
+            # natural-language answer. If no tools are registered this behaves
+            # exactly like a plain LLM.generate call.
             streamed = False
             try:
-                async for fragment in self._llm.stream(history, tier=self._tier, system=system):
-                    if fragment:
+                async for chunk in run_tool_loop(
+                    self._llm,
+                    history,
+                    system=system,
+                    ctx=ctx,
+                    db=db,
+                    tier=self._tier,
+                ):
+                    if chunk.type == "token" and chunk.content:
                         streamed = True
-                        yield OutboundChunk(type="token", content=fragment)
+                    yield chunk
             except Exception as exc:  # noqa: BLE001 - surface on the wire, don't crash the socket
-                log.exception("LLM stream failed")
+                log.exception("Tool loop failed")
                 yield OutboundChunk(
                     type="error",
                     content=f"{type(exc).__name__}: {exc}",
-                    metadata={"stage": "llm"},
+                    metadata={"stage": "tool_loop"},
                 )
                 return
 

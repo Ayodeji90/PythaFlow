@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from enum import Enum
-from typing import Protocol, Any, Type
+from typing import Protocol, Any
 from uuid import UUID
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class ToolKind(str, Enum):
+class ToolKind(str, enum.StrEnum):
     read_only = "read_only"
     draft = "draft"
     fulfilment = "fulfilment"
@@ -24,7 +24,7 @@ class ToolContext(BaseModel):
 class Tool(Protocol):
     name: str
     description: str
-    args_model: Type[BaseModel]
+    args_model: type[BaseModel]
     kind: ToolKind
 
     @abstractmethod
