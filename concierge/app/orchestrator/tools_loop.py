@@ -63,6 +63,19 @@ async def run_tool_loop(
                 yield OutboundChunk(type="token", content=result.text)
             return
 
+        # --- Insert assistant message with tool_calls into history ---
+        # The OpenAI tool-calling protocol requires:
+        #   1. Assistant message with tool_calls=[{id, function(name, arguments)}]
+        #   2. Tool messages with matching tool_call_id + name
+        # Without step 1, the provider rejects the follow-up call.
+        history.append(
+            LLMMessage(
+                role="assistant",
+                content=result.text or "",
+                tool_calls=result.tool_calls,
+            )
+        )
+
         # --- Execute each tool call the LLM made ---
         for call in result.tool_calls:
             yield OutboundChunk(type="action", content=call.name)
@@ -85,7 +98,12 @@ async def run_tool_loop(
                     status=ActionStatus.executed,
                 )
                 history.append(
-                    LLMMessage(role="tool", content=json.dumps(output, default=str))
+                    LLMMessage(
+                        role="tool",
+                        content=json.dumps(output, default=str),
+                        name=call.name,
+                        tool_call_id=call.id,
+                    )
                 )
             except Exception as exc:  # noqa: BLE001 — surface tool errors gracefully
                 log.warning("Tool %s failed: %s", call.name, exc)
@@ -102,6 +120,8 @@ async def run_tool_loop(
                     LLMMessage(
                         role="tool",
                         content=json.dumps({"error": str(exc)}),
+                        name=call.name,
+                        tool_call_id=call.id,
                     )
                 )
 

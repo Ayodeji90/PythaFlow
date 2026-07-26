@@ -5,6 +5,7 @@ NVIDIA NIM, OpenAI, Groq, Mistral, Together, Fireworks, local Ollama, etc. This
 is the only file in the LLM seam that imports a vendor SDK (`openai`)."""
 from __future__ import annotations
 
+import json
 from collections.abc import AsyncIterator, Sequence
 
 from ..base import (
@@ -43,7 +44,32 @@ class OpenAICompatibleProvider(LLMProvider):
         payload: list[dict] = []
         if system:
             payload.append({"role": "system", "content": system})
-        payload.extend({"role": m.role, "content": m.content} for m in messages)
+        for m in messages:
+            msg: dict = {"role": m.role}
+
+            # Content: null for assistant messages that carry tool_calls without text
+            if m.tool_calls and not m.content:
+                msg["content"] = None
+            else:
+                msg["content"] = m.content
+
+            if m.tool_call_id:
+                msg["tool_call_id"] = m.tool_call_id
+            if m.name:
+                msg["name"] = m.name
+            if m.tool_calls:
+                msg["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.name,
+                            "arguments": json.dumps(tc.arguments),
+                        },
+                    }
+                    for tc in m.tool_calls
+                ]
+            payload.append(msg)
         return payload
 
     @staticmethod
@@ -89,8 +115,6 @@ class OpenAICompatibleProvider(LLMProvider):
         temperature: float = 0.4,
         max_tokens: int = 1024,
     ) -> LLMToolResult:
-        import json
-
         resp = await self._client.chat.completions.create(
             model=model,
             messages=self._payload(messages, system),

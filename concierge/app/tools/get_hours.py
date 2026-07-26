@@ -1,7 +1,7 @@
 """Read-only tool: returns the venue's operating hours for the current day."""
 from __future__ import annotations
 
-from datetime import datetime
+import datetime
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -33,7 +33,7 @@ class GetHoursTool:
         if not hours:
             return {"hours": None, "message": "No hours configured for this venue."}
 
-        today = datetime.now(datetime.UTC).strftime("%A").lower()
+        today = datetime.datetime.now(datetime.UTC).strftime("%A").lower()
         today_hours = hours.get(today) if isinstance(hours, dict) else hours
 
         return {"hours": today_hours, "day": today}

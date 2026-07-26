@@ -10,7 +10,10 @@ from typing import Any
 @dataclass
 class LLMMessage:
     role: str  # "system" | "user" | "assistant" | "tool"
-    content: str
+    content: str = ""
+    tool_call_id: str | None = None   # for role="tool" — matches ToolCall.id
+    name: str | None = None           # for role="tool" — the function name
+    tool_calls: list[ToolCall] | None = None  # for role="assistant"
 
 
 @dataclass
