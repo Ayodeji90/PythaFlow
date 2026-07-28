@@ -19,6 +19,7 @@ class ToolContext(BaseModel):
     tenant_id: UUID
     conversation_id: UUID
     guest_id: UUID | None = None
+    channel_type: str = "webchat"
 
 
 class Tool(Protocol):

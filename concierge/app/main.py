@@ -1,15 +1,16 @@
 """FastAPI application factory + lifespan. On boot it logs whether the datastores
 are reachable; it does not crash if they aren't, so `/health` can report the truth."""
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from .config import get_settings
-from .db import engine, ping_db
+from .db import SessionLocal, engine, ping_db
 from .logging import configure_logging
+from .routers import approvals, health, knowledge, webchat
 from .routers import email as email_router
-from .routers import health, knowledge, webchat
 from .services.redis import get_redis_client, ping_redis
 
 settings = get_settings()
@@ -22,9 +23,24 @@ async def lifespan(app: FastAPI):
     log.info("starting PythaFlow Concierge v%s (env=%s)", settings.APP_VERSION, settings.ENV)
     log.info("db reachable:    %s", await ping_db())
     log.info("redis reachable: %s", await ping_redis())
+    # Day 12: start the reminder scheduler as a background task
+    reminder_task = asyncio.create_task(_start_reminder_scheduler())
     yield
+    reminder_task.cancel()
+    try:
+        await reminder_task
+    except asyncio.CancelledError:
+        pass
     await engine.dispose()
     await get_redis_client().aclose()
+
+
+async def _start_reminder_scheduler():
+    """Import and run the reminder scheduler (lazy import to avoid circular deps)."""
+    from .reminders import run_scheduler
+
+    redis = get_redis_client()
+    await run_scheduler(SessionLocal, redis=redis)
 
 
 def create_app() -> FastAPI:
@@ -42,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(webchat.router)
     app.include_router(knowledge.router)
     app.include_router(email_router.router)
+    app.include_router(approvals.router)
     # The manual test page is a development affordance only — never exposed
     # outside a dev/test environment.
     if settings.ENV.lower() in {"dev", "development", "local", "test"}:

@@ -196,3 +196,69 @@ document.getElementById('f').onsubmit = (e) => {
 async def dev_chat() -> str:
     """Dev-only manual test page. Not mounted outside development."""
     return _DEV_PAGE
+
+
+_APPROVALS_PAGE = """<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><title>PythaFlow — approvals</title>
+<style>
+ body{font:15px/1.5 system-ui;margin:0;background:#F3F4F1;color:#17191C;padding:20px}
+ h2{margin:0 0 16px}
+ .card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin-bottom:12px}
+ .card h4{margin:0 0 6px}
+ .meta{color:#6C6F74;font-size:13px;margin-bottom:8px}
+ .note-field{width:100%;padding:6px 10px;border:1px solid #ccc;border-radius:8px;margin-bottom:6px;box-sizing:border-box}
+ .btn{padding:8px 16px;border:0;border-radius:8px;cursor:pointer;font-weight:600}
+ .btn-approve{background:#1E6E68;color:#fff}
+ .btn-reject{background:#B33A3A;color:#fff}
+ .btn-approve:hover,.btn-reject:hover{opacity:0.9}
+ .empty{text-align:center;padding:40px;color:#6C6F74}
+ #refresh{float:right;padding:6px 14px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer}
+ .flash{padding:10px;border-radius:8px;margin-bottom:12px;display:none}
+ .flash.success{background:#d4edda;color:#155724;display:block}
+ .flash.error{background:#f8d7da;color:#721c24;display:block}
+</style>
+<h2>Approvals <button id="refresh">Refresh</button></h2>
+<div id="flash" class="flash"></div>
+<div id="queue"></div>
+<script>
+const TOKEN = 'dev-token';
+async function load(){
+  const r=await fetch('/api/approvals',{headers:{'X-Staff-Token':TOKEN}});
+  const data=await r.json();
+  const q=document.getElementById('queue'); q.innerHTML='';
+  const flash=document.getElementById('flash'); flash.className='flash';
+  if(data.total===0){q.innerHTML='<div class="empty">No pending requests.</div>';return}
+  for(const req of data.requests){
+    const card=document.createElement('div'); card.className='card';
+    const conf=req.confidence ? (req.confidence*100).toFixed(0)+'%' : 'N/A';
+    card.innerHTML='<h4>'+(req.summary||'Untitled')+'</h4>'+
+      '<div class="meta">'+req.type+' &middot; confidence: '+conf+
+      ' &middot; priority: '+req.priority+' &middot; '+new Date(req.created_at).toLocaleString()+'</div>'+
+      '<input class="note-field" placeholder="Optional note..." id="note-'+req.request_id+'">'+
+      '<button class="btn btn-approve" data-id="'+req.request_id+'" data-d="approved">Approve</button> '+
+      '<button class="btn btn-reject" data-id="'+req.request_id+'" data-d="rejected">Reject</button>';
+    q.appendChild(card);
+  }
+  document.querySelectorAll('.btn').forEach(b=>b.onclick=async ()=>{
+    const note=document.getElementById('note-'+b.dataset.id).value;
+    const r=await fetch('/api/approvals/decide',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Staff-Token':TOKEN},
+      body:JSON.stringify({request_id:b.dataset.id,decision:b.dataset.d,note:note||null}),
+    });
+    const flash=document.getElementById('flash');
+    if(r.ok){flash.className='flash success';flash.textContent='Decision recorded.';load()}
+    else{const t=await r.text();flash.className='flash error';flash.textContent='Failed: '+t}
+  });
+}
+document.getElementById('refresh').onclick=load;
+load();
+</script>
+"""
+
+
+@dev_router.get("/dev/approvals", response_class=HTMLResponse, include_in_schema=False)
+async def dev_approvals() -> str:
+    """Dev-only approval management page. Not mounted outside development."""
+    return _APPROVALS_PAGE

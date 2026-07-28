@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.reservation import Reservation
 from .availability import compute_availability
-from .base import AvailabilityResult, BookingStore, ReservationDraft
+from .base import AvailabilityResult, BookingStore, ModificationDraft, ReservationDraft
 
 log = logging.getLogger("concierge.booking.local")
 
@@ -68,4 +68,73 @@ class LocalBookingStore(BookingStore):
             "date": str(draft.date),
             "time": draft.time.strftime("%H:%M"),
             "party_size": draft.party_size,
+        }
+
+    async def modify(
+        self,
+        tenant_id: UUID,
+        reservation_id: UUID,
+        changes: ModificationDraft,
+        *,
+        db: AsyncSession,
+    ) -> dict[str, Any]:
+        """Update an existing reservation's mutable fields."""
+        from sqlalchemy import select
+
+        result = await db.execute(
+            select(Reservation)
+            .where(Reservation.id == reservation_id, Reservation.tenant_id == tenant_id)
+        )
+        reservation = result.scalar_one()
+        if changes.date is not None:
+            from datetime import date as date_type
+            reservation.date = date_type.fromisoformat(changes.date)
+        if changes.time is not None:
+            from datetime import time as time_type
+            reservation.time = time_type.fromisoformat(changes.time)
+        if changes.party_size is not None:
+            reservation.party_size = changes.party_size
+        if changes.area is not None:
+            reservation.area = changes.area
+        if changes.notes is not None:
+            reservation.notes = changes.notes
+        await db.flush()
+
+        return {
+            "reservation_id": str(reservation.id),
+            "status": reservation.status.value if hasattr(reservation.status, 'value') else reservation.status,
+            "date": str(reservation.date) if reservation.date else None,
+            "time": reservation.time.strftime("%H:%M") if reservation.time else None,
+            "party_size": reservation.party_size,
+        }
+
+    async def cancel(
+        self,
+        tenant_id: UUID,
+        reservation_id: UUID,
+        *,
+        reason: str | None = None,
+        db: AsyncSession,
+    ) -> dict[str, Any]:
+        """Cancel an existing reservation."""
+        from sqlalchemy import select
+
+        from ..models.enums import ReservationStatus
+
+        result = await db.execute(
+            select(Reservation)
+            .where(Reservation.id == reservation_id, Reservation.tenant_id == tenant_id)
+        )
+        reservation = result.scalar_one()
+        old_status = reservation.status
+        reservation.status = ReservationStatus.cancelled
+        if reason:
+            reservation.notes = (reservation.notes or "") + f"\n[Cancelled: {reason}]"
+        await db.flush()
+
+        return {
+            "reservation_id": str(reservation.id),
+            "old_status": old_status.value if hasattr(old_status, 'value') else old_status,
+            "new_status": ReservationStatus.cancelled.value,
+            "reason": reason,
         }

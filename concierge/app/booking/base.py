@@ -32,6 +32,17 @@ class ReservationDraft(BaseModel):
     notes: str | None = None
 
 
+class ModificationDraft(BaseModel):
+    """Fields that may be updated on an existing reservation."""
+
+    reservation_id: str
+    party_size: int | None = None
+    date: str | None = None
+    time: str | None = None
+    area: str | None = None
+    notes: str | None = None
+
+
 class BookingStore(ABC):
     """Swappable booking backend.
 
@@ -61,4 +72,28 @@ class BookingStore(ABC):
         *,
         db: AsyncSession,
     ) -> dict[str, Any]:
+        ...
+
+    @abstractmethod
+    async def modify(
+        self,
+        tenant_id: UUID,
+        reservation_id: UUID,
+        changes: ModificationDraft,
+        *,
+        db: AsyncSession,
+    ) -> dict[str, Any]:
+        """Update an existing reservation's fields."""
+        ...
+
+    @abstractmethod
+    async def cancel(
+        self,
+        tenant_id: UUID,
+        reservation_id: UUID,
+        *,
+        reason: str | None = None,
+        db: AsyncSession,
+    ) -> dict[str, Any]:
+        """Cancel an existing reservation."""
         ...

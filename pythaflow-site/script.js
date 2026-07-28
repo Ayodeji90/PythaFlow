@@ -24,14 +24,12 @@
   var menu = document.getElementById('mobileMenu');
   if (toggle && menu) {
     toggle.addEventListener('click', function () {
-      var open = menu.style.display === 'block';
-      menu.style.display = open ? 'none' : 'block';
-      nav.classList.toggle('open', !open);
-      toggle.setAttribute('aria-expanded', String(!open));
+      var open = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
     });
     $$('a', menu).forEach(function (a) {
       a.addEventListener('click', function () {
-        menu.style.display = 'none'; nav.classList.remove('open');
+        nav.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
       });
     });
@@ -93,9 +91,7 @@
   // ---- Live clock (console header) -------------------------------------
   var clock = document.getElementById('clock');
   if (clock) {
-    var pad = function (n) { return String(n).padStart(2, '0'); };
-    var tick = function () { var d = new Date(); clock.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
-    tick(); if (!reduce) setInterval(tick, 1000);
+    clock.textContent = '03:14'; // fixed overnight time — the concierge works while you're closed
   }
 
   // ---- Hero chat: the concierge handling a real guest, on a loop --------

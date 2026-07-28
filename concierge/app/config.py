@@ -68,6 +68,12 @@ class Settings(BaseSettings):
     SHEET_ID: str = ""
     SHEET_CREDENTIALS_JSON: str = ""  # path to service-account JSON key
 
+    # --- request handling (Day 10) ---
+    REQUEST_REVIEW_CONFIDENCE: float = 0.75  # below this => forced human review
+    REQUEST_EXTRACTOR_ENABLED: bool = True   # post-turn help classifier
+    REQUEST_EXTRACTOR_TIER: str = "fast"
+    STAFF_TOKEN_HEADER: str = "X-Staff-Token"  # stopgap auth until Week 3/Day 24
+
     # --- embeddings + retrieval (RAG) ---
     EMBED_PROVIDER: str = "nvidia"
     EMBED_MODEL: str = "nvidia/nv-embedqa-e5-v5"

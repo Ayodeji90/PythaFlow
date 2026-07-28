@@ -25,8 +25,53 @@ _UNGROUNDED = (
     "check with the team and offer to help another way. Keep it to a sentence or two."
 )
 
+# Day 12: multi-turn robustness — corrections, confirmations, empathy.
+_MULTI_TURN = (
+    "When a guest corrects themselves mid-conversation (e.g. 'actually 4 people' "
+    "after saying 3, or 'make it 7pm instead'), treat it as an update to the "
+    "current pending request if one exists. Do not ask them to start over. "
+    "Acknowledge the change naturally and confirm what the current booking details "
+    "are after each correction.\n\n"
+    "If a guest's request is ambiguous (e.g. 'book a table for Friday' without "
+    "specifying time or party size), ask targeted follow-up questions one at a time "
+    "rather than listing everything at once.\n\n"
+    "Before calling any draft_* tool, explicitly confirm the key details "
+    "with the guest and ask for their confirmation. Summarise what you're about to "
+    "submit for staff review and ask 'Shall I proceed?' before calling the tool.\n\n"
+    "Track booking details (date, time, party_size, area, notes) across the "
+    "conversation. If a guest says 'actually 3 people' after you detailed a 4-person "
+    "draft, treat it as a correction to the in-progress booking — do not create a "
+    "new draft until you've confirmed the full updated set of details."
+)
 
-def build_system_prompt(tenant: Tenant, *, context: str | None = None) -> str:
+
+def build_slot_context(state: dict | None) -> str | None:
+    """Build a slot-context snippet from Conversation.state for the system prompt.
+
+    Returns a short string like 'In-progress booking: Table for 4 on 2026-07-28 at 19:00 (terrace)'
+    or None if no booking slot data is present.
+    """
+    if not state:
+        return None
+    date = state.get("date")
+    time = state.get("time")
+    party_size = state.get("party_size")
+    area = state.get("area")
+    if not (date and time and party_size):
+        return None
+    parts = [f"In-progress booking: Table for {party_size} on {date} at {time}"]
+    if area:
+        parts[-1] += f" ({area})"
+    return "\n".join(parts)
+
+
+def build_system_prompt(
+    tenant: Tenant,
+    *,
+    context: str | None = None,
+    guest_context: str | None = None,
+    state: dict | None = None,
+) -> str:
     parts = [_BASE.format(name=tenant.name)]
 
     if tenant.brand_voice:
@@ -37,6 +82,15 @@ def build_system_prompt(tenant: Tenant, *, context: str | None = None) -> str:
         langs = ", ".join(tenant.languages)
         parts.append(f"Reply in the guest's language when you can ({langs} supported).")
 
+    if guest_context:
+        parts.append(guest_context)
+
+    # Day 12: inject current booking slot state, if any.
+    slot_context = build_slot_context(state)
+    if slot_context:
+        parts.append(slot_context)
+
     parts.append(_GROUNDED.format(context=context) if context else _UNGROUNDED)
+    parts.append(_MULTI_TURN)
     parts.append("Keep replies to a few sentences.")
     return "\n\n".join(parts)

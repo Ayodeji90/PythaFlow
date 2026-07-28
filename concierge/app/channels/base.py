@@ -91,6 +91,24 @@ async def handle_inbound(
     tenant = await _resolve_tenant(db, msg.tenant_slug)
     conv = await _resolve_conversation(db, tenant, msg)
 
+    # Day 11: resolve/create a Guest record for this conversation.
+    guest_name = msg.sender.display_name if msg.sender else None
+    from ..guest_memory import (
+        build_guest_context,
+        extract_preferences,
+        resolve_guest,
+        update_guest_preferences,
+    )
+
+    guest = await resolve_guest(db, tenant.id, conv.id, display_name=guest_name)
+
+    # Extract and store any preferences from this turn.
+    prefs = extract_preferences(msg.content)
+    await update_guest_preferences(db, guest.id, prefs)
+
+    # Build guest context for the orchestrator.
+    guest_context = await build_guest_context(db, tenant.id, conv.id)
+
     # Persist the guest turn before thinking, so it survives an orchestrator failure.
     db.add(
         Message(
@@ -104,7 +122,12 @@ async def handle_inbound(
     )
     await db.commit()
 
-    ctx = TurnContext(tenant=tenant, conversation=conv)
+    ctx = TurnContext(
+        tenant=tenant,
+        conversation=conv,
+        guest_context=guest_context,
+        state=conv.state,
+    )
     parts: list[str] = []
     try:
         async for chunk in orchestrator.handle(msg, ctx=ctx, db=db, redis=redis):

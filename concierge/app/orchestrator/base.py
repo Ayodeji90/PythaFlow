@@ -26,6 +26,8 @@ class TurnContext:
 
     tenant: Tenant
     conversation: Conversation
+    guest_context: str | None = None  # Day 11: known guest preferences snippet
+    state: dict | None = None  # Day 12: Conversation.state JSONB (booking slots)
 
     def to_tool_context(self) -> Any:
         """Convert to the ToolContext expected by tools."""
@@ -35,6 +37,9 @@ class TurnContext:
             tenant_id=self.tenant.id,
             conversation_id=self.conversation.id,
             guest_id=None,
+            channel_type=self.conversation.channel_type.value
+            if self.conversation.channel_type
+            else "webchat",
         )
 
 
