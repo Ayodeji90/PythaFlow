@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff>=0.6", "pytest>=8", "pytest-asyncio>=0.23", "anyio>=4"]
+dev = ["ruff>=0.6", "pytest>=8", "pytest-asyncio>=0.23", "anyio>=4", "PyYAML>=6", "fakeredis[lua]>=2", "aiosmtplib>=1.1"]
 
 # Treat this as an application, not a distributable package — uv installs the
 # dependencies into .venv but never tries to build `app/` itself.

@@ -1,0 +1,7 @@
+name: unknown_fact_defer
+tenant_fixture: demo_bistro
+turns:
+  - guest: "do you have a private room for 30 people?"
+    expect:
+      reply_contains: "check"
+      no_request: true

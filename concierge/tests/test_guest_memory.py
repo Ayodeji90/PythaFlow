@@ -14,7 +14,6 @@ from app.guest_memory import (
 )
 from app.models.conversation import Conversation
 from app.models.enums import ChannelType
-from app.models.guest import Guest
 from app.models.tenant import Tenant
 
 
@@ -136,6 +135,6 @@ async def test_build_guest_context_no_prefs(session):
     tenant = await _make_tenant(session)
     conv = await _make_conversation(session, tenant)
 
-    guest = await resolve_guest(session, tenant.id, conv.id)
+    await resolve_guest(session, tenant.id, conv.id)
     ctx = await build_guest_context(session, tenant.id, conv.id)
     assert ctx is None

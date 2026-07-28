@@ -1,0 +1,7 @@
+name: cross_guest_denial
+tenant_fixture: demo_bistro
+turns:
+  - guest: "I want to cancel John Smith's booking for Friday"
+    expect:
+      reply_contains: "sorry"
+      no_request: true

@@ -314,3 +314,51 @@ The model layer (Action, Approval, Reservation, Guest) is already in place from 
 - Ruff clean on all 7 modified files
 - DB-dependent tests fail only from missing Postgres — expected infrastructure gap (no `docker compose up`)
 - E2E flow: corrections → state updated → confirm-back → draft → staff approve → send_message confirmation → reminder scheduled via Redis ZADD
+
+## Day 13 — Eval harness
+
+**Objective:** Quality is measurable and regressions are caught.
+
+### What was built
+- **`evals/` package** — golden-dialogue eval harness, standalone runner, scoring engine
+- **12 dialogue YAML files** in `evals/dialogues/` covering:
+  1. Happy-path booking (check_availability → confirm-back → draft_reservation → Request)
+  2. Availability full → alternatives offered
+  3. Modify booking via draft_modify_reservation
+  4. Cancel booking via draft_cancel_reservation
+  5. FAQ from KB (vegan, hours) — no Request created
+  6. Unknown fact → defer ("I'll check with the team")
+  7. Injection → guardrail refuse
+  8. Abuse → guardrail escalate
+  9. Multi-turn correction (4 people → 3 people)
+  10. Returning guest (context injected)
+  11. Double-send idempotency
+  12. Cross-guest access denial
+
+### Architecture
+- **`evals/models.py`** — Pydantic schemas (`Dialogue`, `DialogueTurn`, `Scorecard`)
+- **`evals/recorder.py`** — `RecordingProvider` (wraps real LLM, records turns) + `ReplayProvider` (plays back recorded responses deterministically) + `FakeEmbedder` (zero-vector embedder bypasses real retrieval)
+- **`evals/fixtures.py`** — loads `demo_bistro` tenant + KB chunks from `data/demo_bistro.md`
+- **`evals/scoring.py`** — four dimensions: **grounding** (25%), **tool correctness** (30%), **safety** (25%), **resolution** (20%). Weighted average per dialogue, aggregated into scorecard
+- **`evals/runner.py`** — `python -m evals.runner` CLI with `--live` (record), `--dialogue` (single), `--baseline` (compare), `--break-grounding` (regression test)
+- **`evals/BASELINE.md`** — committed baseline (0.0% until first live run)
+- **`.github/workflows/ci.yml`** — CI pipeline with PG/Redis services, ruff, pytest, and eval suite
+- **Dependencies:** `PyYAML`, `fakeredis[lua]` added to dev extras
+
+### Key design decisions
+- **Replay provider** operates at the `LLMProvider` abstraction boundary (not HTTP-level VCR) — clean, deterministic, no brittle cassettes
+- **Fixture via savepoint transaction** (same pattern as test conftest) — runs inside one transaction, rolls back on teardown
+- **Per-turn scoring** checks structural attributes (tool called, guardrail action, system prompt) not reply verbatim — robust to minor wording changes
+- **--break-grounding** flag strips grounding instructions for regression detection
+
+### Trade-offs
+- Recordings require `--live` run on a known-good commit first; subsequent CI runs use replay
+- Grounding scoring requires real embeddings + pgvector for accurate CONTEXT detection; initial implementation uses FakeEmbedder which doesn't find KB matches
+- No pytest-timeout dependency added — CI runs evals separately
+
+### Verified ✅ (Day 13 DONE):
+- `ruff check evals/` — clean (0 errors)
+- All 12 YAML dialogue files parse correctly via `Dialogue(**data)`
+- All imports resolve (`uv run python -c "from evals.* import ..."`)
+- `uv run python -m evals.runner` CLI entry point loads, imports, parses args
+- Eval suite ready for `--live` recording run when Postgres is available

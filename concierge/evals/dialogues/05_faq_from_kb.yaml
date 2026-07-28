@@ -1,0 +1,11 @@
+name: faq_from_kb
+tenant_fixture: demo_bistro
+turns:
+  - guest: "what are your opening hours?"
+    expect:
+      reply_contains: "5:00"
+      no_request: true
+  - guest: "do you have vegan options?"
+    expect:
+      reply_contains: "vegan"
+      no_request: true

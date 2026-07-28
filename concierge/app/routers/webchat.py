@@ -207,13 +207,15 @@ _APPROVALS_PAGE = """<!doctype html>
  .card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin-bottom:12px}
  .card h4{margin:0 0 6px}
  .meta{color:#6C6F74;font-size:13px;margin-bottom:8px}
- .note-field{width:100%;padding:6px 10px;border:1px solid #ccc;border-radius:8px;margin-bottom:6px;box-sizing:border-box}
+ .note-field{width:100%;padding:6px 10px;border:1px solid #ccc;
+   border-radius:8px;margin-bottom:6px;box-sizing:border-box}
  .btn{padding:8px 16px;border:0;border-radius:8px;cursor:pointer;font-weight:600}
  .btn-approve{background:#1E6E68;color:#fff}
  .btn-reject{background:#B33A3A;color:#fff}
  .btn-approve:hover,.btn-reject:hover{opacity:0.9}
  .empty{text-align:center;padding:40px;color:#6C6F74}
- #refresh{float:right;padding:6px 14px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer}
+ #refresh{float:right;padding:6px 14px;border:1px solid #ccc;
+   border-radius:8px;background:#fff;cursor:pointer}
  .flash{padding:10px;border-radius:8px;margin-bottom:12px;display:none}
  .flash.success{background:#d4edda;color:#155724;display:block}
  .flash.error{background:#f8d7da;color:#721c24;display:block}
@@ -234,10 +236,13 @@ async function load(){
     const conf=req.confidence ? (req.confidence*100).toFixed(0)+'%' : 'N/A';
     card.innerHTML='<h4>'+(req.summary||'Untitled')+'</h4>'+
       '<div class="meta">'+req.type+' &middot; confidence: '+conf+
-      ' &middot; priority: '+req.priority+' &middot; '+new Date(req.created_at).toLocaleString()+'</div>'+
+      ' &middot; priority: '+req.priority+' &middot; '+
+      new Date(req.created_at).toLocaleString()+'</div>'+
       '<input class="note-field" placeholder="Optional note..." id="note-'+req.request_id+'">'+
-      '<button class="btn btn-approve" data-id="'+req.request_id+'" data-d="approved">Approve</button> '+
-      '<button class="btn btn-reject" data-id="'+req.request_id+'" data-d="rejected">Reject</button>';
+      '<button class="btn btn-approve" data-id="'+req.request_id+
+      '" data-d="approved">Approve</button> '+
+      '<button class="btn btn-reject" data-id="'+req.request_id+
+      '" data-d="rejected">Reject</button>';
     q.appendChild(card);
   }
   document.querySelectorAll('.btn').forEach(b=>b.onclick=async ()=>{

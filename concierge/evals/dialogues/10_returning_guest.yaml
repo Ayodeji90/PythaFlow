@@ -1,0 +1,12 @@
+name: returning_guest
+tenant_fixture: demo_bistro
+turns:
+  - guest: "hi, I'm back! table for 2 Friday 8pm again please"
+    expect:
+      reply_contains: "welcome"
+      tool_called: check_availability
+  - guest: "yes please"
+    expect:
+      tool_called: draft_reservation
+      request_type: reservation
+      request_status: needs_review

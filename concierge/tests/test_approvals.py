@@ -17,7 +17,6 @@ from app.models.enums import (
 from app.models.request import Request
 from app.models.tenant import Tenant
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -246,6 +245,7 @@ async def test_approval_list_endpoint(session):
 async def test_approval_list_requires_auth():
     """GET /api/approvals without token returns 401."""
     from httpx import ASGITransport, AsyncClient
+
     from app.main import app
 
     transport = ASGITransport(app=app)
@@ -361,13 +361,12 @@ async def test_modify_cancel_hidden_from_llm():
 @pytest.mark.asyncio
 async def test_draft_modify_creates_request(session):
     """draft_modify_reservation creates a modification Request."""
-    from app.tools.base import ToolContext
-    from app.tools.registry import registry
-
     from app.models import Tenant
     from app.models.conversation import Conversation
     from app.models.enums import RequestType
     from app.models.request import Request
+    from app.tools.base import ToolContext
+    from app.tools.registry import registry
 
     tenant = Tenant(slug=f"t-{uuid.uuid4().hex[:8]}", name="Test")
     session.add(tenant)
@@ -401,11 +400,10 @@ async def test_draft_modify_creates_request(session):
 @pytest.mark.asyncio
 async def test_draft_modify_idempotent(session):
     """Re-drafting same reservation returns existing request."""
-    from app.tools.base import ToolContext
-    from app.tools.registry import registry
-
     from app.models import Tenant
     from app.models.conversation import Conversation
+    from app.tools.base import ToolContext
+    from app.tools.registry import registry
 
     tenant = Tenant(slug=f"t-{uuid.uuid4().hex[:8]}", name="Test")
     session.add(tenant)
@@ -436,13 +434,12 @@ async def test_draft_modify_idempotent(session):
 @pytest.mark.asyncio
 async def test_draft_cancel_creates_request(session):
     """draft_cancel_reservation creates a cancellation Request."""
-    from app.tools.base import ToolContext
-    from app.tools.registry import registry
-
     from app.models import Tenant
     from app.models.conversation import Conversation
     from app.models.enums import RequestType
     from app.models.request import Request
+    from app.tools.base import ToolContext
+    from app.tools.registry import registry
 
     tenant = Tenant(slug=f"t-{uuid.uuid4().hex[:8]}", name="Test")
     session.add(tenant)

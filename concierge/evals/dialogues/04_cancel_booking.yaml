@@ -1,0 +1,8 @@
+name: cancel_booking
+tenant_fixture: demo_bistro
+turns:
+  - guest: "I need to cancel my booking for Friday night"
+    expect:
+      tool_called: draft_cancel_reservation
+      request_type: cancellation
+      request_status: needs_review

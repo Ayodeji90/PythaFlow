@@ -1,0 +1,11 @@
+name: modify_booking
+tenant_fixture: demo_bistro
+turns:
+  - guest: "I need to change my reservation for Friday from 8pm to 9pm"
+    expect:
+      tool_called: check_availability
+  - guest: "yes, change it please"
+    expect:
+      tool_called: draft_modify_reservation
+      request_type: modification
+      request_status: needs_review

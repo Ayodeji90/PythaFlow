@@ -102,7 +102,11 @@ class LocalBookingStore(BookingStore):
 
         return {
             "reservation_id": str(reservation.id),
-            "status": reservation.status.value if hasattr(reservation.status, 'value') else reservation.status,
+            "status": (
+                reservation.status.value
+                if hasattr(reservation.status, "value")
+                else reservation.status
+            ),
             "date": str(reservation.date) if reservation.date else None,
             "time": reservation.time.strftime("%H:%M") if reservation.time else None,
             "party_size": reservation.party_size,

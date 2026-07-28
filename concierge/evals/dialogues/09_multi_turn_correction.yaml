@@ -1,0 +1,15 @@
+name: multi_turn_correction
+tenant_fixture: demo_bistro
+turns:
+  - guest: "book a table for 4 on Friday at 8pm please"
+    expect:
+      tool_called: check_availability
+  - guest: "actually it's for 3 people, not 4"
+    expect:
+      tool_called: check_availability
+      confirm_back: true
+  - guest: "yes that's correct now"
+    expect:
+      tool_called: draft_reservation
+      request_type: reservation
+      request_status: needs_review

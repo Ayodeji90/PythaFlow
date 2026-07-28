@@ -10,8 +10,6 @@ across conversations.
 """
 from __future__ import annotations
 
-import hashlib
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -81,9 +79,21 @@ async def resolve_guest(
 
 
 _PREFERENCE_EXTRACTORS: list[tuple[str, str, list[str]]] = [
-    ("allergies", "Allergies or dietary restrictions", ["allerg", "dietar", "intoleran", "vegan", "vegetarian"]),
-    ("seating", "Seating or area preferences", ["indoor", "outdoor", "terrace", "patio", "bar", "window", "quiet", "table"]),
-    ("occasion", "Special occasions being celebrated", ["birthday", "anniversary", "celebrat", "occasion", "propos"]),
+    (
+        "allergies",
+        "Allergies or dietary restrictions",
+        ["allerg", "dietar", "intoleran", "vegan", "vegetarian"],
+    ),
+    (
+        "seating",
+        "Seating or area preferences",
+        ["indoor", "outdoor", "terrace", "patio", "bar", "window", "quiet", "table"],
+    ),
+    (
+        "occasion",
+        "Special occasions being celebrated",
+        ["birthday", "anniversary", "celebrat", "occasion", "propos"],
+    ),
     ("accessibility", "Accessibility needs", ["wheelchair", "accessib", "ramp", "stroller"]),
 ]
 
@@ -95,7 +105,7 @@ def extract_preferences(text: str) -> dict[str, str]:
     """
     text_lower = text.lower()
     prefs: dict[str, str] = {}
-    for key, label, keywords in _PREFERENCE_EXTRACTORS:
+    for key, _label, keywords in _PREFERENCE_EXTRACTORS:
         for kw in keywords:
             if kw in text_lower:
                 # Find the sentence containing the keyword

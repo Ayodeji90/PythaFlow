@@ -92,7 +92,7 @@ async def handle_inbound(
     conv = await _resolve_conversation(db, tenant, msg)
 
     # Day 11: resolve/create a Guest record for this conversation.
-    guest_name = msg.sender.display_name if msg.sender else None
+    guest_name = msg.sender.name if msg.sender else None
     from ..guest_memory import (
         build_guest_context,
         extract_preferences,

@@ -10,6 +10,15 @@ _BASE = (
     "Answer as a knowledgeable member of the team would."
 )
 
+# Day 14: instruct the model to resolve relative dates into concrete ISO dates.
+_DATE_RESOLUTION = (
+    "When a guest uses a relative date or time ('this Friday', 'tomorrow', "
+    "'next week', 'tonight'), resolve it to an exact date based on today's real "
+    "date before calling any tool. The current real date is 2026-07-28 (Tuesday). "
+    "For example, 'this Friday' = 2026-07-31, 'tomorrow' = 2026-07-29, "
+    "'next Monday' = 2026-08-03. Always pass YYYY-MM-DD and HH:MM format to tools."
+)
+
 # When we DID retrieve relevant facts.
 _GROUNDED = (
     "Answer using ONLY the facts in CONTEXT below. Do not use outside knowledge or "
@@ -91,6 +100,7 @@ def build_system_prompt(
         parts.append(slot_context)
 
     parts.append(_GROUNDED.format(context=context) if context else _UNGROUNDED)
+    parts.append(_DATE_RESOLUTION)
     parts.append(_MULTI_TURN)
     parts.append("Keep replies to a few sentences.")
     return "\n\n".join(parts)

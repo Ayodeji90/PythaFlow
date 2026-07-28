@@ -1,0 +1,13 @@
+name: happy_path_booking
+tenant_fixture: demo_bistro
+turns:
+  - guest: "hi, can I book a table for 2 on Friday at 8pm?"
+    expect:
+      tool_called: check_availability
+      grounded_content: true
+  - guest: "yes please, go ahead"
+    expect:
+      tool_called: draft_reservation
+      request_type: reservation
+      request_status: needs_review
+      confirm_back: true

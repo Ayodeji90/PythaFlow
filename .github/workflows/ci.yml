@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: concierge
+          POSTGRES_PASSWORD: concierge
+          POSTGRES_DB: concierge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        working-directory: concierge
+        run: uv sync --all-extras
+
+      - name: Run database migrations
+        working-directory: concierge
+        run: uv run alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+asyncpg://concierge:concierge@localhost:5432/concierge
+
+      - name: Lint with ruff
+        working-directory: concierge
+        run: uv run ruff check .
+
+      - name: Run unit tests
+        working-directory: concierge
+        run: uv run pytest -v --timeout 30
+        env:
+          DATABASE_URL: postgresql+asyncpg://concierge:concierge@localhost:5432/concierge
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: Run eval suite (replay mode)
+        working-directory: concierge
+        run: uv run python -m evals.runner --baseline
+        env:
+          DATABASE_URL: postgresql+asyncpg://concierge:concierge@localhost:5432/concierge

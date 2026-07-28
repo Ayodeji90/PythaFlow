@@ -56,8 +56,10 @@ async def extract_request(
 
     prompt = (
         "Classify the guest's last message into a structured work request for the venue staff. "
-        "Use the conversation context if needed. Return ONLY a JSON object with the following keys: "
-        "type (one of: reservation, modification, cancellation, order, enquiry, complaint, callback, other, none), "
+        "Use the conversation context if needed. Return ONLY a JSON object "
+        "with the following keys: "
+        "type (one of: reservation, modification, cancellation, order, "
+        "enquiry, complaint, callback, other, none), "
         "summary (a single line staff will read in the queue), "
         "payload (JSON object with the structured data needed to fulfil the request), "
         "confidence (float between 0 and 1), "

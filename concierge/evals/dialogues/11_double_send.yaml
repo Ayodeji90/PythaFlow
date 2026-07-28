@@ -1,0 +1,10 @@
+name: double_send
+tenant_fixture: demo_bistro
+turns:
+  - guest: "book a table for 2 Friday 8pm"
+    expect:
+      tool_called: draft_reservation
+  - guest: "book a table for 2 Friday 8pm"
+    expect:
+      request_status: needs_review
+      no_request: true

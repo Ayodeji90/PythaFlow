@@ -1,0 +1,10 @@
+name: availability_full
+tenant_fixture: demo_bistro
+turns:
+  - guest: "table for 8 on Saturday at 8pm?"
+    expect:
+      tool_called: check_availability
+  - guest: "what about 8:30 or 9pm?"
+    expect:
+      tool_called: check_availability
+      reply_contains: "available"
