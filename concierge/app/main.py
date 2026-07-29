@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from .config import get_settings
 from .db import SessionLocal, engine, ping_db
 from .logging import configure_logging
-from .routers import approvals, health, knowledge, webchat
+from .routers import approvals, health, knowledge, webchat, whatsapp
 from .routers import email as email_router
 from .services.redis import get_redis_client, ping_redis
 
@@ -59,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(knowledge.router)
     app.include_router(email_router.router)
     app.include_router(approvals.router)
+    app.include_router(whatsapp.router)  # Day 15: inbound WhatsApp webhook (Twilio)
     # The manual test page is a development affordance only — never exposed
     # outside a dev/test environment.
     if settings.ENV.lower() in {"dev", "development", "local", "test"}:

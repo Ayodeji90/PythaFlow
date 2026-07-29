@@ -26,6 +26,8 @@ class OpenAICompatibleProvider(LLMProvider):
         base_url: str,
         name: str = "openai_compatible",
         timeout: float | None = None,
+        api_version: str | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> None:
         # Imported lazily so the module (and the app) load even if the SDK is
         # absent until dependencies are installed.
@@ -35,9 +37,20 @@ class OpenAICompatibleProvider(LLMProvider):
         # api_key is a placeholder when unset — we never call the API without a
         # real key (the smoke test and callers guard on that). `timeout` bounds
         # request duration so a slow/unreachable provider can't stall our work.
-        self._client = AsyncOpenAI(
-            api_key=api_key or "not-set", base_url=base_url, timeout=timeout
-        )
+        #
+        # api_version / extra_headers exist for Azure AI Foundry: its Inference
+        # endpoints (…/models) need `?api-version=` and authenticate via an
+        # `api-key` header. Plain OpenAI-compatible endpoints leave both blank.
+        client_kwargs: dict = {
+            "api_key": api_key or "not-set",
+            "base_url": base_url,
+            "timeout": timeout,
+        }
+        if api_version:
+            client_kwargs["default_query"] = {"api-version": api_version}
+        if extra_headers:
+            client_kwargs["default_headers"] = extra_headers
+        self._client = AsyncOpenAI(**client_kwargs)
 
     @staticmethod
     def _payload(messages: Sequence[LLMMessage], system: str | None) -> list[dict]:
