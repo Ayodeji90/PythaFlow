@@ -362,3 +362,101 @@ The model layer (Action, Approval, Reservation, Guest) is already in place from 
 - All imports resolve (`uv run python -c "from evals.* import ..."`)
 - `uv run python -m evals.runner` CLI entry point loads, imports, parses args
 - Eval suite ready for `--live` recording run when Postgres is available
+
+## Day 14 — Review · demo · buffer
+
+**Week 2 retrospective: Days 8–13 delivered the full booking loop with human approval — the product's core promise. A guest asks, the concierge checks availability and confirms back, a `Request` lands in the staff queue, a human approves, and *only then* is the Reservation written and the guest confirmed. Every write is structurally unreachable without an approved Request (fulfilment tools are hidden from the LLM).**
+
+### What's green ✅
+- **Full booking loop demo scripted** at `docs/demo_week2.md` — check → confirm-back → draft → `Request(needs_review)` → staff approve → fulfilment writes `Reservation(confirmed)` → guest confirmed → `Request(completed)`, plus the "wedge" (off-tool ask → `type=other` Request captured by the extractor).
+- **Staff queue API + dev page**: `GET /api/approvals` + `POST /api/approvals/decide` (X-Staff-Token stopgap) and `/dev/approvals` render the Week-2 designer mock's "needs your attention" screen.
+- **Test suite**: Day 10–12 registration/approval/booking/memory/reminder tests all green (60/60 at Day 10 close; +27 Day 11, +6 Day 12).
+- **Eval harness exists**: 12 golden dialogues, replay recorder, 4-dimension scoring, CI wired (`--baseline` step).
+- **Safety invariants proven by tests**: no `fulfilment` tool in the LLM schema; draft tools never write a Reservation; duplicate drafts dedupe; cross-guest modify denied.
+
+### What's yellow ⚡
+- **WhatsApp BSP sandbox — confirmed accessible** (owner check passed). Real production number + template approval remain ops long-leads into Week 4; Day 15–16 build against sandbox.
+- **Eval baseline is 0.0%** — the harness records/plays back, but the baseline was never scored with real embeddings + pgvector. Book a `--live` recording run early in Week 3 so `evals/BASELINE.md` reflects reality.
+- **Email-adapter test dependency** — one pre-existing test gap (SMTP dep) excluded from green counts; revisit when email outbound is exercised.
+- **Live demo recording** of `demo_week2.md` not yet captured (needs docker + LLM key + a screen recording).
+
+### Week 3 backlog (Days 15–21) — groomed
+| Day | What | Notes |
+|-----|------|-------|
+| **15** | WhatsApp adapter (sandbox) ★ | New channel: BSP client seam + webhook + `to_inbound()`. Zero brain changes — proof of the Week-1 architecture. |
+| **16** | WhatsApp hardening + templates | Outbound templates (submit for approval), 24h-window logic, delivery receipts, retries. |
+| **17** | Staff console: live view + transcripts ★ | Conversations list across channels, transcript view, near-real-time (SSE). |
+| **18** | Staff console: approvals + live takeover | Approve/edit/reject from the console; human takeover (AI stands down) then resume. |
+| **19** | Escalation + notifications | Escalation rules (low-confidence/complaint/VIP/explicit) → real subscribers (email/Slack/WA). |
+| **20** | Knowledge editor + config | Console UI to edit hours/menu/policies/brand voice; re-embed on save. |
+| **21** | Review · demo · buffer | WhatsApp booking → console approval → confirmation demo; evals green. |
+
+**Week 2 verdict:** the concierge now *acts* behind a human. The approval loop — "your staff confirms every booking" — is infrastructure, not a feature flag. Week 3 adds the channel Lagos guests actually use (WhatsApp) and the cockpit staff live in (console).
+
+## Day 18 — Staff console: approvals + live takeover
+
+**Objective: humans can act — approve work, and step into a live chat.**
+
+### What was built
+- **Approvals queue in the console** (renders the enriched Week-2 API): the queue now carries the **channel badge + guest name + payload** (`ApprovalQueueItem` extended, optional `tenant` scoping added — no-tenant behaviour unchanged). The console's new **Approvals tab** shows one-line summary · channel badge · priority · confidence · age · guest, exactly the Week-2 designer mock, with **Approve / Reject (+ note) / Edit** buttons and a live pending-count badge.
+- **Edit-before-approve** (`PATCH /api/requests/{id}?tenant=`): staff fix the date/time/party-size/area the AI misheard; the change lands in `Request.payload` (what fulfilment reads) **and** is snapshotted in `Request.resolution` (`edited` / `edited_at` / `edited_by`) — a recorded edit, never a silent overwrite. Only `new|needs_review` requests are editable.
+- **Human takeover** (`app/routers/takeover.py`): `POST …/takeover` sets `Conversation.status=human`; `POST …/resume` hands control back; `POST …/staff-message` persists a `role=staff` Message and delivers it **as the venue through the same WhatsApp transport** (the `notify()` seam — keyed by a fresh nonce so it can never be deduped, and the transport skips its own persist since the row already exists). All tenant-scoped (cross-tenant → 404) and audited.
+- **The brain stands down on every channel** (`channels/base.py`): `handle_inbound` checks `status==human` before the orchestrator and yields a "paused" notice instead — the same `human` state the Day-6 guardrail escalation sets, so escalation and takeover share one off-switch. The WhatsApp webhook keeps the notice out of outbound (staff reply instead); it still lands in the console transcript.
+- **Audit trail** (`app/audit.py`): every console mutation — approve, reject, edit, takeover, resume, staff send — writes an `Action` row (masked token actor — the stopgap identity until Day 24) reusing the Day-8 audit model. Approvals stay append-only.
+- **Bug fix in the Week-2 fulfilment path** (`requests/fulfilment.py`): `fulfil_request` was passing the raw JSONB `payload` dict straight into `tool.run()`, which expects a typed args object — the tool crashed on attribute access and the Request was silently marked `failed`. Now coerced via `tool.args_model.model_validate(payload)` (validates, ignores extra keys). **Edit→approve now genuinely fulfils the corrected values.**
+
+### Verified ✅ (without Postgres)
+- `ruff` clean; everything compiles/imports; all four new routes smoke-tested (401 without token).
+- **3/3 no-DB tests pass** (takeover / staff-message / edit all 401 without a token).
+- **8/8 DB tests written** (edit→approve fulfils corrected party size + resolution recorded + audit rows, edit rejected for non-pending, takeover pauses the AI — recording orchestrator never invoked, staff send persists exactly one row + delivers via mock transport, resume restores the brain, queue list carries channel + guest).
+- Full non-DB baseline: **76 passed, zero regressions** (remaining failures/errors are DB-connect only).
+
+### Notes / decisions
+- **Review catches applied:** summary rewrite is reservation-only (a modification/cancellation edit no longer becomes "Table for None on None at None"); staff-message is **409 unless a takeover is active** (closes the staff-and-AI-both-reply race the spec flagged); audit rows are written *before* the awaited notify so a slow BSP can't delay/skip them; duplicated tenant lookups consolidated into `deps.resolve_tenant_or_404`.
+- **The takeover race that remains:** the `status=human` guard is checked when a turn *starts*; a takeover landing mid-turn (after the orchestrator already started) still lets that one reply finish. Acceptable for the sandbox; the Day-21 eval "takeover pauses a mid-booking turn" will measure it.
+- **Web-chat staff sends persist but aren't pushed** (no push channel) — the guest sees them on their next session; WhatsApp gets live delivery.
+
+## Day 17 — Staff console: live view + transcripts ★
+
+**Objective: staff see everything, across every channel, in one place — the walk-in demo asset.**
+
+### What was built
+- **Shared staff auth** (`app/routers/console_auth.py`): one `X-Staff-Token` dependency (header for fetch/curl, `?token=` for EventSource + the page load) reused by the Week-2 approvals endpoints via a small refactor — the `/dev/approvals` page keeps working. Loudly documented: **real auth is Day 24**, shared secret only. Also added `STAFF_TOKEN` config and fixed a latent bug in the old approvals auth (`settings.get(...)` would crash outside dev).
+- **Conversations API** (`app/routers/conversations.py`): `GET /api/conversations?tenant=&channel=&status=&q=` → one list across every channel, newest first, with guest name/phone, last-message preview, status, and `unread` (=1 when the newest message is from the guest). `q` matches guest name/phone **and** message text. `GET /api/conversations/{id}` → full ordered transcript (+ WhatsApp delivery ticks from Day 16's `meta.delivery`), guest context (name/phone/preferences), and linked `Request`s. Tenant-scoped: cross-tenant id → 404.
+- **Near-real-time** (`app/routers/stream.py`): `GET /api/stream?tenant=&token=` SSE emitting `conversations_changed` events (ids) on a 2s poll of new messages / status changes; the console refetches and patches, with a 5s client-side fallback if the stream drops. **Decision:** DB-poll, not Redis pub/sub — the repo treats Redis as optional everywhere, and Day 19's notification subscribers become the pub/sub fan-out; swapping the poll behind this endpoint then is small.
+- **The console** (`console/index.html`): single-file, no-build vanilla JS page served at `/console?token=…` behind the token — consistent with the project's dev-page convention (the spec left the stack to us; the API contract is the hard deliverable). Conversations list with channel badges (WhatsApp/Web/Email), NEEDS-HUMAN flag, unread dots, live search + channel filters; transcript with guest/preferences card, linked-requests card, delivery ticks (✓✓), and a takeover banner (already rendered for Day 18).
+
+### Verified ✅ (without Postgres)
+- `ruff` clean; everything compiles/imports; all three routes mounted (smoke: 401 without token; **with** a token header the request passes auth and proceeds to the DB — proving the shared dependency reads the header).
+- **3/3 no-DB console tests pass** (list/detail 401s, page token-gating + serving).
+- **8/8 DB console tests written** (tenant-scoped list, channel + q filters, transcript order + ticks + linked request, cross-tenant 404, SSE change detection) — runnable once Postgres is up.
+- Full non-DB baseline: **73 passed, zero regressions** (remaining failures/errors are all DB-connect).
+
+### Notes / decisions
+- **Review catches applied:** the shared token dependency had lost its `Header(None)` annotation in the refactor (would have 401'd every staff endpoint once Postgres was up) — fixed and proven by smoke; the SSE union column name was wrong (`column_0` → `conversation_id`) — fixed; SSE cursor now captures the tick boundary before querying so a mid-tick change is caught next poll, never skipped.
+- **Front-end stack choice:** vanilla JS + SSE single file (no build step), matching `/dev/chat` + `/dev/approvals`; Jinja+htmx was the spec's suggestion but adds a dependency for no gain at this size.
+- **N+1 in the list endpoint** (last message + guest per row) is accepted at pilot scale and commented.
+- **Console is view-only today** — Day 18 adds the approvals queue, edit-before-approve and live takeover.
+
+## Day 16 — WhatsApp hardening + templates
+
+**Objective: compliant outbound + resilient inbound — no brain changes (Day-15 architecture holds).**
+
+### What was built
+- **24-hour service window** (`app/channels/whatsapp/window.py`): `within_service_window()` / `choose_send_mode()` — in-window sends are free-form **text** (₦0 service messages), out-of-window sends must be an approved **template**. Out-of-window with no template → `ValueError` (Week-3 risk 4): blocked loudly, never a silent drop. Window anchored on the guest's last `Message` (derived, no schema change — zero migration risk).
+- **Template registry** (`app/channels/whatsapp/templates.py` + `docs/whatsapp_templates.md`): `APPROVED_TEMPLATES`, ordered-variable `TemplateSpec`s for `booking_confirmed` / `booking_reminder` / `booking_updated`, and `resolve_template_name()` (explicit `payload["template"]` > subject defaults > intent map; unapproved names refused). **Ops action started:** submit the three templates in the BSP dashboard (approval is days-long).
+- **Bounded retry** (`app/channels/whatsapp/retry.py`): `send_with_retry()` — exponential backoff (0.2s doubling), retries only transient failures (`WhatsAppSendError` + `OSError`). `MetaCloudClient._post` now wraps `httpx.TransportError` into `WhatsAppSendError` so network blips are actually retried (review catch).
+- **Idempotent delivery** (transport): each send is keyed by `sha256(conversation:body)`; a re-notify is recognised and never double-sends. Persisted outbound `Message` rows carry `wa_message_id` + `idempotency_key` + `delivery` meta — the Day-17 console's ticks.
+- **Delivery + read receipts** (`app/routers/whatsapp.py`): the webhook's `sent|delivered|read|failed` callbacks are persisted on the outbound `Message.meta["delivery"]` (found by `wa_message_id`). Webhook replies now retry and stamp their provider id on the assistant turn (`_stamp_reply_message`).
+
+### Verified ✅ (without Postgres)
+- `ruff check app/ tests/` clean; all files compile; app + new modules import cleanly.
+- **8/8 pure Day-16 tests pass** (window boundary, template precedence, retry bounds, registry order).
+- **6/6 DB-dependent Day-16 tests written** (in-window text, out-of-window template + variables, blocked no-template, retry sends exactly once, re-notify no double-send, status receipts) — runnable once Postgres is up (`docker compose up -d db redis`).
+- Day-15 suite unchanged: no regressions in the non-DB subset.
+
+### Notes / decisions
+- **No schema change:** `last_inbound_at` is derived from the last guest `Message` row rather than adding a column — the window is a query, not new state. Keeps `alembic check` drift-free.
+- **Known races, consciously accepted for the sandbox** (documented in code): `_stamp_reply_message` stamps the latest assistant message (serialised turns make this right in practice); idempotency is check-then-act (sequential re-notifies; a unique index on `(tenant_id, idempotency_key)` closes it for production).
+- **Review catches applied:** un-templated test now uses `subject="survey"` (`update` *should* resolve to `booking_updated`); httpx transport errors wrapped so retries work against the real BSP.
+- **Ops:** submit `booking_confirmed`/`booking_reminder`/`booking_updated` for approval; webhook config on the sandbox → `POST /webhooks/whatsapp` with the verify token.

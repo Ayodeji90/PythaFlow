@@ -82,12 +82,13 @@ async def fulfil_request(
             guest_id=request.guest_id,
         )
 
-        # Execute the fulfilment tool
-        result_dict = await tool.run(
-            request.payload,  # the payload already has the structured data
-            ctx=ctx,
-            db=db,
-        )
+        # Day 18 fix: the payload is a JSONB dict, but the fulfilment tools
+        # take a typed args object. Coerce through the tool's own args_model
+        # (validates + ignores any extra keys) so an approved Request actually
+        # fulfils — previously a dict was passed straight through and the tool
+        # crashed on attribute access, silently marking the Request failed.
+        args = tool.args_model.model_validate(request.payload)
+        result_dict = await tool.run(args, ctx=ctx, db=db)
 
         # On success, mark completed
         await transition(db, request_id, to=RequestStatus.completed)

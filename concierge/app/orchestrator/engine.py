@@ -248,3 +248,29 @@ async def _run_extractor(
         request_id=request.id,
         payload={"summary": request.summary, "type": request.type.value},
     )
+
+    # Day 19: escalate when the rules fire (complaint, low confidence, VIP,
+    # explicit ask) — flags the conversation (AI stands down) and alerts the
+    # tenant's configured channels. Fresh session + fresh rows: this task's
+    # request session is closed, and detached ORM objects don't flush reliably.
+    try:
+        from ..models import Conversation, Guest
+        from ..models import Tenant as TenantModel
+        from .escalation import maybe_escalate
+
+        async with SessionLocal() as esc_db:
+            tenant = await esc_db.get(TenantModel, ctx.tenant.id)
+            conv = await esc_db.get(Conversation, ctx.conversation.id)
+            guest = await esc_db.get(Guest, conv.guest_id) if conv and conv.guest_id else None
+            if tenant is not None and conv is not None:
+                fresh_request = await esc_db.get(type(request), request.id)
+                await maybe_escalate(
+                    esc_db,
+                    tenant=tenant,
+                    conversation=conv,
+                    guest=guest,
+                    request=fresh_request,
+                    message=msg.content,
+                )
+    except Exception:  # noqa: BLE001 — a failed escalation check must not crash the task
+        log.exception("escalation check failed for conversation %s", ctx.conversation.id)

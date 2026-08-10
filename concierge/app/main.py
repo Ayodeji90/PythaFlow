@@ -9,8 +9,24 @@ from fastapi import FastAPI
 from .config import get_settings
 from .db import SessionLocal, engine, ping_db
 from .logging import configure_logging
-from .routers import approvals, health, knowledge, webchat
-from .routers import email as email_router
+from .routers import (
+    approvals,
+    conversations,
+    health,
+    knowledge,
+    stream,
+    takeover,
+    webchat,
+)
+from .routers import (
+    console_auth as console_router,
+)
+from .routers import (
+    email as email_router,
+)
+from .routers import (
+    whatsapp as whatsapp_router,
+)
 from .services.redis import get_redis_client, ping_redis
 
 settings = get_settings()
@@ -58,7 +74,35 @@ def create_app() -> FastAPI:
     app.include_router(webchat.router)
     app.include_router(knowledge.router)
     app.include_router(email_router.router)
+    app.include_router(whatsapp_router.router)
     app.include_router(approvals.router)
+    # Day 17: staff console — conversations API + SSE stream + the page.
+    app.include_router(conversations.router)
+    app.include_router(stream.router)
+    app.include_router(console_router.router)
+    # Day 18: human takeover — staff pause/resume the AI and reply as the venue.
+    app.include_router(takeover.router)
+    # Day 15: WhatsApp outbound transport — delivers confirmations/reminders
+    # over WhatsApp when the conversation's channel is whatsapp.
+    from .channels.whatsapp.factory import build_whatsapp_client
+    from .channels.whatsapp.transport import WhatsAppTransport
+    from .notifications import NOTIF_ESCALATED, NOTIF_MESSAGE_SENT, register_subscriber
+
+    register_subscriber(
+        NOTIF_MESSAGE_SENT,
+        WhatsAppTransport(
+            build_whatsapp_client(),
+            template_confirm=settings.WHATSAPP_TEMPLATE_CONFIRM,
+            template_reminder=settings.WHATSAPP_TEMPLATE_REMINDER,
+        ).handle_event,
+    )
+    # Day 19: escalation alerts to real channels — chosen per tenant via
+    # Tenant.config["notify"]; no-op subscribers when a channel isn't set up.
+    from .notifications.email import EmailSubscriber
+    from .notifications.slack import SlackSubscriber
+
+    register_subscriber(NOTIF_ESCALATED, SlackSubscriber().handle_event)
+    register_subscriber(NOTIF_ESCALATED, EmailSubscriber().handle_event)
     # The manual test page is a development affordance only — never exposed
     # outside a dev/test environment.
     if settings.ENV.lower() in {"dev", "development", "local", "test"}:

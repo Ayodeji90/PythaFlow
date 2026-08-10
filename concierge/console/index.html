@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PythaFlow Concierge — Staff Console</title>
+<style>
+  :root{
+    --bg:#F4F2EE; --panel:#FFFFFF; --ink:#1C1E21; --muted:#6E7378;
+    --line:#E4E1DA; --teal:#176E67; --teal-soft:#E4F0EE;
+    --wa:#128C4A; --wa-soft:#E4F4EB; --web:#3B4252; --web-soft:#ECEEF3;
+    --email:#2B5BCC; --email-soft:#E9EFFC;
+    --danger:#C0392B; --danger-soft:#FBEAE8;
+    --amber:#B7791F; --amber-soft:#FBF3E3;
+    --shadow:0 1px 2px rgba(28,30,33,.05), 0 8px 24px rgba(28,30,33,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+       background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;gap:16px;padding:10px 18px;background:var(--panel);
+          border-bottom:1px solid var(--line)}
+  .brand{font-weight:800;letter-spacing:-.02em;font-size:17px;white-space:nowrap}
+  .brand span{color:var(--teal)}
+  .tenant-box{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .tenant-box label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .tenant-box input{width:110px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+  .tenant-box button{padding:6px 12px;border:0;border-radius:8px;background:var(--teal);color:#fff;font-weight:600;cursor:pointer}
+  .tenant-box button:hover{filter:brightness(1.08)}
+  .live{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:#B9BDC2;transition:background .3s}
+  .live.on .dot{background:#2E9E5B;box-shadow:0 0 0 3px rgba(46,158,91,.18)}
+  .live.off .dot{background:#C0392B}
+  .token-wrap{position:relative}
+  .token-wrap input{width:150px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+  main{flex:1;display:flex;min-height:0}
+  .sidebar{width:400px;min-width:320px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--panel)}
+  .filters{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .filters input{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;width:100%}
+  .filters input:focus{outline:2px solid var(--teal);outline-offset:-1px;border-color:transparent}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:4px 11px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;cursor:pointer;
+        color:var(--muted);background:var(--bg);transition:all .15s;user-select:none}
+  .chip:hover{border-color:var(--teal);color:var(--teal)}
+  .chip.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+  .chip .count{margin-left:5px;background:var(--danger-soft);color:var(--danger);border-radius:999px;padding:0 6px;font-size:10.5px;font-weight:800}
+  .chip.on .count{background:#fff;color:var(--teal)}
+  .list{flex:1;overflow-y:auto;padding:6px}
+  .row{display:flex;gap:10px;padding:11px 12px;border-radius:11px;cursor:pointer;transition:background .12s;align-items:flex-start}
+  .row:hover{background:var(--bg)}
+  .row.active{background:var(--teal-soft)}
+  .row .unread{width:8px;height:8px;border-radius:50%;background:var(--teal);margin-top:7px;flex:none}
+  .row .unread.no{background:transparent}
+  .row .body{flex:1;min-width:0}
+  .row .top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .row .name{font-weight:650;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .time{color:var(--muted);font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .row .preview{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+  .row .badges{display:flex;gap:6px;margin-top:6px;align-items:center}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:5px;text-transform:uppercase}
+  .badge.wa{background:var(--wa-soft);color:var(--wa)}
+  .badge.web{background:var(--web-soft);color:var(--web)}
+  .badge.email{background:var(--email-soft);color:var(--email)}
+  .badge.other{background:var(--bg);color:var(--muted)}
+  .needs{background:var(--danger-soft);color:var(--danger);font-size:10.5px;font-weight:800;letter-spacing:.05em;
+         padding:2px 7px;border-radius:5px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px}
+  .detail{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+  .placeholder{flex:1;display:grid;place-items:center;color:var(--muted);font-size:14px}
+  .thread{flex:1;display:flex;flex-direction:column;min-height:0}
+  .thead{padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .thead .who{display:flex;align-items:center;gap:10px}
+  .thead h2{margin:0;font-size:16px}
+  .thead .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .guestcard{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .gchip{font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink)}
+  .gchip b{color:var(--muted);font-weight:600}
+  .reqcard{margin-top:10px;background:var(--amber-soft);border:1px solid #EFDFC0;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#7A5A1E}
+  .reqcard b{text-transform:uppercase;font-size:10.5px;letter-spacing:.05em}
+  .reqcard .req{margin-top:5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .req .pill{font-size:11px;font-weight:700;border-radius:5px;padding:2px 7px;background:var(--amber);color:#fff}
+  .takeover{margin-top:10px;background:var(--danger-soft);border:1px solid #F2CCC7;border-radius:10px;
+            padding:9px 12px;font-size:12.5px;color:var(--danger);font-weight:600}
+  .msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:70%;padding:9px 13px;border-radius:14px;font-size:14px;white-space:pre-wrap;word-break:break-word;
+       box-shadow:var(--shadow)}
+  .msg.guest{align-self:flex-end;background:var(--ink);color:#F7F6F3;border-bottom-right-radius:4px}
+  .msg.assistant{align-self:flex-start;background:var(--panel);border-bottom-left-radius:4px}
+  .msg.staff{align-self:flex-start;background:#FDEBD0;border-bottom-left-radius:4px}
+  .msg .meta{display:flex;gap:8px;align-items:center;margin-top:5px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .msg.guest .meta{color:#B9B4A9}
+  .tick{color:var(--wa);font-weight:700;letter-spacing:-.05em}
+  .tick.fail{color:var(--danger)}
+  .banner{align-self:center;background:var(--bg);border:1px solid var(--line);color:var(--muted);
+          font-size:12px;border-radius:999px;padding:4px 14px}
+  .day{margin-top:14px;text-align:center;color:#B9BDC2;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .tabs{display:flex;gap:2px;padding:0 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .tab{padding:11px 16px;font-size:13.5px;font-weight:650;color:var(--muted);cursor:pointer;
+       border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--teal);border-bottom-color:var(--teal)}
+  .tab .count{margin-left:7px;background:var(--danger-soft);color:var(--danger);border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800}
+  .panel{flex:1;display:flex;min-height:0}
+  .queuewrap{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .qcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+  .qcard h3{margin:0;font-size:14.5px}
+  .qcard .meta{color:var(--muted);font-size:12.5px;margin-top:5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .qcard .actions{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+  .qcard .note{flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+  .btn{padding:7px 14px;border:0;border-radius:8px;font-weight:650;cursor:pointer;font-size:13px;transition:filter .12s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn-approve{background:var(--teal);color:#fff}
+  .btn-reject{background:var(--danger);color:#fff}
+  .btn-ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+  .btn-ghost.on{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+  .qedit{display:none;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .qedit.open{display:grid}
+  .qedit input{padding:6px 9px;border:1px solid var(--line);border-radius:8px;font:inherit;width:100%}
+  .thead .controls{display:flex;gap:8px;margin-top:10px}
+  .staffbox{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--line);background:var(--panel)}
+  .staffbox input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font:inherit}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(10px);opacity:0;
+         pointer-events:none;transition:all .2s;background:var(--ink);color:#fff;padding:9px 16px;
+         border-radius:999px;font-size:13px;box-shadow:var(--shadow)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.ok{background:#1E7A4D}
+  .toast.err{background:var(--danger)}
+  @media (max-width:860px){ .sidebar{width:100%;max-height:40vh;border-right:0;border-bottom:1px solid var(--line)}
+    main{flex-direction:column} .msg{max-width:88%} .qedit{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">PythaFlow <span>concierge</span></div>
+  <div class="tenant-box">
+    <label>Tenant</label>
+    <input id="tenant" value="demo" spellcheck="false">
+    <button id="apply" title="Load tenant">Load</button>
+  </div>
+  <div class="live off" id="live"><span class="dot"></span><span id="liveText">Connecting…</span></div>
+  <div class="token-wrap"><input id="token" type="password" placeholder="staff token" title="X-Staff-Token (change reloads)" spellcheck="false"></div>
+</header>
+<div class="tabs">
+  <button class="tab on" data-view="conversations">Conversations</button>
+  <button class="tab" data-view="approvals">Approvals <span class="count" id="qcount" hidden></span></button>
+</div>
+<div id="toast" class="toast"></div>
+<main id="view-conversations">
+  <aside class="sidebar">
+    <div class="filters">
+      <input id="q" placeholder="Search by name, phone or message…" spellcheck="false">
+      <div class="chips" id="chips">
+        <span class="chip on" data-ch="">All</span>
+        <span class="chip" data-ch="whatsapp">WhatsApp</span>
+        <span class="chip" data-ch="webchat">Web</span>
+        <span class="chip" data-ch="email">Email</span>
+      </div>
+      <div class="chips" id="statusChips">
+        <span class="chip on" data-st="">Any status</span>
+        <span class="chip" data-st="human">Needs human <span class="count" id="humanCount" hidden></span></span>
+        <span class="chip" data-st="active">Active</span>
+        <span class="chip" data-st="closed">Closed</span>
+      </div>
+    </div>
+    <div class="list" id="list"><div class="empty">Loading conversations…</div></div>
+  </aside>
+  <section class="detail" id="detail">
+    <div class="placeholder" id="placeholder">Select a conversation to see the transcript.</div>
+    <div class="thread" id="thread" hidden></div>
+  </section>
+</main>
+<section class="panel" id="view-approvals" hidden>
+  <div class="queuewrap" id="queue"></div>
+</section>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const state = {
+  tenant: new URLSearchParams(location.search).get("tenant") || "demo",
+  token: new URLSearchParams(location.search).get("token") || "",
+  channel: "", q: "", selected: null, convs: [], es: null, esAlive: false,
+};
+
+/* ── tiny helpers ─────────────────────────────────────────────── */
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+function rel(iso) {
+  if (!iso) return "";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 45) return "now";
+  if (s < 90) return "1m";
+  const m = Math.round(s / 60);
+  if (m < 60) return m + "m";
+  const h = Math.round(m / 60);
+  if (h < 24) return h + "h";
+  return Math.round(h / 24) + "d";
+}
+const CHANNEL_META = { whatsapp: ["wa", "WhatsApp"], webchat: ["web", "Web"], email: ["email", "Email"] };
+function channelBadge(ch) {
+  const [cls, label] = CHANNEL_META[ch] || ["other", ch];
+  return el("span", "badge " + cls, label);
+}
+
+/* ── API ──────────────────────────────────────────────────────── */
+async function api(path, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({ "X-Staff-Token": state.token }, opts.headers || {});
+  const r = await fetch(path, opts);
+  if (r.status === 401) { setLive("off", "Token rejected — update the staff token"); throw new Error("401"); }
+  if (!r.ok) throw new Error(r.status + " " + (await r.text()).slice(0, 200));
+  return r.json();
+}
+function listUrl() {
+  const p = new URLSearchParams({ tenant: state.tenant });
+  if (state.channel) p.set("channel", state.channel);
+  if (state.status) p.set("status", state.status);
+  if (state.q) p.set("q", state.q);
+  return "/api/conversations?" + p;
+}
+function refreshHumanCount() {
+  // The count is derived from the last full (unfiltered) load so the badge
+  // stays truthful even while a status filter is active.
+  const all = state.allConvs || state.convs;
+  const n = all.filter(c => c.status === "human").length;
+  const badge = $("#humanCount");
+  badge.hidden = n === 0;
+  badge.textContent = n;
+}
+
+/* ── conversation list ────────────────────────────────────────── */
+async function loadList() {
+  const box = $("#list");
+  try {
+    const data = await api(listUrl());
+    state.convs = data.conversations;
+    if (!state.status && !state.channel && !state.q) state.allConvs = data.conversations;
+    renderList();
+    refreshHumanCount();
+  } catch (e) {
+    if (e.message !== "401") box.innerHTML = '<div class="empty">Failed to load — is the API up?</div>';
+  }
+}
+function renderList() {
+  const box = $("#list");
+  box.innerHTML = "";
+  if (!state.convs.length) {
+    box.appendChild(el("div", "empty", "No conversations" + (state.q ? " match your search." : " yet.")));
+    return;
+  }
+  for (const c of state.convs) {
+    const row = el("div", "row" + (state.selected === c.id ? " active" : ""));
+    row.appendChild(el("span", "unread " + (c.unread ? "" : "no")));
+    const body = el("div", "body");
+    const top = el("div", "top");
+    top.appendChild(el("span", "name", c.guest_name || c.guest_phone || "Anonymous"));
+    top.appendChild(el("span", "time", rel(c.updated_at)));
+    body.appendChild(top);
+    body.appendChild(el("div", "preview", c.last_message_preview || "—"));
+    const badges = el("div", "badges");
+    badges.appendChild(channelBadge(c.channel_type));
+    if (c.status === "human") badges.appendChild(el("span", "needs", "Needs human"));
+    else if (c.status === "closed") badges.appendChild(el("span", "badge other", "Closed"));
+    body.appendChild(badges);
+    row.appendChild(body);
+    row.onclick = () => { state.selected = c.id; renderList(); openThread(c.id); };
+    box.appendChild(row);
+  }
+}
+
+/* ── transcript ───────────────────────────────────────────────── */
+async function openThread(id) {
+  const thread = $("#thread"), ph = $("#placeholder");
+  ph.hidden = true; thread.hidden = false;
+  thread.innerHTML = '<div class="placeholder" style="padding:40px">Loading transcript…</div>';
+  try {
+    const d = await api(`/api/conversations/${id}?tenant=${encodeURIComponent(state.tenant)}`);
+    renderThread(d);
+  } catch (e) {
+    if (e.message !== "401") thread.innerHTML = '<div class="placeholder">Could not load transcript.</div>';
+  }
+}
+function ticksFor(m) {
+  const d = m.delivery_ticks || {};
+  if (d.failed) return el("span", "tick fail", "✗");
+  if (d.read) return el("span", "tick", "✓✓");
+  if (d.delivered) return el("span", "tick", "✓✓");
+  if (d.sent) return el("span", "tick", "✓");
+  return null;
+}
+function renderThread(d) {
+  const thread = $("#thread");
+  thread.innerHTML = "";
+  const head = el("div", "thead");
+
+  const who = el("div", "who");
+  who.appendChild(el("h2", null, d.guest && d.guest.display_name ? d.guest.display_name : (d.guest && d.guest.phone) || "Anonymous"));
+  who.appendChild(channelBadge(d.channel_type));
+  if (d.status === "human") who.appendChild(el("span", "needs", "Needs human"));
+  head.appendChild(who);
+  head.appendChild(el("div", "sub", (d.guest && d.guest.phone ? d.guest.phone + " · " : "") +
+    (d.external_thread_id ? "thread " + d.external_thread_id.slice(0, 14) : "") +
+    " · " + d.messages.length + " messages"));
+
+  if (d.guest && Object.keys(d.guest.preferences || {}).length) {
+    const card = el("div", "guestcard");
+    for (const [k, v] of Object.entries(d.guest.preferences)) {
+      const chip = el("span", "gchip", "");
+      chip.appendChild(el("b", null, k + ": "));
+      chip.appendChild(document.createTextNode(String(v)));
+      card.appendChild(chip);
+    }
+    head.appendChild(card);
+  }
+  if (d.requests.length) {
+    const card = el("div", "reqcard");
+    card.appendChild(el("b", null, "Linked requests"));
+    for (const r of d.requests) {
+      const row = el("div", "req");
+      row.appendChild(el("span", "pill", r.type));
+      row.appendChild(document.createTextNode(
+        (r.summary || "") + (r.status === "needs_review" ? " · needs review" : " · " + r.status) +
+        (r.confidence != null ? " · " + Math.round(r.confidence * 100) + "% conf" : "") +
+        " · " + new Date(r.created_at).toLocaleString()
+      ));
+      card.appendChild(row);
+    }
+    head.appendChild(card);
+  }
+  if (d.status === "human") {
+    head.appendChild(el("div", "takeover", "Human takeover — the concierge is paused. A staff member is in control."));
+  }
+  const controls = el("div", "controls");
+  if (d.status === "human") {
+    const resume = el("button", "btn btn-ghost", "Resume AI");
+    resume.onclick = async () => {
+      try { await post(`/api/conversations/${d.id}/resume?tenant=${encodeURIComponent(state.tenant)}`, {}); }
+      catch (e) { flash("err", "Resume failed"); }
+      openThread(d.id); loadList();
+    };
+    controls.appendChild(resume);
+  } else {
+    const take = el("button", "btn btn-approve", "Take over");
+    take.onclick = async () => {
+      try {
+        await post(`/api/conversations/${d.id}/takeover?tenant=${encodeURIComponent(state.tenant)}`, {});
+        flash("ok", "You're in control — the AI is paused.");
+      } catch (e) { flash("err", "Takeover failed"); }
+      openThread(d.id); loadList();
+    };
+    controls.appendChild(take);
+  }
+  head.appendChild(controls);
+  thread.appendChild(head);
+
+  const msgs = el("div", "msgs");
+  let lastDay = "";
+  for (const m of d.messages) {
+    const day = new Date(m.created_at).toLocaleDateString();
+    if (day !== lastDay) { lastDay = day; msgs.appendChild(el("div", "day", day)); }
+    const bubble = el("div", "msg " + m.role);
+    bubble.textContent = m.content || (m.role === "assistant" ? "(no reply)" : "");
+    const meta = el("div", "meta");
+    meta.appendChild(document.createTextNode(new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })));
+    const tk = ticksFor(m);
+    if (tk) meta.appendChild(tk);
+    bubble.appendChild(meta);
+    msgs.appendChild(bubble);
+  }
+  thread.appendChild(msgs);
+  if (d.status === "human") {
+    const sb = el("div", "staffbox");
+    const inp = el("input");
+    inp.placeholder = "Reply as the venue…";
+    const send = el("button", "btn btn-approve", "Send");
+    send.onclick = async () => {
+      const content = inp.value.trim();
+      if (!content) return;
+      try {
+        await post(`/api/conversations/${d.id}/staff-message?tenant=${encodeURIComponent(state.tenant)}`, { content });
+        inp.value = "";
+      } catch (e) { flash("err", "Send failed"); }
+      openThread(d.id); loadList();
+    };
+    sb.append(inp, send);
+    thread.appendChild(sb);
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+/* ── tabs ──────────────────────────────────────────────────────── */
+function showTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === name));
+  $("#view-conversations").hidden = name !== "conversations";
+  $("#view-approvals").hidden = name !== "approvals";
+  if (name === "approvals") loadQueue();
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => showTab(t.dataset.view));
+
+/* ── small helpers ─────────────────────────────────────────────── */
+async function post(path, body) {
+  const r = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Staff-Token": state.token },
+    body: JSON.stringify(body || {}),
+  });
+  if (r.status === 401) throw new Error("401");
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+function flash(kind, text) {
+  const t = $("#toast");
+  t.textContent = text;
+  t.className = "toast " + kind + " show";
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => (t.className = "toast"), 2600);
+}
+
+/* ── approvals queue ───────────────────────────────────────────── */
+async function loadQueue() {
+  try {
+    const data = await api(`/api/approvals?tenant=${encodeURIComponent(state.tenant)}`);
+    renderQueue(data.requests || []);
+    const n = (data.requests || []).length;
+    const badge = $("#qcount");
+    badge.hidden = n === 0;
+    badge.textContent = n;
+  } catch (e) { /* 401 handled by api() */ }
+}
+function renderQueue(items) {
+  const box = $("#queue");
+  box.innerHTML = "";
+  if (!items.length) {
+    box.appendChild(el("div", "empty", "No pending approvals. Everything's handled."));
+    return;
+  }
+  for (const r of items) box.appendChild(queueCard(r));
+}
+function queueCard(r) {
+  const card = el("div", "qcard");
+  card.appendChild(el("h3", null, r.summary || r.type));
+  const meta = el("div", "meta");
+  meta.appendChild(channelBadge(r.channel_type || "other"));
+  if (r.guest_name) meta.appendChild(document.createTextNode(r.guest_name));
+  meta.appendChild(el("span", "badge " + (r.priority === "high" ? "needs" : "other"), r.priority));
+  meta.appendChild(document.createTextNode(
+    (r.confidence != null ? Math.round(r.confidence * 100) + "% conf · " : "") + rel(r.created_at)
+  ));
+  card.appendChild(meta);
+
+  const edit = el("div", "qedit");
+  const p = r.payload || {};
+  for (const [k, v] of [["date", p.date], ["time", p.time], ["party_size", p.party_size], ["area", p.area]]) {
+    const inp = el("input");
+    inp.placeholder = k;
+    inp.dataset.k = k;
+    inp.value = v != null ? v : "";
+    edit.appendChild(inp);
+  }
+  const save = el("button", "btn btn-approve", "Save edit");
+  save.onclick = async () => {
+    const body = {};
+    for (const inp of edit.querySelectorAll("input")) {
+      const v = inp.value.trim();
+      if (v !== "") body[inp.dataset.k] = inp.dataset.k === "party_size" ? Number(v) : v;
+    }
+    if (!Object.keys(body).length) return;
+    const rr = await fetch(`/api/requests/${r.request_id}?tenant=${encodeURIComponent(state.tenant)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Staff-Token": state.token },
+      body: JSON.stringify(body),
+    });
+    if (rr.ok) { flash("ok", "Edit saved — review, then approve."); loadQueue(); }
+    else flash("err", "Edit failed: " + (await rr.text()).slice(0, 140));
+  };
+  edit.appendChild(save);
+  card.appendChild(edit);
+
+  const actions = el("div", "actions");
+  const note = el("input", "note");
+  note.placeholder = "optional note…";
+  const editToggle = el("button", "btn btn-ghost", "Edit");
+  editToggle.onclick = () => edit.classList.toggle("open");
+  const approve = el("button", "btn btn-approve", "Approve");
+  approve.onclick = () => decide(r, "approved", note);
+  const reject = el("button", "btn btn-reject", "Reject");
+  reject.onclick = () => decide(r, "rejected", note);
+  actions.append(note, editToggle, approve, reject);
+  card.appendChild(actions);
+  return card;
+}
+async function decide(r, decision, noteInput) {
+  try {
+    await post("/api/approvals/decide", {
+      request_id: r.request_id, decision, note: noteInput.value || null,
+    });
+    flash("ok", decision === "approved" ? "Approved ✓" : "Rejected");
+  } catch (e) {
+    flash("err", "Decision failed: " + String(e).slice(0, 140));
+  }
+  loadQueue();
+  if (state.selected) openThread(state.selected);
+}
+
+/* ── live updates (SSE + 5s poll fallback) ────────────────────── */
+function setLive(kind, text) {
+  $("#live").className = "live " + kind;
+  $("#liveText").textContent = text;
+}
+function connectStream() {
+  if (state.es) { state.es.close(); state.es = null; }
+  if (!state.token) return;
+  state.es = new EventSource(`/api/stream?tenant=${encodeURIComponent(state.tenant)}&token=${encodeURIComponent(state.token)}`);
+  state.es.onopen = () => { state.esAlive = true; setLive("on", "Live"); };
+  state.es.addEventListener("conversations_changed", (e) => {
+    let ids = [];
+    try { ids = JSON.parse(e.data).ids || []; } catch (_) {}
+    loadList();
+    if (!$("#view-approvals").hidden) loadQueue();
+    if (state.selected && ids.includes(state.selected)) openThread(state.selected);
+  });
+  state.es.onerror = () => {
+    state.esAlive = false;
+    setLive("off", "Reconnecting…");
+    if (state.es) { state.es.close(); state.es = null; }
+  };
+}
+setInterval(() => {
+  if (!state.esAlive) loadList();          // 5s poll fallback when SSE is down
+}, 5000);
+setInterval(() => { if (state.convs.length) renderList(); }, 30000); // refresh relative times
+
+/* ── boot / wiring ────────────────────────────────────────────── */
+$("#tenant").value = state.tenant;
+$("#token").value = state.token;
+$("#apply").onclick = () => {
+  const t = $("#tenant").value.trim() || "demo";
+  const tk = $("#token").value.trim();
+  location.href = "/console?tenant=" + encodeURIComponent(t) + "&token=" + encodeURIComponent(tk);
+};
+$("#token").addEventListener("keydown", e => { if (e.key === "Enter") $("#apply").click(); });
+$("#q").addEventListener("input", debounce(() => { state.q = $("#q").value.trim(); loadList(); }, 250));
+document.querySelectorAll("#chips .chip").forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll("#chips .chip").forEach(c => c.classList.remove("on"));
+    chip.classList.add("on");
+    state.channel = chip.dataset.ch;
+    loadList();
+  };
+});
+document.querySelectorAll("#statusChips .chip").forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll("#statusChips .chip").forEach(c => c.classList.remove("on"));
+    chip.classList.add("on");
+    state.status = chip.dataset.st || "";
+    loadList();
+  };
+});
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+if (!state.token) {
+  setLive("off", "No token — open /console?token=YOUR_TOKEN");
+} else {
+  loadList().then(connectStream);
+}
+</script>
+</body>
+</html>

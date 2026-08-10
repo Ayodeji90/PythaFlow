@@ -12,6 +12,11 @@ _DEV_REDIS_DEFAULT = "redis://localhost:6379/0"
 _DEV_ENVS = {"dev", "development", "local", "test"}
 
 
+def is_dev_env(env: str) -> bool:
+    """True when the environment is one of the dev/test environments."""
+    return env.lower() in _DEV_ENVS
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
@@ -36,6 +41,20 @@ class Settings(BaseSettings):
 
     # --- email channel (optional — only needed when email adapter is used) ---
     EMAIL_SENDER: str = "smtp"          # "smtp" | "sendgrid"
+
+    # --- WhatsApp / BSP (Day 15) ---
+    # The BSP seam mirrors the LLM seam: the core depends only on the client
+    # Protocol. `mock` = no network (dev/tests, records sends); `meta` = real
+    # sends via the WhatsApp Business Cloud API — the endpoint that Meta's own
+    # Cloud API, 360dialog, and Twilio's WhatsApp sandbox all proxy.
+    WHATSAPP_BSP: str = "meta"
+    WHATSAPP_TOKEN: str = ""            # BSP access token (Meta permanent token)
+    WHATSAPP_PHONE_ID: str = ""  # business number id = the Channel.external_id for routing
+    WHATSAPP_VERIFY_TOKEN: str = ""     # webhook verification token (GET challenge)
+    WHATSAPP_APP_SECRET: str = ""       # HMAC secret for X-Hub-Signature-256 (POST webhook)
+    WHATSAPP_GRAPH_BASE: str = "https://graph.facebook.com/v21.0"
+    WHATSAPP_TEMPLATE_CONFIRM: str = "booking_confirmed"
+    WHATSAPP_TEMPLATE_REMINDER: str = "booking_reminder"
     EMAIL_SMTP_HOST: str = ""
     EMAIL_SMTP_PORT: int = 587
     EMAIL_SMTP_USERNAME: str = ""
@@ -72,7 +91,13 @@ class Settings(BaseSettings):
     REQUEST_REVIEW_CONFIDENCE: float = 0.75  # below this => forced human review
     REQUEST_EXTRACTOR_ENABLED: bool = True   # post-turn help classifier
     REQUEST_EXTRACTOR_TIER: str = "fast"
-    STAFF_TOKEN_HEADER: str = "X-Staff-Token"  # stopgap auth until Week 3/Day 24
+    STAFF_TOKEN_HEADER: str = "X-Staff-Token"  # stopgap auth until Day 24
+    STAFF_TOKEN: str = ""  # shared secret for staff endpoints (dev accepts any non-empty)
+
+    # --- escalation notifications (Day 19) — per-tenant values live in
+    #     Tenant.config["notify"]; these are the env-level defaults ---
+    NOTIFY_SLACK_WEBHOOK: str = ""  # blank disables Slack alerts
+    NOTIFY_EMAIL_FROM: str = ""  # blank disables the email fallback recipient
 
     # --- embeddings + retrieval (RAG) ---
     EMBED_PROVIDER: str = "nvidia"
@@ -94,6 +119,9 @@ class Settings(BaseSettings):
 
     @field_validator(
         "LLM_API_KEY", "LLM_BASE_URL", "LLM_PROVIDER", "EMBED_API_KEY", "EMBED_PROVIDER",
+        "WHATSAPP_TOKEN", "WHATSAPP_PHONE_ID", "WHATSAPP_VERIFY_TOKEN",
+        "WHATSAPP_APP_SECRET", "WHATSAPP_BSP", "WHATSAPP_GRAPH_BASE",
+        "STAFF_TOKEN", "NOTIFY_SLACK_WEBHOOK", "NOTIFY_EMAIL_FROM",
         mode="before",
     )
     @classmethod

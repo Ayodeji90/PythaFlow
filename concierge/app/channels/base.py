@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import Channel, Conversation, Message, Tenant
-from ..models.enums import ChannelType, MessageRole
+from ..models.enums import ChannelType, ConversationStatus, MessageRole
 from ..orchestrator.base import Orchestrator, TurnContext
 from ..schemas.message import InboundMessage, OutboundChunk
 
@@ -121,6 +121,17 @@ async def handle_inbound(
         )
     )
     await db.commit()
+
+    # Day 18: while staff have taken over (or the Day-6 guardrail escalated),
+    # the AI stands down on EVERY channel — checked here, before the
+    # orchestrator. The guest turn is already persisted, so staff see it.
+    if conv.status == ConversationStatus.human:
+        yield OutboundChunk(
+            type="message",
+            content="A staff member is handling this conversation — the concierge is paused.",
+            metadata={"paused": True, "status": "human"},
+        )
+        return
 
     ctx = TurnContext(
         tenant=tenant,
