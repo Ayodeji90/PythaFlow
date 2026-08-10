@@ -95,7 +95,13 @@ async def maybe_escalate(
         request.priority = RequestPriority.high
     await db.commit()
 
-    if transitioned:
+    if transitioned or "explicit_ask" in reasons:
+        # ``transitioned`` covers the normal routes (extractor-classified
+        # complaint / low confidence / VIP). ``explicit_ask`` needs an extra
+        # case: the Day-6 guardrail already set status=human *mid-turn*, so by
+        # the time this post-turn check runs the conversation is already human
+        # — but that turn is exactly the one that needs alerting. It can only
+        # fire once (the AI stands down after, so no later extractor runs).
         log.info(
             "escalated conversation %s (%s)",
             conversation.id,

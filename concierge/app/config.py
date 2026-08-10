@@ -62,6 +62,29 @@ class Settings(BaseSettings):
     EMAIL_FROM_ADDRESS: str = "concierge@localhost"
     EMAIL_FROM_NAME: str = "Concierge"
 
+    # --- WhatsApp channel (Day 15) --------------------------------------------
+    # Twilio is the default because its WhatsApp Sandbox needs NO Meta business
+    # verification — a venue (or you) can demo on real WhatsApp with just a Twilio
+    # account. Swappable to the Meta Cloud API later (WHATSAPP_PROVIDER=meta).
+    WHATSAPP_PROVIDER: str = "twilio"          # twilio | meta (future)
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_WHATSAPP_FROM: str = ""             # e.g. "whatsapp:+14155238886" (sandbox)
+    # Verify the X-Twilio-Signature on inbound webhooks (proves it's really Twilio).
+    WHATSAPP_VALIDATE_SIGNATURE: bool = True
+    # Sandbox fallback: if an inbound message's "To" number matches no whatsapp
+    # Channel row, route it to this tenant slug. Blank = strict channel matching.
+    WHATSAPP_DEFAULT_TENANT: str = ""
+    # Day 16 — hardening.
+    # WhatsApp only allows free-form text within 24h of the guest's last message;
+    # outside that window a pre-approved template is required.
+    WHATSAPP_SESSION_WINDOW_HOURS: int = 24
+    WHATSAPP_SEND_MAX_RETRIES: int = 3         # outbound send retries on transient failure
+    # Twilio Content template SIDs (HX…) for out-of-window / proactive messages.
+    # Submitting + getting these approved is an ops long-lead; blank disables them.
+    TWILIO_TEMPLATE_BOOKING_CONFIRMED: str = ""
+    TWILIO_TEMPLATE_BOOKING_REMINDER: str = ""
+
     # --- guardrails (Day 6) ---
     # Hybrid: rules always run (instant); the LLM moderator only runs on input the
     # rules flag as borderline. Turn the LLM layer off for pure-rules / offline.
@@ -69,7 +92,8 @@ class Settings(BaseSettings):
     GUARDRAILS_MODERATION_TIMEOUT: float = 12.0
 
     # --- LLM orchestration (provider-agnostic) ---
-    LLM_PROVIDER: str = "nvidia"          # nvidia | openai | groq | mistral | openai_compatible
+    # nvidia | openai | groq | mistral | openai_compatible | azure_failover
+    LLM_PROVIDER: str = "nvidia"
     LLM_API_KEY: str = ""
     LLM_BASE_URL: str = ""                # optional override; blank = provider default
     LLM_MODEL_FAST: str = "meta/llama-3.1-8b-instruct"
@@ -79,6 +103,29 @@ class Settings(BaseSettings):
     # Tier for guest-facing chat replies. Default 'quality' — for a concierge,
     # instruction-following and brand voice matter more than a few hundred ms.
     CHAT_TIER: str = "quality"
+
+    # --- Azure AI Foundry multi-model failover (optional) ---------------------
+    # Set LLM_PROVIDER=azure_failover to route across up to 3 Foundry serverless
+    # deployments (DeepSeek / Grok / Kimi / …). The router tries backend 1; if it
+    # errors OR exceeds AZURE_FOUNDRY_ATTEMPT_TIMEOUT seconds, it falls over to 2,
+    # then 3. Order = preference (put your fastest/most reliable model first).
+    #
+    # If all three are deployments under the SAME Foundry resource, use the SAME
+    # endpoint + key for all three and only change the MODEL (the deployment name).
+    AZURE_FOUNDRY_1_ENDPOINT: str = ""     # e.g. https://<resource>.services.ai.azure.com/models
+    AZURE_FOUNDRY_1_KEY: str = ""
+    AZURE_FOUNDRY_1_MODEL: str = ""        # deployment name, e.g. DeepSeek-V4-Pro
+    AZURE_FOUNDRY_2_ENDPOINT: str = ""
+    AZURE_FOUNDRY_2_KEY: str = ""
+    AZURE_FOUNDRY_2_MODEL: str = ""        # e.g. grok-4-20-non-reasoning
+    AZURE_FOUNDRY_3_ENDPOINT: str = ""
+    AZURE_FOUNDRY_3_KEY: str = ""
+    AZURE_FOUNDRY_3_MODEL: str = ""        # e.g. Kimi-K2.6
+    # Azure AI Inference endpoints (…/models) require an api-version. Leave blank
+    # if your endpoint is a plain OpenAI-compatible route (…/openai/v1).
+    AZURE_FOUNDRY_API_VERSION: str = ""
+    # Seconds to wait on a backend before routing to the next one.
+    AZURE_FOUNDRY_ATTEMPT_TIMEOUT: float = 30.0
 
     # --- tool calling loop ---
     TOOLS_MAX_STEPS: int = 4
@@ -116,6 +163,21 @@ class Settings(BaseSettings):
     # ~0.54–0.65, genuine misses ~0.72+, so 0.68 sits cleanly in the gap. Retune
     # per embedding model / venue if that distribution shifts.
     RAG_MAX_DISTANCE: float = 0.68
+
+    def azure_foundry_backends(self) -> list[tuple[str, str, str]]:
+        """Return the configured (endpoint, key, model) Foundry backends, in
+        preference order. A backend counts as configured once it has both an
+        endpoint and a model; blank slots are skipped."""
+        raw = [
+            (self.AZURE_FOUNDRY_1_ENDPOINT, self.AZURE_FOUNDRY_1_KEY, self.AZURE_FOUNDRY_1_MODEL),
+            (self.AZURE_FOUNDRY_2_ENDPOINT, self.AZURE_FOUNDRY_2_KEY, self.AZURE_FOUNDRY_2_MODEL),
+            (self.AZURE_FOUNDRY_3_ENDPOINT, self.AZURE_FOUNDRY_3_KEY, self.AZURE_FOUNDRY_3_MODEL),
+        ]
+        return [
+            (e.strip(), k.strip(), m.strip())
+            for e, k, m in raw
+            if e.strip() and m.strip()
+        ]
 
     @field_validator(
         "LLM_API_KEY", "LLM_BASE_URL", "LLM_PROVIDER", "EMBED_API_KEY", "EMBED_PROVIDER",

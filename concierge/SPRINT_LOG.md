@@ -393,6 +393,29 @@ The model layer (Action, Approval, Reservation, Guest) is already in place from 
 
 **Week 2 verdict:** the concierge now *acts* behind a human. The approval loop — "your staff confirms every booking" — is infrastructure, not a feature flag. Week 3 adds the channel Lagos guests actually use (WhatsApp) and the cockpit staff live in (console).
 
+## Day 19 — Escalation + notifications
+
+**Objective: the right things reach a human fast, on the channel staff actually watch.**
+
+### What was built
+- **Escalation rules** (`app/orchestrator/escalation.py`): four independent triggers, each reusing signals already in the system (no new state): `low_confidence` (Request.confidence < 0.75 — the extractor's own forced-review threshold), `complaint` (Request.type), `vip` (Guest.preferences.vip), `explicit_ask` (message regex mirroring the Day-6 guardrail pattern). Applying = set `Conversation.status=human` (the Day-6/Day-18 flag — AI stands down) + bump Request to `priority=high` + fire `NOTIF_ESCALATED`. Per-tenant off-switch via `Tenant.config["escalation"]["enabled"]=false`.
+- **Wired post-turn** (`engine._run_extractor`): after the extractor creates a Request, escalation runs in a **fresh session with fresh rows** (the task's request session is closed; detached ORM objects don't flush).
+- **Real notification subscribers** (`app/notifications/slack.py` + `email.py`): the Week-2 `notify()` seam graduates from log-stub — escalations alert the tenant's configured channels via `Tenant.config["notify"]` (`slack` webhook, `email` recipient list), falling back to env defaults (`NOTIFY_SLACK_WEBHOOK`, `NOTIFY_EMAIL_FROM`). Email reuses the channel's `SmtpSender`/`NullSender` seam; both degrade to quiet no-ops when unconfigured. **Callers never changed** — adding a channel is adding a subscriber.
+- **Handoff surface**: the console now has a **"Needs human" status filter with a live count badge** — one click filters to escalated conversations, one more click lands in the transcript with the staff reply box ready (takeover already active). The Day-17 SSE picks up the status change automatically, so the inbox updates live.
+- **Latent bug fixed:** Day-18's staff-message endpoint called `notify()` without the required `request_id` kwarg → staff sends would have crashed at runtime (invisible: the DB test never ran). Now `request_id=None`.
+
+### Verified ✅ (without Postgres)
+- `ruff` clean; everything compiles/imports.
+- **6/6 pure rule tests pass** (each trigger fires; above-threshold confidence doesn't; VIP off doesn't; explicit-ask detection; combined triggers).
+- **7/7 DB tests written** (flags + bumps + notifies, disabled-by-config, no re-notify when already human, Slack posts to tenant webhook / silent without, email to recipients, escalated conversation surfaces in the needs-human inbox).
+- Full non-DB baseline: **82 passed, zero regressions** (remaining failures/errors are DB-connect only).
+
+### Notes / decisions
+- **Review catch — explicit-ask alerting:** the Day-6 guardrail sets `status=human` *mid-turn* for "let me speak to a manager", so the post-turn check found the conversation already human and skipped the alert — the headline trigger never notified staff. Fixed: `explicit_ask` notifies even when already human (safe — the AI stands down afterwards, so it can only fire on that one turn).
+- **No re-notify spam:** an already-human conversation with a *new* extractor request bumps priority only (and can't recur — the Day-18 guard stops the orchestrator/extractor once human). A human→active→human cycle *does* re-notify, which is correct (staff explicitly resumed).
+- **Console count badge** is derived from the last unfiltered load — goes stale while a filter is active (accepted, cosmetic).
+- **Ops:** per-tenant notification routing is config, not code — set `Tenant.config = {"notify": {"slack": "…", "email": ["…"]}}` on the tenant row.
+
 ## Day 18 — Staff console: approvals + live takeover
 
 **Objective: humans can act — approve work, and step into a live chat.**

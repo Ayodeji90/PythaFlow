@@ -161,12 +161,13 @@ async def _run_live(
     break_grounding: bool = False,
 ) -> DialogueScore:
     """Run a dialogue against the real LLM, recording responses."""
-    from .recorder import FakeEmbedder, RecordingProvider
+    from .recorder import RecordingProvider
 
     db, tenant_info = await _setup_db(dialogue.tenant_fixture)
 
-    # Build real LLM service
+    # Build real LLM service + real embedder (needed for retrieval in live mode)
     from app.config import get_settings
+    from app.llm.embeddings import build_embedding_service
     from app.llm.factory import build_llm_service
 
     settings = get_settings()
@@ -188,7 +189,7 @@ async def _run_live(
     orch = LLMOrchestrator(
         llm=recording_llm,
         tier=settings.CHAT_TIER,
-        embedder=FakeEmbedder(),
+        embedder=build_embedding_service(settings),
         _skip_extractor=True,
     )
 

@@ -255,6 +255,7 @@ async def _run_extractor(
     # request session is closed, and detached ORM objects don't flush reliably.
     try:
         from ..models import Conversation, Guest
+        from ..models import Request as RequestModel
         from ..models import Tenant as TenantModel
         from .escalation import maybe_escalate
 
@@ -263,7 +264,7 @@ async def _run_extractor(
             conv = await esc_db.get(Conversation, ctx.conversation.id)
             guest = await esc_db.get(Guest, conv.guest_id) if conv and conv.guest_id else None
             if tenant is not None and conv is not None:
-                fresh_request = await esc_db.get(type(request), request.id)
+                fresh_request = await esc_db.get(RequestModel, request.id)
                 await maybe_escalate(
                     esc_db,
                     tenant=tenant,
