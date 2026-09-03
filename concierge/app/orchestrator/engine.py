@@ -27,7 +27,7 @@ from ..schemas.message import InboundMessage, OutboundChunk
 from ..services.locks import conversation_turn_lock
 from .base import TurnContext
 from .guardrails import GuardrailAction, check_inbound
-from .prompt import build_system_prompt
+from .prompt import build_post_draft_message, build_system_prompt
 from .state import load_history
 from .tools_loop import run_tool_loop
 
@@ -115,6 +115,7 @@ class LLMOrchestrator:
                 context=context,
                 guest_context=ctx.guest_context,
                 state=ctx.state,
+                channel=msg.channel.value if msg.channel else None,
             )
             history = await load_history(db, ctx.conversation.id)
 
@@ -160,10 +161,13 @@ class LLMOrchestrator:
                 # turns can reference in-progress booking details.
                 if ctx.state is not None:
                     ctx.state["intent"] = "reservation"
+                # D3: brand-voiced post-draft message (replaces hardcoded text)
+                post_draft_msg = build_post_draft_message(
+                    ctx.tenant, request_type="reservation"
+                )
                 yield OutboundChunk(
                     type="message",
-                    content="I've sent this request to our team for review — "
-                    "they'll confirm your booking shortly!",
+                    content=post_draft_msg,
                     metadata={"stage": "approval"},
                 )
 
@@ -177,15 +181,81 @@ class LLMOrchestrator:
             )
 
             # Day 10: fire-and-forget request extractor for unhandled intents.
+            # E1 fix: retry with backoff + dead-letter on permanent failure.
             if not self._skip_extractor and get_settings().REQUEST_EXTRACTOR_ENABLED:
                 asyncio.create_task(
-                    _run_extractor(
+                    _run_extractor_with_retry(
                         llm=self._llm,
                         ctx=ctx,
                         msg=msg,
                         draft_already_created=draft_detected,
                     )
                 )
+
+
+# E1: retry config for the request extractor
+_EXTRACTOR_MAX_RETRIES = 3
+_EXTRACTOR_BASE_DELAY = 1.0  # seconds; doubles each attempt
+
+
+async def _run_extractor_with_retry(
+    *,
+    llm: LLMService,
+    ctx: TurnContext,
+    msg: InboundMessage,
+    draft_already_created: bool,
+) -> None:
+    """Post-turn extractor with retry + dead-letter.
+
+    Retries up to _EXTRACTOR_MAX_RETRIES times with exponential backoff.
+    On permanent failure, logs a dead-letter event so the staff console can
+    surface it — the guest's intent is never silently lost.
+    """
+    if draft_already_created:
+        return
+
+    last_exc: Exception | None = None
+    for attempt in range(_EXTRACTOR_MAX_RETRIES):
+        try:
+            await _run_extractor(
+                llm=llm, ctx=ctx, msg=msg, draft_already_created=draft_already_created
+            )
+            return  # success
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            delay = _EXTRACTOR_BASE_DELAY * (2 ** attempt)
+            log.warning(
+                "Extractor attempt %d/%d failed: %s — retrying in %.1fs",
+                attempt + 1,
+                _EXTRACTOR_MAX_RETRIES,
+                exc,
+                delay,
+            )
+            await asyncio.sleep(delay)
+
+    # All retries exhausted — dead-letter: log + notify so staff sees it
+    log.error(
+        "Extractor permanently failed after %d attempts for conversation=%s: %s",
+        _EXTRACTOR_MAX_RETRIES,
+        ctx.conversation.id,
+        last_exc,
+    )
+    try:
+        from ..notifications import NOTIF_REQUEST_CREATED, notify
+
+        await notify(
+            NOTIF_REQUEST_CREATED,
+            tenant_id=ctx.tenant.id,
+            request_id=ctx.conversation.id,  # use conv id as stable key
+            payload={
+                "summary": f"[EXTRACTION FAILED] Guest said: {msg.content[:120]}",
+                "type": "extraction_failed",
+                "error": str(last_exc),
+                "guest_message": msg.content,
+            },
+        )
+    except Exception:  # noqa: BLE001
+        log.exception("dead-letter notification also failed")
 
 
 async def _run_extractor(
@@ -195,10 +265,9 @@ async def _run_extractor(
     msg: InboundMessage,
     draft_already_created: bool,
 ) -> None:
-    """Post-turn: classify the guest's intent into a Request.
+    """Single attempt: classify the guest's intent into a Request.
 
-    Runs fire-and-forget after the turn streams, so it never blocks the reply.
-    If a draft tool already created a Request, skip extraction.
+    Raises on failure so the retry wrapper can catch it.
     """
     if draft_already_created:
         return
@@ -236,11 +305,7 @@ async def _run_extractor(
             confidence=extracted["confidence"],
             priority=extracted["priority"],
         )
-        try:
-            await extract_db.commit()
-        except Exception:  # noqa: BLE001 — background task must not crash
-            log.exception("failed to persist extracted request")
-            return
+        await extract_db.commit()
 
     await notify(
         NOTIF_REQUEST_CREATED,

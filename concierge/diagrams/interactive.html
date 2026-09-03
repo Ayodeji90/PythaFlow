@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balance Concierge — Interactive Diagrams</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0f1117; color: #e1e4e8; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Top bar */
+  .topbar { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .topbar h1 { font-size: 16px; font-weight: 600; }
+  .topbar .subtitle { color: #8b949e; font-size: 12px; margin-left: 12px; }
+
+  /* Tab bar */
+  .tabs { display: flex; background: #0d1117; border-bottom: 1px solid #30363d; flex-shrink: 0; overflow-x: auto; }
+  .tab { padding: 10px 18px; cursor: pointer; color: #8b949e; font-size: 13px; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; user-select: none; }
+  .tab:hover { color: #e1e4e8; background: #161b22; }
+  .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; background: #161b22; }
+
+  /* Diagram viewport */
+  .viewport-container { flex: 1; position: relative; overflow: hidden; background: #0d1117; }
+  .diagram-panel { position: absolute; inset: 0; display: none; overflow: hidden; cursor: grab; }
+  .diagram-panel.active { display: block; }
+  .diagram-panel.dragging { cursor: grabbing; }
+  .diagram-panel .inner { transform-origin: 0 0; transition: transform 0.05s ease-out; min-width: 100%; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .diagram-panel .inner svg { max-width: none; }
+
+  /* Controls */
+  .controls { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+  .controls button { width: 40px; height: 40px; border: 1px solid #30363d; background: #161b22; color: #e1e4e8; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .controls button:hover { background: #30363d; border-color: #58a6ff; }
+  .controls button:active { transform: scale(0.95); }
+  .controls .divider { height: 1px; background: #30363d; margin: 2px 0; }
+
+  /* Zoom indicator */
+  .zoom-badge { position: absolute; bottom: 20px; left: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #8b949e; z-index: 10; }
+
+  /* Help tooltip */
+  .help { position: absolute; top: 12px; right: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 8px 14px; font-size: 11px; color: #8b949e; z-index: 10; pointer-events: none; opacity: 0.8; }
+  .help kbd { background: #21262d; padding: 1px 5px; border-radius: 3px; border: 1px solid #30363d; font-size: 10px; }
+
+  /* Loading */
+  .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 14px; z-index: 5; }
+  .loading.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:baseline;">
+    <h1>🧠 Balance Concierge</h1>
+    <span class="subtitle">Interactive System Diagrams</span>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-panel="p1">📐 System Architecture</div>
+  <div class="tab" data-panel="p2">🔄 Request Lifecycle</div>
+  <div class="tab" data-panel="p3">🏗️ UML Components</div>
+  <div class="tab" data-panel="p4">📊 Data Flow</div>
+  <div class="tab" data-panel="p5">🛡️ Tool Safety</div>
+</div>
+
+<div class="viewport-container" id="viewport">
+  <!-- Panel 1: System Architecture -->
+  <div class="diagram-panel active" id="p1">
+    <div class="inner" id="inner-p1">
+      <div class="loading" id="loading-p1">Rendering diagram…</div>
+    </div>
+  </div>
+  <!-- Panel 2: Request Lifecycle -->
+  <div class="diagram-panel" id="p2">
+    <div class="inner" id="inner-p2">
+      <div class="loading" id="loading-p2">Rendering diagram…</div>
+    </div>
+  </div>
+  <!-- Panel 3: UML Components -->
+  <div class="diagram-panel" id="p3">
+    <div class="inner" id="inner-p3">
+      <div class="loading" id="loading-p3">Rendering diagram…</div>
+    </div>
+  </div>
+  <!-- Panel 4: Data Flow -->
+  <div class="diagram-panel" id="p4">
+    <div class="inner" id="inner-p4">
+      <div class="loading" id="loading-p4">Rendering diagram…</div>
+    </div>
+  </div>
+  <!-- Panel 5: Tool Safety -->
+  <div class="diagram-panel" id="p5">
+    <div class="inner" id="inner-p5">
+      <div class="loading" id="loading-p5">Rendering diagram…</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-zoom-in" title="Zoom In (+)">+</button>
+    <button id="btn-zoom-out" title="Zoom Out (-)">−</button>
+    <div class="divider"></div>
+    <button id="btn-fit" title="Fit to Screen (0)" style="font-size:13px;">⊞</button>
+    <button id="btn-reset" title="Reset Zoom (1)" style="font-size:13px;">1:1</button>
+  </div>
+
+  <div class="zoom-badge" id="zoom-badge">100%</div>
+
+  <div class="help">
+    <kbd>Scroll</kbd> zoom · <kbd>Drag</kbd> pan · <kbd>0</kbd> fit · <kbd>1</kbd> reset · <kbd>+</kbd><kbd>−</kbd> zoom
+  </div>
+</div>
+
+<script>
+// ── Diagram sources ──────────────────────────────────────────────
+const DIAGRAMS = {
+  p1: `graph LR
+    subgraph Inbound["Inbound Channels"]
+        WC["🌐 Web Chat<br/>WebSocket"]
+        WA["📱 WhatsApp<br/>Twilio"]
+        EM["📧 Email<br/>SMTP"]
+    end
+
+    subgraph Gateway["Channel Gateway"]
+        AD["Channel Adapters<br/>normalize to InboundMessage"]
+        PIPE["Shared Pipeline<br/>handle_inbound()"]
+    end
+
+    subgraph Brain["Concierge Brain"]
+        GR["🛡️ Guardrails<br/>Rules + LLM"]
+        ORCH["🧠 Orchestrator"]
+        PROMPT["📝 System Prompt<br/>persona + context"]
+        RAG["🔍 RAG<br/>pgvector search"]
+        TOOLS["🔧 Tool Loop<br/>up to 4 steps"]
+    end
+
+    subgraph ToolReg["Tool Registry"]
+        direction TB
+        RO["✅ Read-Only<br/>check_availability · get_hours"]
+        DR["📝 Draft<br/>draft_reservation · draft_modify · draft_cancel"]
+        FL["🔒 Fulfilment<br/>create · modify · cancel_reservation"]
+    end
+
+    subgraph Backend["Backend Services"]
+        BK["BookingStore<br/>availability + reservations"]
+        REQ["Request Service<br/>open · transition · fulfil"]
+        APPROVE["Approval Queue<br/>staff approve / reject"]
+    end
+
+    subgraph LLM["LLM Seam"]
+        LS["LLMService<br/>tier: fast/quality"]
+        PROV["OpenAI-Compatible<br/>Provider Wrapper"]
+        FAILOVER["Failover<br/>Azure AI Foundry"]
+        EMB["Embeddings<br/>nv-embedqa-e5-v5"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        PG[("🐘 PostgreSQL<br/>+ pgvector")]
+        RD[("🔴 Redis<br/>locks · pub/sub · ZADD")]
+    end
+
+    subgraph Staff["Staff Console"]
+        STAFF_API["Conversations API"]
+        SSE["SSE Event Stream"]
+        APPROVE_API["Approval Endpoints"]
+    end
+
+    subgraph Support["Cross-Cutting"]
+        GM["Guest Memory"]
+        REM["Reminders"]
+        NOT["Notifications"]
+        KB["Knowledge Base"]
+        LOG["PII-safe Logging"]
+    end
+
+    Inbound --> AD --> PIPE
+    PIPE --> GR --> ORCH
+    ORCH --> PROMPT & RAG & TOOLS & GM
+    TOOLS --> RO & DR
+    DR --> REQ
+    REQ --> APPROVE --> BK
+    FL -.->|"after approval"| BK
+    RAG --> EMB & KB
+    ORCH --> LS --> PROV
+    PROV --> FAILOVER
+    PIPE --> NOT
+    REQ --> REM
+    STAFF_API & SSE & APPROVE_API -.->|"read/write"| PG & RD
+    PIPE -.-> PG
+    ORCH -.-> RD`,
+
+  p2: `sequenceDiagram
+    actor Guest
+    participant Channel as Channel Adapter
+    participant Pipeline as handle_inbound()
+    participant Guard as Guardrails
+    participant Orch as Orchestrator
+    participant RAG as RAG Retrieval
+    participant Tools as Tool Loop
+    participant ReqSvc as Request Service
+    participant Staff as Staff Console
+    participant Book as Booking Store
+    participant DB as PostgreSQL
+    participant Redis as Redis
+
+    Guest->>Channel: sends message
+    Channel->>Pipeline: InboundMessage
+
+    Pipeline->>DB: resolve tenant + conversation
+    Pipeline->>DB: persist guest turn (first!)
+    Pipeline->>Redis: acquire turn lock
+
+    Pipeline->>Guard: check_inbound(content)
+    alt Injection / Abuse detected
+        Guard-->>Pipeline: refuse or escalate
+        Pipeline-->>Guest: safe deflection message
+    else Allowed
+        Guard-->>Pipeline: allow
+
+        Pipeline->>Orch: handle(msg, ctx)
+        Orch->>RAG: retrieve(tenant, query)
+        RAG->>DB: pgvector cosine search
+        RAG-->>Orch: top-k chunks (distance < 0.68)
+
+        Orch->>Orch: build_system_prompt(tenant, context, slots)
+        Orch->>DB: load_history(last 20 turns)
+
+        loop Tool-calling loop (max 4 steps)
+            Orch->>Tools: generate_with_tools(history, tools)
+            alt LLM calls a tool
+                Tools->>DB: execute tool + log Action
+                Tools-->>Orch: tool result
+                Orch->>Tools: feed result back
+            else LLM responds with text
+                Tools-->>Orch: natural language reply
+            end
+        end
+
+        alt draft_reservation created
+            Orch->>ReqSvc: open Request (needs_review)
+            ReqSvc->>DB: insert Request row
+            Orch-->>Guest: "Sent to team for review"
+        end
+
+        Orch->>Redis: release turn lock
+        Pipeline->>DB: persist assistant turn
+        Pipeline->>Redis: publish SSE notification
+    end
+
+    Pipeline-->>Guest: reply (streamed chunks)
+
+    Note over Staff,Book: Staff Approval (later)
+    Staff->>ReqSvc: approve Request
+    ReqSvc->>DB: transition to approved
+    ReqSvc->>Book: fulfil_request()
+    Book->>DB: create Reservation row
+    Book->>Redis: schedule_reminder(ZADD)`,
+
+  p3: `classDiagram
+    class Orchestrator {
+        &lt;&lt;Protocol&gt;&gt;
+        +name: str
+        +handle(msg, ctx, db, redis) AsyncIterator
+    }
+
+    class LLMOrchestrator {
+        +name = "llm"
+        -_llm: LLMService
+        -_tier: str
+        -_embedder: EmbeddingService
+        +handle(msg, ctx, db, redis) AsyncIterator
+    }
+
+    class EchoOrchestrator {
+        +name = "echo"
+        +handle(msg, ctx, db, redis) AsyncIterator
+    }
+
+    class TurnContext {
+        &lt;&lt;dataclass&gt;&gt;
+        +tenant: Tenant
+        +conversation: Conversation
+        +guest_context: str
+        +state: dict
+        +to_tool_context() ToolContext
+    }
+
+    class LLMService {
+        -_provider: LLMProvider
+        -_models: dict
+        +generate(messages, tier, system) str
+        +stream(messages, tier, system) AsyncIterator
+        +generate_with_tools(messages, tools, tier) LLMToolResult
+    }
+
+    class LLMProvider {
+        &lt;&lt;ABC&gt;&gt;
+        +name: str
+        +generate(messages, model, system) LLMResult
+        +generate_with_tools(messages, model, tools) LLMToolResult
+        +stream(messages, model, system) AsyncIterator
+    }
+
+    class OpenAICompatibleProvider {
+        -_client: AsyncOpenAI
+        +generate() LLMResult
+        +generate_with_tools() LLMToolResult
+        +stream() AsyncIterator
+    }
+
+    class FailoverProvider {
+        -_backends: list
+        -_attempt_timeout: float
+        +generate() LLMResult
+    }
+
+    class Tool {
+        &lt;&lt;Protocol&gt;&gt;
+        +name: str
+        +description: str
+        +args_model: BaseModel
+        +kind: ToolKind
+        +run(args, ctx, db) dict
+    }
+
+    class ToolKind {
+        &lt;&lt;enum&gt;&gt;
+        read_only
+        draft
+        fulfilment
+    }
+
+    class ToolContext {
+        &lt;&lt;BaseModel&gt;&gt;
+        +tenant_id: UUID
+        +conversation_id: UUID
+        +guest_id: UUID
+        +channel_type: str
+    }
+
+    class Registry {
+        -_tools: dict
+        +register(tool)
+        +get(name) Tool
+        +definitions_for() list
+        +get_fulfilment(name) Tool
+    }
+
+    class BookingStore {
+        &lt;&lt;ABC&gt;&gt;
+        +check_availability() AvailabilityResult
+        +create() dict
+        +modify() dict
+        +cancel() dict
+    }
+
+    class LocalBookingStore {
+        +check_availability() AvailabilityResult
+        +create() dict
+        +modify() dict
+        +cancel() dict
+    }
+
+    class ChannelAdapter {
+        &lt;&lt;Protocol&gt;&gt;
+        +channel: ChannelType
+        +to_inbound() InboundMessage
+    }
+
+    class InboundMessage {
+        &lt;&lt;BaseModel&gt;&gt;
+        +tenant_slug: str
+        +channel: ChannelType
+        +conversation_ref: str
+        +sender: SenderRef
+        +content: str
+        +metadata: dict
+    }
+
+    class OutboundChunk {
+        &lt;&lt;BaseModel&gt;&gt;
+        +type: str
+        +content: str
+        +metadata: dict
+    }
+
+    class Tenant {
+        +slug: str
+        +name: str
+        +brand_voice: str
+        +timezone: str
+        +hours: dict
+        +config: dict
+    }
+
+    class Conversation {
+        +tenant_id: UUID
+        +guest_id: UUID
+        +channel_type: ChannelType
+        +status: ConversationStatus
+        +state: dict
+    }
+
+    class Request {
+        +type: RequestType
+        +status: RequestStatus
+        +priority: RequestPriority
+        +summary: str
+        +payload: dict
+        +confidence: float
+    }
+
+    LLMOrchestrator ..|> Orchestrator
+    EchoOrchestrator ..|> Orchestrator
+    LLMOrchestrator --> LLMService
+    LLMService --> LLMProvider
+    OpenAICompatibleProvider ..|> LLMProvider
+    FailoverProvider ..|> LLMProvider
+    LLMOrchestrator --> TurnContext
+    TurnContext --> Tenant
+    TurnContext --> Conversation
+    Registry --> Tool
+    Tool --> ToolKind
+    Tool --> ToolContext
+    BookingStore <|-- LocalBookingStore
+    ChannelAdapter --> InboundMessage
+    Orchestrator ..> OutboundChunk
+    Orchestrator ..> InboundMessage
+    Request --> Tenant
+    Conversation --> Tenant`,
+
+  p4: `graph TB
+    subgraph Input["📥 Input"]
+        G["Guest Message"]
+    end
+
+    subgraph Normalize["Channel Normalization"]
+        direction LR
+        WC["WebChat<br/>session_id"]
+        WA["WhatsApp<br/>phone + wa_id"]
+        EM["Email<br/>message_id"]
+    end
+
+    subgraph Canonical["Canonical Message"]
+        IM["InboundMessage<br/>tenant_slug · channel<br/>conversation_ref · content<br/>sender · metadata"]
+    end
+
+    subgraph Resolve["Resolution"]
+        T["Tenant"]
+        C["Conversation"]
+        G2["Guest"]
+    end
+
+    subgraph Persist["Persist First"]
+        MSG1["Message(guest)"]
+    end
+
+    subgraph Process["🧠 Processing"]
+        direction TB
+        GR["Guardrails<br/>rules + LLM"]
+        RET["RAG Retrieve<br/>pgvector cosine"]
+        PROMPT["System Prompt<br/>persona + context<br/>+ slot state"]
+        HISTORY["Load History<br/>last 20 turns"]
+        TOOL["Tool Loop<br/>max 4 steps"]
+    end
+
+    subgraph Tools["Tool Calls"]
+        direction LR
+        RO2["check_availability"]
+        DR2["draft_reservation"]
+        DR3["draft_modify"]
+        DR4["draft_cancel"]
+    end
+
+    subgraph Output["📤 Output"]
+        direction LR
+        CHUNK["OutboundChunk<br/>token · message<br/>action · done · error"]
+    end
+
+    subgraph Persist2["Persist After"]
+        MSG2["Message(assistant)"]
+        ACT["Action (audit)"]
+        REQ["Request (if draft)"]
+    end
+
+    subgraph Notify["Notification"]
+        REDIS_PUB["Redis Pub/Sub"]
+        SSE2["SSE Stream to Staff"]
+        REM2["Reminder ZADD"]
+    end
+
+    G --> WC & WA & EM
+    WC & WA & EM --> IM
+    IM --> T & C & G2
+    T & C & G2 --> MSG1
+    MSG1 --> GR
+    GR --> RET
+    RET --> PROMPT
+    PROMPT --> HISTORY
+    HISTORY --> TOOL
+    TOOL --> RO2 & DR2 & DR3 & DR4
+    TOOL --> CHUNK
+    CHUNK --> MSG2
+    DR2 & DR3 & DR4 --> REQ
+    TOOL --> ACT
+    MSG2 --> REDIS_PUB
+    REQ --> REDIS_PUB
+    REDIS_PUB --> SSE2
+    REQ -.->|"after approval"| REM2`,
+
+  p5: `graph TB
+    LLM["🧠 LLM<br/>(Orchestrator)"]
+
+    subgraph Tier1["Tier 1: Read-Only ✅"]
+        CA["check_availability<br/>safe, no side effects"]
+        GH["get_hours<br/>safe, no side effects"]
+    end
+
+    subgraph Tier2["Tier 2: Draft 📝"]
+        DR["draft_reservation<br/>creates Request row"]
+        DM["draft_modify_reservation<br/>creates Request row"]
+        DC["draft_cancel_reservation<br/>creates Request row"]
+    end
+
+    subgraph Tier3["Tier 3: Fulfilment 🔒"]
+        CR["create_reservation<br/>writes Reservation row"]
+        MR["modify_reservation<br/>updates Reservation"]
+        CC["cancel_reservation<br/>cancels Reservation"]
+        SM2["send_message<br/>notification"]
+    end
+
+    subgraph Safety["Safety Gates"]
+        REG["Registry<br/>definitions_for()<br/>excludes fulfilment"]
+        STAFF["Staff Approval<br/>approve / reject"]
+        TRANSITION["Request State Machine<br/>new → needs_review<br/>→ approved → in_progress<br/>→ completed"]
+    end
+
+    subgraph StaffUI["Staff Console"]
+        AQ["Approval Queue<br/>GET /api/approvals"]
+        DECIDE["Decide<br/>POST /api/approvals/decide"]
+    end
+
+    LLM -->|"can call"| Tier1
+    LLM -->|"can call"| Tier2
+    LLM -.->|"❌ hidden"| Tier3
+
+    REG -.->|"filters out"| Tier3
+    Tier2 -->|"creates"| STAFF
+    STAFF -->|"approve"| TRANSITION
+    TRANSITION -->|"triggers"| Tier3
+    AQ --> STAFF
+    DECIDE --> STAFF
+
+    style Tier1 fill:#d4edda,stroke:#28a745
+    style Tier2 fill:#fff3cd,stroke:#ffc107
+    style Tier3 fill:#f8d7da,stroke:#dc3545
+    style LLM fill:#cce5ff,stroke:#004085`
+};
+
+// ── State per panel ──────────────────────────────────────────────
+const state = {};
+for (const id of Object.keys(DIAGRAMS)) {
+  state[id] = { scale: 1, panX: 0, panY: 0, dragging: false, startX: 0, startY: 0, rendered: false };
+}
+let activePanel = 'p1';
+
+// ── Mermaid init ─────────────────────────────────────────────────
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    darkMode: true, background: '#0d1117', primaryColor: '#1f6feb',
+    primaryTextColor: '#e1e4e8', lineColor: '#58a6ff', fontSize: '14px'
+  },
+  flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' },
+  sequence: { useMaxWidth: false, actorMargin: 50, mirrorActors: false },
+  class: { useMaxWidth: false }
+});
+
+// ── Render a diagram into its panel ──────────────────────────────
+async function renderDiagram(panelId) {
+  if (state[panelId].rendered) return;
+  const inner = document.getElementById('inner-' + panelId);
+  const loading = document.getElementById('loading-' + panelId);
+  try {
+    const { svg } = await mermaid.render('mermaid-' + panelId, DIAGRAMS[panelId]);
+    loading.remove();
+    inner.innerHTML = svg;
+    state[panelId].rendered = true;
+    fitToScreen(panelId);
+  } catch (e) {
+    loading.textContent = 'Render error: ' + e.message;
+    console.error(e);
+  }
+}
+
+// ── Transform helpers ────────────────────────────────────────────
+function applyTransform(panelId) {
+  const s = state[panelId];
+  const inner = document.getElementById('inner-' + panelId);
+  inner.style.transform = `translate(${s.panX}px, ${s.panY}px) scale(${s.scale})`;
+  if (panelId === activePanel) {
+    document.getElementById('zoom-badge').textContent = Math.round(s.scale * 100) + '%';
+  }
+}
+
+function fitToScreen(panelId) {
+  const s = state[panelId];
+  const panel = document.getElementById(panelId);
+  const inner = document.getElementById('inner-' + panelId);
+  const svg = inner.querySelector('svg');
+  if (!svg) return;
+  const pw = panel.clientWidth - 80;
+  const ph = panel.clientHeight - 80;
+  const bw = svg.getBoundingClientRect().width / (s.scale || 1);
+  const bh = svg.getBoundingClientRect().height / (s.scale || 1);
+  const scale = Math.min(pw / bw, ph / bh, 2);
+  s.scale = scale;
+  s.panX = (pw - bw * scale) / 2 + 40;
+  s.panY = (ph - bh * scale) / 2 + 40;
+  applyTransform(panelId);
+}
+
+function resetZoom(panelId) {
+  const s = state[panelId];
+  s.scale = 1;
+  const panel = document.getElementById(panelId);
+  const inner = document.getElementById('inner-' + panelId);
+  const svg = inner.querySelector('svg');
+  if (!svg) return;
+  s.panX = (panel.clientWidth - svg.getBoundingClientRect().width) / 2;
+  s.panY = (panel.clientHeight - svg.getBoundingClientRect().height) / 2;
+  applyTransform(panelId);
+}
+
+function zoom(panelId, delta, cx, cy) {
+  const s = state[panelId];
+  const oldScale = s.scale;
+  s.scale = Math.min(Math.max(s.scale * (1 + delta), 0.1), 5);
+  const ratio = s.scale / oldScale;
+  s.panX = cx - ratio * (cx - s.panX);
+  s.panY = cy - ratio * (cy - s.panY);
+  applyTransform(panelId);
+}
+
+// ── Tab switching ────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.diagram-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    activePanel = tab.dataset.panel;
+    document.getElementById(activePanel).classList.add('active');
+    document.getElementById('zoom-badge').textContent = Math.round(state[activePanel].scale * 100) + '%';
+    renderDiagram(activePanel);
+  });
+});
+
+// ── Mouse wheel zoom ─────────────────────────────────────────────
+document.getElementById('viewport').addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = document.getElementById(activePanel).getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  zoom(activePanel, e.deltaY < 0 ? 0.1 : -0.1, cx, cy);
+}, { passive: false });
+
+// ── Drag to pan ──────────────────────────────────────────────────
+for (const id of Object.keys(DIAGRAMS)) {
+  const panel = document.getElementById(id);
+  panel.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    state[id].dragging = true;
+    state[id].startX = e.clientX - state[id].panX;
+    state[id].startY = e.clientY - state[id].panY;
+    panel.classList.add('dragging');
+  });
+  panel.addEventListener('mousemove', e => {
+    if (!state[id].dragging) return;
+    state[id].panX = e.clientX - state[id].startX;
+    state[id].panY = e.clientY - state[id].startY;
+    applyTransform(id);
+  });
+  panel.addEventListener('mouseup', () => { state[id].dragging = false; panel.classList.remove('dragging'); });
+  panel.addEventListener('mouseleave', () => { state[id].dragging = false; panel.classList.remove('dragging'); });
+
+  // Touch support
+  let lastTouchDist = 0;
+  panel.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      state[id].dragging = true;
+      state[id].startX = e.touches[0].clientX - state[id].panX;
+      state[id].startY = e.touches[0].clientY - state[id].panY;
+    } else if (e.touches.length === 2) {
+      lastTouchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+  panel.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (e.touches.length === 1 && state[id].dragging) {
+      state[id].panX = e.touches[0].clientX - state[id].startX;
+      state[id].panY = e.touches[0].clientY - state[id].startY;
+      applyTransform(id);
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const rect = panel.getBoundingClientRect();
+      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+      zoom(id, (dist - lastTouchDist) * 0.005, cx, cy);
+      lastTouchDist = dist;
+    }
+  }, { passive: false });
+  panel.addEventListener('touchend', () => { state[id].dragging = false; });
+}
+
+// ── Buttons ──────────────────────────────────────────────────────
+document.getElementById('btn-zoom-in').addEventListener('click', () => {
+  const rect = document.getElementById(activePanel).getBoundingClientRect();
+  zoom(activePanel, 0.2, rect.width / 2, rect.height / 2);
+});
+document.getElementById('btn-zoom-out').addEventListener('click', () => {
+  const rect = document.getElementById(activePanel).getBoundingClientRect();
+  zoom(activePanel, -0.2, rect.width / 2, rect.height / 2);
+});
+document.getElementById('btn-fit').addEventListener('click', () => fitToScreen(activePanel));
+document.getElementById('btn-reset').addEventListener('click', () => resetZoom(activePanel));
+
+// ── Keyboard shortcuts ───────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const rect = document.getElementById(activePanel).getBoundingClientRect();
+  const cx = rect.width / 2, cy = rect.height / 2;
+  if (e.key === '+' || e.key === '=') zoom(activePanel, 0.15, cx, cy);
+  else if (e.key === '-' || e.key === '_') zoom(activePanel, -0.15, cx, cy);
+  else if (e.key === '0') fitToScreen(activePanel);
+  else if (e.key === '1') resetZoom(activePanel);
+  // Tab switching with arrow keys
+  else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    const tabs = [...document.querySelectorAll('.tab')];
+    const idx = tabs.findIndex(t => t.classList.contains('active'));
+    const next = e.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+    tabs[next].click();
+  }
+});
+
+// ── Init first diagram ───────────────────────────────────────────
+renderDiagram('p1');
+</script>
+</body>
+</html>

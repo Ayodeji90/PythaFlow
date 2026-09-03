@@ -80,6 +80,7 @@ async def fulfil_request(
             tenant_id=request.tenant_id,
             conversation_id=request.conversation_id,
             guest_id=request.guest_id,
+            channel_type=request.channel_type.value if request.channel_type else "webchat",
         )
 
         # Execute the fulfilment tool

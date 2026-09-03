@@ -1,0 +1,181 @@
+classDiagram
+    class Orchestrator {
+        <<Protocol>>
+        +name: str
+        +handle(msg, ctx, db, redis) AsyncIterator~OutboundChunk~
+    }
+
+    class LLMOrchestrator {
+        +name = "llm"
+        -_llm: LLMService
+        -_tier: str
+        -_embedder: EmbeddingService
+        +handle(msg, ctx, db, redis) AsyncIterator~OutboundChunk~
+    }
+
+    class EchoOrchestrator {
+        +name = "echo"
+        +handle(msg, ctx, db, redis) AsyncIterator~OutboundChunk~
+    }
+
+    class TurnContext {
+        <<dataclass>>
+        +tenant: Tenant
+        +conversation: Conversation
+        +guest_context: str | None
+        +state: dict | None
+        +to_tool_context() ToolContext
+    }
+
+    class LLMService {
+        -_provider: LLMProvider
+        -_models: dict
+        +generate(messages, tier, system) str
+        +stream(messages, tier, system) AsyncIterator~str~
+        +generate_with_tools(messages, tools, tier) LLMToolResult
+    }
+
+    class LLMProvider {
+        <<ABC>>
+        +name: str
+        +generate(messages, model, system) LLMResult
+        +generate_with_tools(messages, model, tools) LLMToolResult
+        +stream(messages, model, system) AsyncIterator~str~
+    }
+
+    class OpenAICompatibleProvider {
+        -_client: AsyncOpenAI
+        +generate() LLMResult
+        +generate_with_tools() LLMToolResult
+        +stream() AsyncIterator~str~
+    }
+
+    class FailoverProvider {
+        -_backends: list~Backend~
+        -_attempt_timeout: float
+        +generate() LLMResult
+    }
+
+    class Tool {
+        <<Protocol>>
+        +name: str
+        +description: str
+        +args_model: BaseModel
+        +kind: ToolKind
+        +run(args, ctx, db) dict
+    }
+
+    class ToolKind {
+        <<enum>>
+        read_only
+        draft
+        fulfilment
+    }
+
+    class ToolContext {
+        <<BaseModel>>
+        +tenant_id: UUID
+        +conversation_id: UUID
+        +guest_id: UUID | None
+        +channel_type: str
+    }
+
+    class Registry {
+        -_tools: dict~str,Tool~
+        +register(tool)
+        +get(name) Tool
+        +definitions_for() list~ToolDefinition~
+        +get_fulfilment(name) Tool
+    }
+
+    class BookingStore {
+        <<ABC>>
+        +check_availability(tenant_id, date, time, party_size) AvailabilityResult
+        +create(tenant_id, draft, idempotency_key) dict
+        +modify(tenant_id, reservation_id, changes) dict
+        +cancel(tenant_id, reservation_id) dict
+    }
+
+    class LocalBookingStore {
+        +check_availability() AvailabilityResult
+        +create() dict
+        +modify() dict
+        +cancel() dict
+    }
+
+    class ChannelAdapter {
+        <<Protocol>>
+        +channel: ChannelType
+        +to_inbound(**kwargs) InboundMessage
+    }
+
+    class InboundMessage {
+        <<BaseModel>>
+        +tenant_slug: str
+        +channel: ChannelType
+        +conversation_ref: str
+        +sender: SenderRef
+        +content: str
+        +metadata: dict
+    }
+
+    class OutboundChunk {
+        <<BaseModel>>
+        +type: token | message | typing | action | done | error
+        +content: str | None
+        +metadata: dict
+    }
+
+    class Tenant {
+        +slug: str
+        +name: str
+        +brand_voice: str
+        +languages: list
+        +timezone: str
+        +hours: dict
+        +config: dict
+    }
+
+    class Conversation {
+        +tenant_id: UUID
+        +guest_id: UUID | None
+        +channel_type: ChannelType
+        +status: ConversationStatus
+        +state: dict
+    }
+
+    class Request {
+        +type: RequestType
+        +status: RequestStatus
+        +priority: RequestPriority
+        +summary: str
+        +payload: dict
+        +confidence: float
+    }
+
+    class EmbeddingService {
+        <<Protocol>>
+        +dim: int
+        +embed_query(text) list~float~
+        +embed_documents(texts) list~list~float~~
+    }
+
+    LLMOrchestrator ..|> Orchestrator
+    EchoOrchestrator ..|> Orchestrator
+    LLMOrchestrator --> LLMService
+    LLMService --> LLMProvider
+    OpenAICompatibleProvider ..|> LLMProvider
+    FailoverProvider ..|> LLMProvider
+    LLMOrchestrator --> TurnContext
+    TurnContext --> Tenant
+    TurnContext --> Conversation
+    Registry --> Tool
+    Tool --> ToolKind
+    Tool --> ToolContext
+    BookingStore <|-- LocalBookingStore
+    ChannelAdapter --> InboundMessage
+    Orchestrator ..> OutboundChunk
+    Orchestrator ..> InboundMessage
+    LLMOrchestrator --> EmbeddingService
+    Request --> Tenant
+    Conversation --> Tenant

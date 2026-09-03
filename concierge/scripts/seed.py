@@ -36,7 +36,7 @@ async def main() -> None:
                     Channel(
                         tenant_id=existing.id,
                         type=ChannelType.email,
-                        external_id="demo-bistro@pythaflow.local",
+                        external_id="demo-bistro@getbalance.local",
                         active=True,
                         config={
                             "display_name": "Demo Bistro Concierge",
@@ -47,7 +47,7 @@ async def main() -> None:
                 await s.commit()
                 print(
                     f"✓ added email channel for tenant '{existing.slug}' "
-                    f"(demo-bistro@pythaflow.local)"
+                    f"(demo-bistro@getbalance.local)"
                 )
             else:
                 print(f"tenant '{existing.slug}' already fully seeded — nothing to do")
@@ -80,7 +80,7 @@ async def main() -> None:
                 Channel(
                     tenant_id=tenant.id,
                     type=ChannelType.email,
-                    external_id="demo-bistro@pythaflow.local",
+                    external_id="demo-bistro@getbalance.local",
                     active=True,
                     config={
                         "display_name": "Demo Bistro Concierge",

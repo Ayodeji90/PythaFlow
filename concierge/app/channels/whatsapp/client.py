@@ -131,7 +131,7 @@ def validate_twilio_signature(
 T = TypeVar("T")
 
 
-async def send_with_retry(
+async def send_with_retry(  # noqa: UP047 — keep 3.12-compatible generic
     send: Callable[[], Awaitable[T]],
     *,
     max_retries: int = 3,

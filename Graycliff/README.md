@@ -1,4 +1,4 @@
-# Graycliff AI Platform — PythaFlow Demo
+# Graycliff AI Platform — Balance Demo
 
 Five AI solutions for Graycliff Hotel & Restaurant (Nassau), built as one
 integrated demo: Smart Menu & Dynamic Pricing, Guest Personalization,

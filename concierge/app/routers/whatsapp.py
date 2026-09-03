@@ -83,8 +83,13 @@ async def inbound_whatsapp(
     settings = get_settings()
     form = {k: str(v) for k, v in (await request.form()).items()}
 
-    # 1) Prove it's really Twilio (unless disabled / no token configured).
-    if settings.WHATSAPP_VALIDATE_SIGNATURE and settings.TWILIO_AUTH_TOKEN:
+    # 1) Prove it's really Twilio (reject if validation is requested but unsupported).
+    if settings.WHATSAPP_VALIDATE_SIGNATURE:
+        if not settings.TWILIO_AUTH_TOKEN:
+            raise HTTPException(
+                status_code=403,
+                detail="signature validation enabled but no Twilio token configured",
+            )
         signature = request.headers.get("X-Twilio-Signature", "")
         if not validate_twilio_signature(
             settings.TWILIO_AUTH_TOKEN, str(request.url), form, signature
@@ -205,7 +210,12 @@ async def whatsapp_status(
     """Twilio delivery/read receipts (sent → delivered → read, or failed)."""
     settings = get_settings()
     form = {k: str(v) for k, v in (await request.form()).items()}
-    if settings.WHATSAPP_VALIDATE_SIGNATURE and settings.TWILIO_AUTH_TOKEN:
+    if settings.WHATSAPP_VALIDATE_SIGNATURE:
+        if not settings.TWILIO_AUTH_TOKEN:
+            raise HTTPException(
+                status_code=403,
+                detail="signature validation enabled but no Twilio token configured",
+            )
         signature = request.headers.get("X-Twilio-Signature", "")
         if not validate_twilio_signature(
             settings.TWILIO_AUTH_TOKEN, str(request.url), form, signature

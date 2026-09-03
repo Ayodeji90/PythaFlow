@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balance Concierge — System Diagrams</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0f1117; color: #e1e4e8; padding: 20px; }
+  h1 { text-align: center; margin: 20px 0 10px; font-size: 24px; }
+  .subtitle { text-align: center; color: #8b949e; margin-bottom: 30px; font-size: 14px; }
+  .nav { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
+  .nav a { padding: 8px 16px; background: #21262d; border: 1px solid #30363d; border-radius: 8px; color: #58a6ff; text-decoration: none; font-size: 13px; transition: all 0.2s; }
+  .nav a:hover { background: #30363d; border-color: #58a6ff; }
+  .nav a.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+  .diagram-section { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .diagram-section h2 { color: #f0f6fc; margin-bottom: 8px; font-size: 18px; }
+  .diagram-section .desc { color: #8b949e; margin-bottom: 16px; font-size: 13px; }
+  .mermaid { background: #0d1117; border-radius: 8px; padding: 20px; overflow-x: auto; }
+  .mermaid svg { max-width: 100%; height: auto; }
+  .note { text-align: center; color: #8b949e; font-size: 12px; margin-top: 40px; padding: 20px; }
+  .note code { background: #21262d; padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>🧠 Balance Concierge — System Diagrams</h1>
+<p class="subtitle">Interactive architecture diagrams for the AI concierge platform</p>
+
+<div class="nav">
+  <a href="#arch" class="active">System Architecture</a>
+  <a href="#lifecycle">Request Lifecycle</a>
+  <a href="#uml">UML Components</a>
+  <a href="#dataflow">Data Flow</a>
+  <a href="#tools">Tool Safety</a>
+</div>
+
+<div class="diagram-section" id="arch">
+  <h2>1. System Architecture</h2>
+  <p class="desc">High-level block diagram showing all components and how they connect</p>
+  <div class="mermaid">
+graph LR
+    subgraph Inbound["Inbound Channels"]
+        WC["🌐 Web Chat<br/>WebSocket"]
+        WA["📱 WhatsApp<br/>Twilio"]
+        EM["📧 Email<br/>SMTP"]
+    end
+
+    subgraph Gateway["Channel Gateway"]
+        AD["Channel Adapters<br/>normalize to InboundMessage"]
+        PIPE["Shared Pipeline<br/>handle_inbound()"]
+    end
+
+    subgraph Brain["Concierge Brain"]
+        GR["🛡️ Guardrails<br/>Rules + LLM"]
+        ORCH["🧠 Orchestrator"]
+        PROMPT["📝 System Prompt<br/>persona + context"]
+        RAG["🔍 RAG<br/>pgvector search"]
+        TOOLS["🔧 Tool Loop<br/>up to 4 steps"]
+    end
+
+    subgraph ToolReg["Tool Registry"]
+        direction TB
+        RO["✅ Read-Only<br/>check_availability · get_hours"]
+        DR["📝 Draft<br/>draft_reservation · draft_modify · draft_cancel"]
+        FL["🔒 Fulfilment<br/>create · modify · cancel_reservation"]
+    end
+
+    subgraph Backend["Backend Services"]
+        BK["BookingStore<br/>availability + reservations"]
+        REQ["Request Service<br/>open · transition · fulfil"]
+        APPROVE["Approval Queue<br/>staff approve / reject"]
+    end
+
+    subgraph LLM["LLM Seam"]
+        LS["LLMService<br/>tier: fast/quality"]
+        PROV["OpenAI-Compatible<br/>Provider Wrapper"]
+        FAILOVER["Failover<br/>Azure AI Foundry"]
+        EMB["Embeddings<br/>nv-embedqa-e5-v5"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        PG[("🐘 PostgreSQL<br/>+ pgvector")]
+        RD[("🔴 Redis<br/>locks · pub/sub · ZADD")]
+    end
+
+    subgraph Staff["Staff Console"]
+        STAFF_API["Conversations API"]
+        SSE["SSE Event Stream"]
+        APPROVE_API["Approval Endpoints"]
+    end
+
+    subgraph Support["Cross-Cutting"]
+        GM["Guest Memory"]
+        REM["Reminders"]
+        NOT["Notifications"]
+        KB["Knowledge Base"]
+        LOG["PII-safe Logging"]
+    end
+
+    Inbound --> AD --> PIPE
+    PIPE --> GR --> ORCH
+    ORCH --> PROMPT & RAG & TOOLS & GM
+    TOOLS --> RO & DR
+    DR --> REQ
+    REQ --> APPROVE --> BK
+    FL -.->|"after approval"| BK
+    RAG --> EMB & KB
+    ORCH --> LS --> PROV
+    PROV --> FAILOVER
+    PIPE --> NOT
+    REQ --> REM
+    STAFF_API & SSE & APPROVE_API -.->|"read/write"| PG & RD
+    PIPE -.-> PG
+    ORCH -.-> RD
+  </div>
+</div>
+
+<div class="diagram-section" id="lifecycle">
+  <h2>2. Request Lifecycle</h2>
+  <p class="desc">Step-by-step sequence of a guest message through the entire system</p>
+  <div class="mermaid">
+sequenceDiagram
+    actor Guest
+    participant Channel as Channel Adapter
+    participant Pipeline as handle_inbound()
+    participant Guard as Guardrails
+    participant Orch as Orchestrator
+    participant RAG as RAG Retrieval
+    participant Tools as Tool Loop
+    participant ReqSvc as Request Service
+    participant Staff as Staff Console
+    participant Book as Booking Store
+    participant DB as PostgreSQL
+    participant Redis as Redis
+
+    Guest->>Channel: sends message
+    Channel->>Pipeline: InboundMessage
+
+    Pipeline->>DB: resolve tenant + conversation
+    Pipeline->>DB: persist guest turn (first!)
+    Pipeline->>Redis: acquire turn lock
+
+    Pipeline->>Guard: check_inbound(content)
+    alt Injection / Abuse detected
+        Guard-->>Pipeline: refuse or escalate
+        Pipeline-->>Guest: safe deflection message
+    else Allowed
+        Guard-->>Pipeline: allow
+
+        Pipeline->>Orch: handle(msg, ctx)
+        Orch->>RAG: retrieve(tenant, query)
+        RAG->>DB: pgvector cosine search
+        RAG-->>Orch: top-k chunks (distance < 0.68)
+
+        Orch->>Orch: build_system_prompt(tenant, context, slots)
+        Orch->>DB: load_history(last 20 turns)
+
+        loop Tool-calling loop (max 4 steps)
+            Orch->>Tools: generate_with_tools(history, tools)
+            alt LLM calls a tool
+                Tools->>DB: execute tool + log Action
+                Tools-->>Orch: tool result
+                Orch->>Tools: feed result back
+            else LLM responds with text
+                Tools-->>Orch: natural language reply
+            end
+        end
+
+        alt draft_reservation created
+            Orch->>ReqSvc: open Request (needs_review)
+            ReqSvc->>DB: insert Request row
+            Orch-->>Guest: "Sent to team for review"
+        end
+
+        Orch->>Redis: release turn lock
+        Pipeline->>DB: persist assistant turn
+        Pipeline->>Redis: publish SSE notification
+    end
+
+    Pipeline-->>Guest: reply (streamed chunks)
+
+    Note over Staff,Book: Staff Approval (later)
+    Staff->>ReqSvc: approve Request
+    ReqSvc->>DB: transition to approved
+    ReqSvc->>Book: fulfil_request()
+    Book->>DB: create Reservation row
+    Book->>Redis: schedule_reminder(ZADD)
+  </div>
+</div>
+
+<div class="diagram-section" id="uml">
+  <h2>3. UML Components</h2>
+  <p class="desc">Key abstractions, interfaces, and their relationships</p>
+  <div class="mermaid">
+classDiagram
+    class Orchestrator {
+        &lt;&lt;Protocol&gt;&gt;
+        +name: str
+        +handle(msg, ctx, db, redis) AsyncIterator
+    }
+
+    class LLMOrchestrator {
+        +name = "llm"
+        -_llm: LLMService
+        -_tier: str
+        -_embedder: EmbeddingService
+        +handle(msg, ctx, db, redis) AsyncIterator
+    }
+
+    class EchoOrchestrator {
+        +name = "echo"
+        +handle(msg, ctx, db, redis) AsyncIterator
+    }
+
+    class TurnContext {
+        &lt;&lt;dataclass&gt;&gt;
+        +tenant: Tenant
+        +conversation: Conversation
+        +guest_context: str
+        +state: dict
+        +to_tool_context() ToolContext
+    }
+
+    class LLMService {
+        -_provider: LLMProvider
+        -_models: dict
+        +generate(messages, tier, system) str
+        +stream(messages, tier, system) AsyncIterator
+        +generate_with_tools(messages, tools, tier) LLMToolResult
+    }
+
+    class LLMProvider {
+        &lt;&lt;ABC&gt;&gt;
+        +name: str
+        +generate(messages, model, system) LLMResult
+        +generate_with_tools(messages, model, tools) LLMToolResult
+        +stream(messages, model, system) AsyncIterator
+    }
+
+    class OpenAICompatibleProvider {
+        -_client: AsyncOpenAI
+        +generate() LLMResult
+        +generate_with_tools() LLMToolResult
+        +stream() AsyncIterator
+    }
+
+    class FailoverProvider {
+        -_backends: list
+        -_attempt_timeout: float
+        +generate() LLMResult
+    }
+
+    class Tool {
+        &lt;&lt;Protocol&gt;&gt;
+        +name: str
+        +description: str
+        +args_model: BaseModel
+        +kind: ToolKind
+        +run(args, ctx, db) dict
+    }
+
+    class ToolKind {
+        &lt;&lt;enum&gt;&gt;
+        read_only
+        draft
+        fulfilment
+    }
+
+    class ToolContext {
+        &lt;&lt;BaseModel&gt;&gt;
+        +tenant_id: UUID
+        +conversation_id: UUID
+        +guest_id: UUID
+        +channel_type: str
+    }
+
+    class Registry {
+        -_tools: dict
+        +register(tool)
+        +get(name) Tool
+        +definitions_for() list
+        +get_fulfilment(name) Tool
+    }
+
+    class BookingStore {
+        &lt;&lt;ABC&gt;&gt;
+        +check_availability() AvailabilityResult
+        +create() dict
+        +modify() dict
+        +cancel() dict
+    }
+
+    class LocalBookingStore {
+        +check_availability() AvailabilityResult
+        +create() dict
+        +modify() dict
+        +cancel() dict
+    }
+
+    class ChannelAdapter {
+        &lt;&lt;Protocol&gt;&gt;
+        +channel: ChannelType
+        +to_inbound() InboundMessage
+    }
+
+    class InboundMessage {
+        &lt;&lt;BaseModel&gt;&gt;
+        +tenant_slug: str
+        +channel: ChannelType
+        +conversation_ref: str
+        +sender: SenderRef
+        +content: str
+        +metadata: dict
+    }
+
+    class OutboundChunk {
+        &lt;&lt;BaseModel&gt;&gt;
+        +type: str
+        +content: str
+        +metadata: dict
+    }
+
+    class Tenant {
+        +slug: str
+        +name: str
+        +brand_voice: str
+        +timezone: str
+        +hours: dict
+        +config: dict
+    }
+
+    class Conversation {
+        +tenant_id: UUID
+        +guest_id: UUID
+        +channel_type: ChannelType
+        +status: ConversationStatus
+        +state: dict
+    }
+
+    class Request {
+        +type: RequestType
+        +status: RequestStatus
+        +priority: RequestPriority
+        +summary: str
+        +payload: dict
+        +confidence: float
+    }
+
+    LLMOrchestrator ..|> Orchestrator
+    EchoOrchestrator ..|> Orchestrator
+    LLMOrchestrator --> LLMService
+    LLMService --> LLMProvider
+    OpenAICompatibleProvider ..|> LLMProvider
+    FailoverProvider ..|> LLMProvider
+    LLMOrchestrator --> TurnContext
+    TurnContext --> Tenant
+    TurnContext --> Conversation
+    Registry --> Tool
+    Tool --> ToolKind
+    Tool --> ToolContext
+    BookingStore <|-- LocalBookingStore
+    ChannelAdapter --> InboundMessage
+    Orchestrator ..> OutboundChunk
+    Orchestrator ..> InboundMessage
+    Request --> Tenant
+    Conversation --> Tenant
+  </div>
+</div>
+
+<div class="diagram-section" id="dataflow">
+  <h2>4. Data Flow</h2>
+  <p class="desc">How data moves and transforms through the system at each stage</p>
+  <div class="mermaid">
+graph TB
+    subgraph Input["📥 Input"]
+        G["Guest Message"]
+    end
+
+    subgraph Normalize["Channel Normalization"]
+        direction LR
+        WC["WebChat<br/>session_id"]
+        WA["WhatsApp<br/>phone + wa_id"]
+        EM["Email<br/>message_id"]
+    end
+
+    subgraph Canonical["Canonical Message"]
+        IM["InboundMessage<br/>tenant_slug · channel<br/>conversation_ref · content<br/>sender · metadata"]
+    end
+
+    subgraph Resolve["Resolution"]
+        T["Tenant"]
+        C["Conversation"]
+        G2["Guest"]
+    end
+
+    subgraph Persist["Persist First"]
+        MSG1["Message(guest)"]
+    end
+
+    subgraph Process["🧠 Processing"]
+        direction TB
+        GR["Guardrails<br/>rules + LLM"]
+        RET["RAG Retrieve<br/>pgvector cosine"]
+        PROMPT["System Prompt<br/>persona + context<br/>+ slot state"]
+        HISTORY["Load History<br/>last 20 turns"]
+        TOOL["Tool Loop<br/>max 4 steps"]
+    end
+
+    subgraph Tools["Tool Calls"]
+        direction LR
+        RO2["check_availability"]
+        DR2["draft_reservation"]
+        DR3["draft_modify"]
+        DR4["draft_cancel"]
+    end
+
+    subgraph Output["📤 Output"]
+        direction LR
+        CHUNK["OutboundChunk<br/>token · message<br/>action · done · error"]
+    end
+
+    subgraph Persist2["Persist After"]
+        MSG2["Message(assistant)"]
+        ACT["Action (audit)"]
+        REQ["Request (if draft)"]
+    end
+
+    subgraph Notify["Notification"]
+        REDIS_PUB["Redis Pub/Sub"]
+        SSE2["SSE Stream to Staff"]
+        REM2["Reminder ZADD"]
+    end
+
+    G --> WC & WA & EM
+    WC & WA & EM --> IM
+    IM --> T & C & G2
+    T & C & G2 --> MSG1
+    MSG1 --> GR
+    GR --> RET
+    RET --> PROMPT
+    PROMPT --> HISTORY
+    HISTORY --> TOOL
+    TOOL --> RO2 & DR2 & DR3 & DR4
+    TOOL --> CHUNK
+    CHUNK --> MSG2
+    DR2 & DR3 & DR4 --> REQ
+    TOOL --> ACT
+    MSG2 --> REDIS_PUB
+    REQ --> REDIS_PUB
+    REDIS_PUB --> SSE2
+    REQ -.->|"after approval"| REM2
+  </div>
+</div>
+
+<div class="diagram-section" id="tools">
+  <h2>5. Tool Safety Taxonomy</h2>
+  <p class="desc">The 3-tier safety model — what the LLM can call vs what requires staff approval</p>
+  <div class="mermaid">
+graph TB
+    LLM["🧠 LLM<br/>(Orchestrator)"]
+
+    subgraph Tier1["Tier 1: Read-Only ✅"]
+        CA["check_availability<br/>safe, no side effects"]
+        GH["get_hours<br/>safe, no side effects"]
+    end
+
+    subgraph Tier2["Tier 2: Draft 📝"]
+        DR["draft_reservation<br/>creates Request row"]
+        DM["draft_modify_reservation<br/>creates Request row"]
+        DC["draft_cancel_reservation<br/>creates Request row"]
+    end
+
+    subgraph Tier3["Tier 3: Fulfilment 🔒"]
+        CR["create_reservation<br/>writes Reservation row"]
+        MR["modify_reservation<br/>updates Reservation"]
+        CC["cancel_reservation<br/>cancels Reservation"]
+        SM2["send_message<br/>notification"]
+    end
+
+    subgraph Safety["Safety Gates"]
+        REG["Registry<br/>definitions_for()<br/>excludes fulfilment"]
+        STAFF["Staff Approval<br/>approve / reject"]
+        TRANSITION["Request State Machine<br/>new → needs_review<br/>→ approved → in_progress<br/>→ completed"]
+    end
+
+    subgraph StaffUI["Staff Console"]
+        AQ["Approval Queue<br/>GET /api/approvals"]
+        DECIDE["Decide<br/>POST /api/approvals/decide"]
+    end
+
+    LLM -->|"can call"| Tier1
+    LLM -->|"can call"| Tier2
+    LLM -.->|"❌ hidden"| Tier3
+
+    REG -.->|"filters out"| Tier3
+    Tier2 -->|"creates"| STAFF
+    STAFF -->|"approve"| TRANSITION
+    TRANSITION -->|"triggers"| Tier3
+    AQ --> STAFF
+    DECIDE --> STAFF
+
+    style Tier1 fill:#d4edda,stroke:#28a745
+    style Tier2 fill:#fff3cd,stroke:#ffc107
+    style Tier3 fill:#f8d7da,stroke:#dc3545
+    style LLM fill:#cce5ff,stroke:#004085
+  </div>
+</div>
+
+<p class="note">
+  Source files at <code>concierge/diagrams/*.mmd</code> · Edit at <a href="https://mermaid.live" style="color:#58a6ff">mermaid.live</a>
+</p>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#0d1117',
+      primaryColor: '#1f6feb',
+      primaryTextColor: '#e1e4e8',
+      lineColor: '#58a6ff',
+      fontSize: '14px'
+    },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+    sequence: { useMaxWidth: true, actorMargin: 50, mirrorActors: false },
+    class: { useMaxWidth: true }
+  });
+</script>
+</body>
+</html>

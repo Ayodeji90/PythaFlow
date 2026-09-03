@@ -80,7 +80,7 @@ class DraftReservationTool:
             tenant_id=ctx.tenant_id,
             conversation_id=ctx.conversation_id,
             guest_id=ctx.guest_id,
-            channel_type=None,
+            channel_type=ctx.channel_type,
             type=RequestType.reservation,
             status=RequestStatus.needs_review,
             priority="normal",

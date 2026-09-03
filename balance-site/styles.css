@@ -1,5 +1,5 @@
 /* =========================================================================
-   PythaFlow — brand system
+   Balance — brand system
    Three colors, disciplined: Smoke White carries the page, Graphite Ink
    does all text + the dark anchor bands, Deep Teal appears rarely.
    ========================================================================= */
@@ -47,11 +47,11 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- the living mark: a pulse travels the flow-loop, always ---------- */
 .mark { display: block; height: auto; overflow: visible; }
-.pf-loop  { stroke: var(--teal); stroke-width: 2.7; opacity: 0.62; }
-.pf-pulse { stroke: var(--teal); stroke-width: 2.7; stroke-dasharray: 16 84; stroke-dashoffset: 0; animation: pf-flow 3.4s linear infinite; }
-.pf-node  { fill: var(--teal); transform-origin: 24px 16px; animation: pf-node 3.4s ease-in-out infinite; }
-@keyframes pf-flow { to { stroke-dashoffset: -100; } }
-@keyframes pf-node { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+.bl-loop  { stroke: var(--teal); stroke-width: 2.7; opacity: 0.62; }
+.bl-pulse { stroke: var(--teal); stroke-width: 2.7; stroke-dasharray: 16 84; stroke-dashoffset: 0; animation: bl-flow 3.4s linear infinite; }
+.bl-node  { fill: var(--teal); transform-origin: 24px 16px; animation: bl-node 3.4s ease-in-out infinite; }
+@keyframes bl-flow { to { stroke-dashoffset: -100; } }
+@keyframes bl-node { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 /* ---------- type scale ---------- */
 h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.02em; line-height: 1.06; }
@@ -434,8 +434,8 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.02e
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
   .reveal, .hero-in > *, .hero-in-late { opacity: 1 !important; transform: none !important; }
-  .pf-pulse { display: none; }
-  .pf-loop { opacity: 0.85; }
+  .bl-pulse { display: none; }
+  .bl-loop { opacity: 0.85; }
   html { scroll-behavior: auto; }
 }
 
@@ -465,15 +465,15 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.02e
 .vs .sec-head h2 { max-width: 24ch; }
 .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden; margin-top: 2rem; }
 .vs-col { background: var(--smoke); padding: 2rem 2rem 2.2rem; }
-.vs-col.vs-pf { background: var(--ink); }
+.vs-col.vs-bal { background: var(--ink); }
 .vs-label { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 1.3rem; }
-.vs-pf .vs-label { color: #6fd0c8; }
+.vs-bal .vs-label { color: #6fd0c8; }
 .vs-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
 .vs-list li { font-size: 14.5px; color: var(--ink-soft); padding-left: 1.4rem; position: relative; line-height: 1.5; }
 .vs-list li::before { content: ""; position: absolute; left: 0; top: 7px; width: 7px; height: 7px; border-radius: 50%; }
-.vs-col:not(.vs-pf) .vs-list li::before { background: var(--line); }
-.vs-pf .vs-list li { color: rgba(243,244,241,0.82); }
-.vs-pf .vs-list li::before { background: var(--teal); }
+.vs-col:not(.vs-bal) .vs-list li::before { background: var(--line); }
+.vs-bal .vs-list li { color: rgba(243,244,241,0.82); }
+.vs-bal .vs-list li::before { background: var(--teal); }
 .vs-bottom { text-align: center; margin-top: 2rem; font-size: 15px; color: var(--ink-soft); font-weight: 500; }
 
 /* =========================================================================

@@ -1,12 +1,12 @@
-# PythaFlow — company website
+# Balance — company website
 
-The marketing site for PythaFlow. Static, self-contained, no build step — it
+The marketing site for Balance. Static, self-contained, no build step — it
 runs from any static host or the existing FastAPI backend.
 
 ## Run locally
 
 ```bash
-cd pythaflow-site
+cd balance-site
 python3 -m http.server 8080
 # open http://localhost:8080
 ```
@@ -29,7 +29,7 @@ Every animation reinforces the idea of a concierge that never sleeps, and every
 one is disabled under `prefers-reduced-motion`:
 
 - **Living logo** — a teal pulse continuously travels the flow-loop (inline SVG
-  sprite `#pf-mark`, animated in CSS).
+  sprite `#bl-mark`, animated in CSS).
 - **Hero conversation** — a **WhatsApp-styled** chat plays a real guest booking a
   table on a loop (guest asks → concierge offers a time → books → confirms), with
   a typing indicator, per-message timestamps, and teal read-ticks. It pauses when
@@ -44,7 +44,7 @@ one is disabled under `prefers-reduced-motion`:
 
 ## Positioning
 
-PythaFlow is branded as **the AI concierge for restaurants and hotels** — a
+Balance is branded as **the AI concierge for restaurants and hotels** — a
 concierge that works *alongside* the hospitality team (answering guests, booking
 reservations, supporting staff after hours), not an "AI platform" or an
 "automation agency." Copy leads with **who it's for** (restaurants, hotels,
@@ -72,7 +72,7 @@ Type: **Fraunces** (display serif) + **Inter** (UI/body), loaded from Google Fon
 
 ## Things to update before going live
 
-- **Contact email** — currently the placeholder `hello@pythaflow.com`
+- **Contact email** — currently the placeholder `hello@getbalance.ai`
   (in `index.html`, the CTA and footer). Swap for the real inbox.
 - **"See it in action" numbers** are illustrative sample data, clearly labelled
   as such. Once you have a real customer, this section can become a genuine
@@ -86,7 +86,7 @@ mount this folder as static files — e.g. in the backend app:
 
 ```python
 from fastapi.staticfiles import StaticFiles
-app.mount("/", StaticFiles(directory="pythaflow-site", html=True), name="site")
+app.mount("/", StaticFiles(directory="balance-site", html=True), name="site")
 ```
 
 (or a subpath like `/company`). For most cases, though, a static host such as

@@ -14,10 +14,8 @@ from __future__ import annotations
 import uuid
 from unittest.mock import patch
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
 
 from app.config import Settings
 from app.deps import get_db
@@ -25,7 +23,6 @@ from app.main import create_app
 from app.models import Channel, Conversation, Message, Tenant
 from app.models.enums import ChannelType, MessageRole
 from app.orchestrator.echo import EchoOrchestrator
-
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 

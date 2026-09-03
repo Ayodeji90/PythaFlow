@@ -1,4 +1,4 @@
-# PythaFlow Concierge
+# Balance Concierge
 
 The AI concierge for hospitality — Phase 0 (text-first). See the plans in
 `../Discovery/`: system architecture, the 30-day sprint, and the Week-1 build spec.

@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="PythaFlow — Graycliff AI Platform",
+    title="Balance — Graycliff AI Platform",
     description="Five AI solutions for Graycliff Hotel & Restaurant, Nassau.",
     version="0.1.0",
     lifespan=lifespan,
@@ -49,7 +49,7 @@ app.include_router(knowledge.router)
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "platform": "PythaFlow Graycliff demo"}
+    return {"status": "ok", "platform": "Balance Graycliff demo"}
 
 
 # The graycliff.com mockup (with the embedded concierge widget) is served

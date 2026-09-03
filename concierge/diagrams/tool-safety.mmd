@@ -1,0 +1,47 @@
+graph TB
+    LLM["🧠 LLM<br/>(Orchestrator)"]
+
+    subgraph Tier1["Tier 1: Read-Only ✅"]
+        CA["check_availability<br/>← safe, no side effects"]
+        GH["get_hours<br/>← safe, no side effects"]
+    end
+
+    subgraph Tier2["Tier 2: Draft 📝"]
+        DR["draft_reservation<br/>→ creates Request row"]
+        DM["draft_modify_reservation<br/>→ creates Request row"]
+        DC["draft_cancel_reservation<br/>→ creates Request row"]
+    end
+
+    subgraph Tier3["Tier 3: Fulfilment 🔒"]
+        CR["create_reservation<br/>→ writes Reservation row"]
+        MR["modify_reservation<br/>→ updates Reservation"]
+        CC["cancel_reservation<br/>→ cancels Reservation"]
+        SM2["send_message<br/>→ notification"]
+    end
+
+    subgraph Safety["Safety Gates"]
+        REG["Registry<br/>definitions_for()<br/>excludes fulfilment"]
+        STAFF["Staff Approval<br/>approve / reject"]
+        TRANSITION["Request State Machine<br/>new → needs_review<br/>→ approved → in_progress<br/>→ completed"]
+    end
+
+    subgraph StaffUI["Staff Console"]
+        AQ["Approval Queue<br/>GET /api/approvals"]
+        DECIDE["Decide<br/>POST /api/approvals/decide"]
+    end
+
+    LLM -->|"can call"| Tier1
+    LLM -->|"can call"| Tier2
+    LLM -.->|"❌ hidden"| Tier3
+
+    REG -.->|"filters out"| Tier3
+    Tier2 -->|"creates"| STAFF
+    STAFF -->|"approve"| TRANSITION
+    TRANSITION -->|"triggers"| Tier3
+    AQ --> STAFF
+    DECIDE --> STAFF
+
+    style Tier1 fill:#d4edda,stroke:#28a745
+    style Tier2 fill:#fff3cd,stroke:#ffc107
+    style Tier3 fill:#f8d7da,stroke:#dc3545
+    style LLM fill:#cce5ff,stroke:#004085

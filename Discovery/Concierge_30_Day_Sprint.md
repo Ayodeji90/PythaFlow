@@ -1,4 +1,4 @@
-# PythaFlow Concierge — First 30-Day Sprint (Phase 0: text-first)
+# Balance Concierge — First 30-Day Sprint (Phase 0: text-first)
 
 *Turns [Concierge_System_Plan.md](./Concierge_System_Plan.md) into a daily build
 schedule. Locked scope: **text-first, one venue** — web chat + WhatsApp text,

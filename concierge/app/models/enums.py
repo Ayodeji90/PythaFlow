@@ -20,6 +20,7 @@ class ChannelType(enum.StrEnum):
     voice = "voice"
     instagram = "instagram"
     email = "email"
+    telegram = "telegram"
 
 
 class ConversationStatus(enum.StrEnum):

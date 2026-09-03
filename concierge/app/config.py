@@ -66,6 +66,18 @@ class Settings(BaseSettings):
     TWILIO_TEMPLATE_BOOKING_CONFIRMED: str = ""
     TWILIO_TEMPLATE_BOOKING_REMINDER: str = ""
 
+    # --- Telegram MTProto channel ------------------------------------------------
+    # MTProto requires API ID and Hash from my.telegram.org, plus a phone number
+    # for authentication. Session strings can be stored for persistent connections.
+    TELEGRAM_API_ID: int = 0
+    TELEGRAM_API_HASH: str = ""
+    TELEGRAM_PHONE_NUMBER: str = ""       # e.g. "+2348012345678"
+    TELEGRAM_SESSION_STRING: str = ""     # persisted session (optional, for production)
+    # Webhook secret for inbound update verification (same pattern as WhatsApp)
+    TELEGRAM_WEBHOOK_SECRET: str = ""
+    # Webhook URL for receiving updates (if empty, use long polling in dev)
+    TELEGRAM_WEBHOOK_URL: str = ""
+
     # --- guardrails (Day 6) ---
     # Hybrid: rules always run (instant); the LLM moderator only runs on input the
     # rules flag as borderline. Turn the LLM layer off for pure-rules / offline.
@@ -120,6 +132,17 @@ class Settings(BaseSettings):
     REQUEST_EXTRACTOR_ENABLED: bool = True   # post-turn help classifier
     REQUEST_EXTRACTOR_TIER: str = "fast"
     STAFF_TOKEN_HEADER: str = "X-Staff-Token"  # stopgap auth until Week 3/Day 24
+
+    # --- Staff console (Day 17) -----------------------------------------------
+    # Per-tenant staff tokens live at Tenant.config["staff_tokens"]: list[str].
+    # In dev environments the literal tenant SUPER_TOKEN below also authenticates
+    # every tenant — never set this anywhere non-dev.
+    CONSOLE_SUPER_TOKEN: str = "dev-token"
+    # Heartbeat the SSE publisher emits to keep EventSource connections open
+    # past any idle-timeout in fronting proxies (CloudFront / Nginx).
+    CONSOLE_SSE_HEARTBEAT_SECONDS: float = 20.0
+    # Max time a single SSE connection stays open. Clients auto-reconnect.
+    CONSOLE_SSE_MAX_AGE_SECONDS: int = 600
 
     # --- embeddings + retrieval (RAG) ---
     EMBED_PROVIDER: str = "nvidia"

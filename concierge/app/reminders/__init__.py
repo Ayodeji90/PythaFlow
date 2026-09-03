@@ -30,6 +30,19 @@ _REDIS_KEY_TPL = "reminders:{}"
 # In-memory dedup set (when Redis is unavailable)
 _reminded_set: set[str] = set()
 
+# E2: Lua script for atomic ZRANGEBYSCORE + ZREM.
+# Returns the removed members so the caller can fire them.
+# This prevents double-firing under multi-worker deployments.
+_ATOMIC_POP_LUA = """
+local key = KEYS[1]
+local max_score = tonumber(ARGV[1])
+local items = redis.call('ZRANGEBYSCORE', key, 0, max_score)
+if #items > 0 then
+    redis.call('ZREM', key, unpack(items))
+end
+return items
+"""
+
 
 async def schedule_reminder(
     redis,
@@ -72,14 +85,18 @@ async def _check_and_fire(
 
     fired: set[str] = set()
 
-    # --- Primary: Redis ZRANGEBYSCORE ---
+    # --- Primary: Redis atomic pop (E2 fix) ---
+    # Uses a Lua script for atomic ZRANGEBYSCORE + ZREM so multi-worker
+    # deployments never double-fire the same reminder.
     if redis is not None:
         try:
+            _pop_script = redis.register_script(_ATOMIC_POP_LUA)
             cursor = 0
             while True:
                 cursor, keys = await redis.scan(cursor, match="reminders:*", count=100)
                 for key in keys:
-                    due_items = await redis.zrangebyscore(key, 0, window_end_ts)
+                    # Atomic: get due items AND remove them in one operation
+                    due_items = await _pop_script(keys=[key], args=[window_end_ts])
                     if not due_items:
                         continue
                     tenant_id = key.split(":", 1)[1]
@@ -102,9 +119,6 @@ async def _check_and_fire(
                             },
                         )
                         fired.add(res_id)
-                    # Remove all fired items from the sorted set
-                    if due_items:
-                        await redis.zrem(key, *due_items)
                 if cursor == 0:
                     break
         except Exception:

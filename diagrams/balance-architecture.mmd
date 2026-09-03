@@ -1,0 +1,185 @@
+graph LR
+    %% =============================================
+    %% BALANCE ARCHITECTURE — GRAYCLIFF + CONCIERGE
+    %% =============================================
+
+    subgraph DEMO["🏨 Graycliff Demo (Nassau) — Five-Module Platform"]
+        direction TB
+        
+        subgraph FE["Frontend (React + Vite SPA)"]
+            QR["QR Menu<br/>/?table=12"]
+            QR_GUEST["QR Menu + Personalization<br/>/?table=12&guest=7"]
+            DASH["Manager Dashboard<br/>/dashboard"]
+            VOICE_DEMO["Voice Concierge Demo<br/>/voice"]
+            MKT["Marketing Studio<br/>/marketing"]
+            KNOWLEDGE["Knowledge Base UI<br/>/knowledge"]
+        end
+
+        subgraph BE["Backend (FastAPI + SQLite)"]
+            API["FastAPI App"]
+            
+            subgraph SERVICES["Core Services"]
+                FORECAST["Forecast Service<br/>trailing level × weekday profile × event uplift"]
+                PRICING["Dynamic Pricing Engine<br/>rule engine + guardrails (±15%, ≥2× cost)"]
+                RECOMMENDER["Recommender<br/>co-occurrence CF + content tags + guest history"]
+                LLM_SVC["LLMService<br/>vendor-blind interface"]
+                KB["Knowledge Service<br/>Graycliff-specific facts"]
+            end
+
+            subgraph PROVIDERS["LLM Providers (swappable via .env)"]
+                ANTHROPIC["Anthropic Provider"]
+                OPENAI_COMPAT["OpenAI-Compatible<br/>(OpenAI, Groq, Mistral, Ollama)"]
+            end
+
+            subgraph ROUTERS["API Routers"]
+                R_MENU["Menu & Orders"]
+                R_RES["Reservations"]
+                R_FORECAST["Forecast & Pricing"]
+                R_REC["Recommendations"]
+                R_VOICE["Voice (demo)"]
+                R_MKT["Marketing"]
+                R_KNOW["Knowledge"]
+            end
+
+            DB[("SQLite<br/>graycliff.db<br/>seeded from data/seed/")]
+        end
+
+        subgraph DATA["Synthetic Data Pipeline"]
+            GEN["generate_graycliff_data.py<br/>12 months seasonal POS history"]
+            SEED["Seed CSVs<br/>menu, guests, orders, inventory, events, reservations"]
+        end
+
+        %% Demo connections
+        FE --> API
+        API --> SERVICES
+        SERVICES --> PROVIDERS
+        API --> ROUTERS
+        ROUTERS --> DB
+        SERVICES --> DB
+        GEN --> SEED
+        SEED --> DB
+    end
+
+    subgraph PRODUCT["🇳🇬 Balance Concierge (Lagos Pilot) — Production Product"]
+        direction TB
+
+        subgraph CHANNELS["Guest Channels"]
+            WHATSAPP["WhatsApp Business API"]
+            INSTAGRAM["Instagram DM"]
+            WEB_CHAT["Website Chat Widget"]
+        end
+
+        subgraph CORE["Concierge Core (FastAPI + PostgreSQL + pgvector + Redis)"]
+            MAIN["FastAPI App<br/>app/main.py"]
+            
+            subgraph ORCHESTRATOR["Orchestrator Engine"]
+                ENGINE["Tools Loop Engine<br/>orchestrator/engine.py"]
+                PROMPT["Prompt Assembly<br/>persona + knowledge + context"]
+                GUARD["Guardrails<br/>grounding, injection refusal"]
+                STATE["Conversation State"]
+            end
+
+            subgraph LLM_LAYER["LLM Layer (vendor-blind)"]
+                LLM_SVC2["LLMService<br/>app/llm/service.py"]
+                FACTORY["Provider Factory<br/>build_llm_service()"]
+                BASE["LLMProvider ABC<br/>base.py"]
+                
+                subgraph PROVIDERS2["Provider Wrappers"]
+                    NVIDIA_NIM["NVIDIA NIM<br/>openai_compatible.py"]
+                    OPENAI2["OpenAI / Groq / Mistral / Ollama"]
+                end
+            end
+
+            subgraph KNOWLEDGE2["RAG Knowledge Base"]
+                INGEST["Ingest & Chunk<br/>knowledge/ingest.py"]
+                EMBED["Embeddings<br/>llm/embeddings.py"]
+                RETRIEVE["Retrieve<br/>knowledge/retrieve.py"]
+                VECTOR[("pgvector<br/>PostgreSQL")]
+            end
+
+            subgraph TOOLS["Function Tools"]
+                CHECK_AVAIL["check_availability"]
+                CREATE_RES["create_reservation"]
+                MODIFY_RES["modify_reservation"]
+                CANCEL_RES["cancel_reservation"]
+                DRAFT_RES["draft_reservation"]
+                DRAFT_MOD["draft_modify_reservation"]
+                DRAFT_CANCEL["draft_cancel_reservation"]
+                GET_HOURS["get_hours"]
+                SEND_MSG["send_message"]
+            end
+
+            subgraph BOOKING["Booking Backend (swappable)"]
+                LOCAL["Local DB Reservations"]
+                SHEET["Google Sheets Mirror"]
+                FACTORY_B["Booking Factory"]
+            end
+
+            subgraph CHANNEL_ADAPTERS["Channel Adapters"]
+                WA_ADAPTER["WhatsApp Adapter<br/>window management, templates"]
+                WA_CLIENT["WhatsApp Client<br/>API wrapper"]
+                EMAIL_ADAPTER["Email Adapter"]
+                WEB_ADAPTER["WebChat Adapter"]
+            end
+
+            subgraph APPROVAL["Human Approval Workflow"]
+                APPROVAL_SVC["Approval Service<br/>one-tap staff approval"]
+                REMINDERS["Reminders<br/>follow-up on pending"]
+            end
+
+            subgraph DATA_STORES["Data Layer"]
+                PG[("PostgreSQL<br/>multi-tenant")]
+                REDIS[("Redis<br/>session state, locks")]
+            end
+        end
+
+        subgraph OPS["Operations & Monitoring"]
+            HEALTH["Health Endpoint<br/>/health (db, redis, llm)"]
+            CHECK_LLM["scripts/check_llm.py<br/>LLM smoke test"]
+        end
+
+        %% Product connections
+        CHANNELS --> CHANNEL_ADAPTERS
+        CHANNEL_ADAPTERS --> MAIN
+        MAIN --> ORCHESTRATOR
+        ORCHESTRATOR --> LLM_LAYER
+        ORCHESTRATOR --> TOOLS
+        ORCHESTRATOR --> KNOWLEDGE2
+        ORCHESTRATOR --> APPROVAL
+        ORCHESTRATOR --> STATE
+        LLM_LAYER --> FACTORY
+        FACTORY --> PROVIDERS2
+        KNOWLEDGE2 --> INGEST
+        KNOWLEDGE2 --> EMBED
+        KNOWLEDGE2 --> RETRIEVE
+        KNOWLEDGE2 --> VECTOR
+        TOOLS --> BOOKING
+        BOOKING --> FACTORY_B
+        FACTORY_B --> LOCAL
+        FACTORY_B --> SHEET
+        MAIN --> DATA_STORES
+        MAIN --> HEALTH
+        CHECK_LLM --> LLM_LAYER
+    end
+
+    subgraph SHARED["Shared Infrastructure Pattern"]
+        direction TB
+        LLM_INTERFACE["LLMService Interface<br/>Stable: generate(messages, tier)"]
+        PROVIDER_PATTERN["Provider Wrapper Pattern<br/>One file per vendor → swap via .env"]
+        MULTI_TENANT["Multi-Tenant from Day One<br/>restaurant_id on every table"]
+    end
+
+    %% Cross-connections
+    DEMO -. "Same LLM isolation pattern" .-> SHARED
+    PRODUCT -. "Same LLM isolation pattern" .-> SHARED
+
+    %% Deployment
+    subgraph DEPLOY["Deployment"]
+        DOCKER["Docker Compose<br/>frontend + backend + db"]
+        DEV_SH["./dev.sh<br/>hot-reload everything"]
+        PROD_DOCKER["Docker Compose<br/>api + Postgres + Redis"]
+    end
+
+    DEMO --> DOCKER
+    DEMO --> DEV_SH
+    PRODUCT --> PROD_DOCKER

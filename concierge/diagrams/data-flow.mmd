@@ -1,0 +1,78 @@
+graph TB
+    subgraph Input["📥 Input"]
+        G["Guest Message"]
+    end
+
+    subgraph Normalize["Channel Normalization"]
+        direction LR
+        WC["WebChat<br/>session_id"]
+        WA["WhatsApp<br/>phone + wa_id"]
+        EM["Email<br/>message_id"]
+    end
+
+    subgraph Canonical["Canonical Message"]
+        IM["InboundMessage<br/>tenant_slug · channel<br/>conversation_ref · content<br/>sender · metadata"]
+    end
+
+    subgraph Resolve["Resolution"]
+        T["Tenant"]
+        C["Conversation"]
+        G2["Guest"]
+    end
+
+    subgraph Persist["Persist First"]
+        MSG1["Message(guest)"]
+    end
+
+    subgraph Process["🧠 Processing"]
+        direction TB
+        GR["Guardrails<br/>rules + LLM"]
+        RET["RAG Retrieve<br/>pgvector cosine"]
+        PROMPT["System Prompt<br/>persona + context<br/>+ slot state"]
+        HISTORY["Load History<br/>last 20 turns"]
+        TOOL["Tool Loop<br/>max 4 steps"]
+    end
+
+    subgraph Tools["Tool Calls"]
+        direction LR
+        RO2["check_availability"]
+        DR2["draft_reservation"]
+        DR3["draft_modify"]
+        DR4["draft_cancel"]
+    end
+
+    subgraph Output["📤 Output"]
+        direction LR
+        CHUNK["OutboundChunk<br/>token · message<br/>action · done · error"]
+    end
+
+    subgraph Persist2["Persist After"]
+        MSG2["Message(assistant)"]
+        ACT["Action (audit)"]
+        REQ["Request (if draft)"]
+    end
+
+    subgraph Notify["Notification"]
+        REDIS_PUB["Redis Pub/Sub"]
+        SSE2["SSE Stream → Staff"]
+        REM2["Reminder ZADD"]
+    end
+
+    G --> WC & WA & EM
+    WC & WA & EM --> IM
+    IM --> T & C & G2
+    T & C & G2 --> MSG1
+    MSG1 --> GR
+    GR --> RET
+    RET --> PROMPT
+    PROMPT --> HISTORY
+    HISTORY --> TOOL
+    TOOL --> RO2 & DR2 & DR3 & DR4
+    TOOL --> CHUNK
+    CHUNK --> MSG2
+    DR2 & DR3 & DR4 --> REQ
+    TOOL --> ACT
+    MSG2 --> REDIS_PUB
+    REQ --> REDIS_PUB
+    REDIS_PUB --> SSE2
+    REQ -.->|"after approval"| REM2

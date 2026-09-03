@@ -1,4 +1,4 @@
-# Contributing to PythaFlow
+# Contributing to Balance
 
 How we use git on this repo. The whole point: **`main` always works, and every
 change is tracked as a small, reviewable unit.**
@@ -8,7 +8,7 @@ This is a monorepo with three concerns that live side by side:
 | Folder | What it is |
 |---|---|
 | `concierge/` | The product — FastAPI backend, the AI concierge |
-| `pythaflow-site/` | The marketing website (static) |
+| `balance-site/` | The marketing website (static) |
 | `Discovery/` | Specs, research, GTM, business docs |
 
 They are separated by **folder**, not by permanent branches. Do not create a

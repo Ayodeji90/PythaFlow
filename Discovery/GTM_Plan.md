@@ -1,4 +1,4 @@
-# PythaFlow — Go-To-Market Plan (v1: land the first paying venue)
+# Balance — Go-To-Market Plan (v1: land the first paying venue)
 
 *The build is ahead of the go-to-market. This plan closes that gap. Nothing here
 requires new product beyond the current sprint.*

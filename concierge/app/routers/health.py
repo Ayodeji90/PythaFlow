@@ -22,7 +22,7 @@ async def root() -> dict:
     }
     if s.ENV.lower() in {"dev", "development", "local", "test"}:
         endpoints["dev_chat"] = "/dev/chat?tenant=demo"
-    return {"service": "PythaFlow Concierge", "version": s.APP_VERSION, "endpoints": endpoints}
+    return {"service": "Balance Concierge", "version": s.APP_VERSION, "endpoints": endpoints}
 
 
 @router.get("/favicon.ico", include_in_schema=False)

@@ -118,7 +118,7 @@ async def ws_chat(websocket: WebSocket) -> None:
 
 
 _DEV_PAGE = """<!doctype html>
-<meta charset="utf-8"><title>PythaFlow concierge — dev chat</title>
+<meta charset="utf-8"><title>Balance concierge — dev chat</title>
 <style>
  body{font:15px/1.5 system-ui;margin:0;background:#F3F4F1;color:#17191C}
  .wrap{max-width:640px;margin:40px auto;padding:0 16px}
@@ -200,7 +200,7 @@ async def dev_chat() -> str:
 
 _APPROVALS_PAGE = """<!doctype html>
 <html lang="en">
-<meta charset="utf-8"><title>PythaFlow — approvals</title>
+<meta charset="utf-8"><title>Balance — approvals</title>
 <style>
  body{font:15px/1.5 system-ui;margin:0;background:#F3F4F1;color:#17191C;padding:20px}
  h2{margin:0 0 16px}

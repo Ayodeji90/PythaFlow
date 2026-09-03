@@ -1,0 +1,74 @@
+graph LR
+    subgraph Inbound["Inbound Channels"]
+        WC["🌐 Web Chat<br/>WebSocket"]
+        WA["📱 WhatsApp<br/>Twilio"]
+        EM["📧 Email<br/>SMTP"]
+    end
+
+    subgraph Gateway["Channel Gateway"]
+        AD["Channel Adapters<br/>normalize to InboundMessage"]
+        PIPE["Shared Pipeline<br/>handle_inbound()"]
+    end
+
+    subgraph Brain["Concierge Brain"]
+        GR["🛡️ Guardrails<br/>Rules + LLM"]
+        ORCH["🧠 Orchestrator"]
+        PROMPT["📝 System Prompt<br/>persona + context"]
+        RAG["🔍 RAG<br/>pgvector search"]
+        TOOLS["🔧 Tool Loop<br/>up to 4 steps"]
+    end
+
+    subgraph Tools["Tool Registry"]
+        direction TB
+        RO["✅ Read-Only<br/>check_availability · get_hours"]
+        DR["📝 Draft (needs approval)<br/>draft_reservation · draft_modify · draft_cancel"]
+        FL["🔒 Fulfilment (staff-only)<br/>create · modify · cancel_reservation"]
+    end
+
+    subgraph Backend["Backend Services"]
+        BK["BookingStore<br/>availability + reservations"]
+        REQ["Request Service<br/>open · transition · fulfil"]
+        APPROVE["Approval Queue<br/>staff approve / reject"]
+    end
+
+    subgraph LLM["LLM Seam"]
+        LS["LLMService<br/>(tier: fast/quality)"]
+        PROV["OpenAI-Compatible<br/>Provider Wrapper"]
+        FAILOVER["Failover<br/>Azure AI Foundry"]
+        EMB["Embeddings<br/>nv-embedqa-e5-v5"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        PG[("🐘 PostgreSQL<br/>+ pgvector")]
+        RD[("🔴 Redis<br/>locks · pub/sub · ZADD")]
+    end
+
+    subgraph Staff["Staff Console"]
+        STAFF_API["Conversations API"]
+        SSE["SSE Event Stream"]
+        APPROVE_API["Approval Endpoints"]
+    end
+
+    subgraph Support["Cross-Cutting"]
+        GM["Guest Memory"]
+        REM["Reminders"]
+        NOT["Notifications"]
+        KB["Knowledge Base"]
+        LOG["PII-safe Logging"]
+    end
+
+    Inbound --> AD --> PIPE
+    PIPE --> GR --> ORCH
+    ORCH --> PROMPT & RAG & TOOLS & GM
+    TOOLS --> RO & DR
+    DR --> REQ
+    REQ --> APPROVE --> BK
+    FL -.->|"after approval"| BK
+    RAG --> EMB & KB
+    ORCH --> LS --> PROV
+    PROV --> FAILOVER
+    PIPE --> NOT
+    REQ --> REM
+    STAFF_API & SSE & APPROVE_API -.->|"read/write"| PG & RD
+    PIPE -.-> PG
+    ORCH -.-> RD

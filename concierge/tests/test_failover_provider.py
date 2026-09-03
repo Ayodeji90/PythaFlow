@@ -20,7 +20,6 @@ import pytest
 from app.llm.base import LLMMessage, LLMProvider, LLMResult, LLMToolResult, ToolDefinition
 from app.llm.providers.failover import Backend, FailoverProvider
 
-
 # ── Mock provider factory ────────────────────────────────────────────────────
 
 
@@ -312,7 +311,7 @@ class TestStream:
 
 class TestReason:
     def test_timeout_exception(self):
-        assert FailoverProvider._reason(asyncio.TimeoutError()) == "timeout"
+        assert FailoverProvider._reason(TimeoutError()) == "timeout"
         assert FailoverProvider._reason(TimeoutError()) == "timeout"
 
     def test_other_exception(self):

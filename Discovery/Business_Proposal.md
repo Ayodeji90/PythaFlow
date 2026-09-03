@@ -1,4 +1,4 @@
-# PythaFlow — Founding Venue Pilot (Lagos)
+# Balance — Founding Venue Pilot (Lagos)
 ### The AI concierge for restaurants & hotels that never sleeps
 
 *Customer-facing. Hand this over after the live demo, or send as a PDF/WhatsApp
@@ -67,7 +67,7 @@ itself.
 Meta now offers a free auto-reply, and it will answer "what time do you open?" But it
 doesn't know *your* menu, it doesn't route a booking through *your* staff's approval,
 it doesn't speak in *your* voice across WhatsApp **and** Instagram **and** your website,
-and it doesn't hand you a weekly revenue report. **PythaFlow is a member of your team,
+and it doesn't hand you a weekly revenue report. **Balance is a member of your team,
 set up and looked after by a founder who shows up in person — not a setting you toggle
 on.** Grounded answers, staff approval on every booking, your brand's voice.
 
@@ -76,4 +76,4 @@ on.** Grounded answers, staff approval on every booking, your brand's voice.
 **Next step:** message the demo above, then reply **"YES"** and we'll have your
 concierge answering your guests **this week** — in time for the December rush.
 
-**[Your name] · PythaFlow · [email] · [WhatsApp]**
+**[Your name] · Balance · [email] · [WhatsApp]**

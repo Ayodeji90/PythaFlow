@@ -1,7 +1,7 @@
-# PythaFlow Website — UI/UX & Frontend Audit
+# Balance Website — UI/UX & Frontend Audit
 
 **Date:** 2026-07-25
-**Scope:** `pythaflow-site/` (337 HTML / 532 CSS / 178 JS)
+**Scope:** `balance-site/` (337 HTML / 532 CSS / 178 JS)
 **Verdict:** 9/10 brochure. Strong craft, weak conversion. Gorgeous but doesn't match the Lagos fine-dining pivot or defend against Meta's free bot.
 
 ---
@@ -10,7 +10,7 @@
 
 | # | Finding | Why it matters | Proposed change |
 |---|---|---|---|
-| 1 | **No WhatsApp anywhere.** Every CTA is a `mailto:hello@pythaflow.com`. | Lagos B2B buyers answer WhatsApp before email (own research §7). A mailto is high-friction and dated. | Add a `wa.me` click-to-chat as the primary CTA ("Message us on WhatsApp"), keep email secondary. |
+| 1 | **No WhatsApp anywhere.** Every CTA is a `mailto:hello@getbalance.ai`. | Lagos B2B buyers answer WhatsApp before email (own research §7). A mailto is high-friction and dated. | Add a `wa.me` click-to-chat as the primary CTA ("Message us on WhatsApp"), keep email secondary. |
 | 2 | **The hero chat is a movie, not a demo.** It's a canned, looping fake conversation. | The chosen pitch mechanism is the live phone demo. The site should let a visitor actually try the concierge. | Add a "Try it now — text our concierge" block with a real `wa.me` link + QR. This is the highest-conversion single change on the page. |
 | 3 | **Zero differentiation vs Meta / free bots.** Meta Business Agent (June 2026) now answers DMs for free. | If a visitor thinks "Meta does this free," you're dead. This is the #1 strategic threat and the site never addresses it. | Add a short "Why not just the free bot?" beat: grounded in facts, human-approves every booking, your voice, cross-channel. |
 | 4 | **Doesn't fit the Lagos pivot.** Copy says "restaurants, hotels and resorts," generic/global tone, no local trust signals. | Pivoted to premium Lagos fine-dining. "Resorts" dilutes the beachhead; a Nigerian founder's #1 barrier is trust, which local signals build. | Tighten ICP to fine-dining/hospitality; add a "Built in Lagos, for Lagos venues" trust cue; consider naira/December framing. |

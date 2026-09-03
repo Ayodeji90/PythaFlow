@@ -15,6 +15,11 @@ class Tenant(UUIDMixin, TimestampMixin, Base):
     slug: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(200))
     brand_voice: Mapped[str] = mapped_column(Text, default="", server_default="")
+    # D2: structured voice config — tone, do/don't, length-by-channel, etc.
+    # Falls back to brand_voice text when this is empty.
+    voice_config: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb"), nullable=False
+    )
     languages: Mapped[list] = mapped_column(
         JSONB, default=list, server_default=text("'[]'::jsonb"), nullable=False
     )

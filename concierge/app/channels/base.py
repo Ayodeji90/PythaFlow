@@ -81,6 +81,39 @@ async def _resolve_conversation(
     return conv
 
 
+async def _publish_message_event(
+    *,
+    event: str,
+    tenant_id,
+    conv_id,
+    role: str,
+    content: str,
+    msg_id,
+    extra: dict | None = None,
+) -> None:
+    """Day 17: push a chat-event onto the Redis bus so the staff console's SSE
+    gets a push within ~2s of every persisted turn.
+
+    Fire-and-forget: a Redis outage must never break the inbound pipeline.
+    """
+    from ..notifications import notify
+
+    payload = {"role": role, "message_id": str(msg_id), "preview": content[:140]}
+    if extra:
+        payload.update(extra)
+    try:
+        await notify(
+            event,
+            tenant_id=tenant_id,
+            request_id=msg_id,  # already a UUID; events re-use the message id as a stable key
+            conversation_id=conv_id,
+            payload=payload,
+        )
+    except Exception:  # noqa: BLE001
+        # Already swallowed inside `notify`, but defend against ImportError etc.
+        return
+
+
 async def handle_inbound(
     msg: InboundMessage,
     *,
@@ -110,16 +143,15 @@ async def handle_inbound(
     guest_context = await build_guest_context(db, tenant.id, conv.id)
 
     # Persist the guest turn before thinking, so it survives an orchestrator failure.
-    db.add(
-        Message(
-            tenant_id=tenant.id,
-            conversation_id=conv.id,
-            role=MessageRole.guest,
-            content=msg.content,
-            content_type=msg.content_type,
-            meta={"sender": msg.sender.model_dump(exclude_none=True), **msg.metadata},
-        )
+    guest_msg = Message(
+        tenant_id=tenant.id,
+        conversation_id=conv.id,
+        role=MessageRole.guest,
+        content=msg.content,
+        content_type=msg.content_type,
+        meta={"sender": msg.sender.model_dump(exclude_none=True), **msg.metadata},
     )
+    db.add(guest_msg)
     await db.commit()
 
     ctx = TurnContext(
@@ -140,13 +172,31 @@ async def handle_inbound(
 
     reply = "".join(parts)
     if reply:
-        db.add(
-            Message(
-                tenant_id=tenant.id,
-                conversation_id=conv.id,
-                role=MessageRole.assistant,
-                content=reply,
-                meta={"orchestrator": getattr(orchestrator, "name", "unknown")},
-            )
+        assistant_msg = Message(
+            tenant_id=tenant.id,
+            conversation_id=conv.id,
+            role=MessageRole.assistant,
+            content=reply,
+            meta={"orchestrator": getattr(orchestrator, "name", "unknown")},
         )
+        db.add(assistant_msg)
         await db.commit()
+        # Day 17: console SSE push. Fire-and-forget — must not bubble up.
+        await _publish_message_event(
+            event="message.sent",
+            tenant_id=tenant.id,
+            conv_id=conv.id,
+            role=MessageRole.assistant.value,
+            content=reply,
+            msg_id=assistant_msg.id,
+        )
+    # Same SSE push for the inbound guest message (independent of reply length).
+    await _publish_message_event(
+        event="message.received",
+        tenant_id=tenant.id,
+        conv_id=conv.id,
+        role=MessageRole.guest.value,
+        content=msg.content,
+        msg_id=guest_msg.id,
+        extra={"channel": msg.channel.value},
+    )

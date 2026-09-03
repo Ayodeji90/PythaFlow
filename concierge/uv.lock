@@ -711,7 +711,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pythaflow-concierge"
+name = "balance-concierge"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -1,8 +1,8 @@
-/* PythaFlow Concierge widget — v0 prototype.
+/* Balance Concierge widget — v0 prototype.
  *
  * Drops onto any host page via one script tag:
  *   <script async src=".../concierge.js" data-restaurant="graycliff"
- *           data-api="https://api.pythaflow.com"></script>
+ *           data-api="https://api.getbalance.ai"></script>
  *
  * v0 scope: Shadow-DOM shell + text conversation against the existing
  * /api/voice/interpret endpoint. The streaming voice pipeline (mic,
@@ -22,7 +22,7 @@
   };
 
   var host = document.createElement("div");
-  host.id = "pythaflow-concierge";
+  host.id = "balance-concierge";
   var root = host.attachShadow({ mode: "closed" });
   document.body.appendChild(host);
 
@@ -98,7 +98,7 @@
     '    <input type="text" placeholder="Ask the house anything…" aria-label="Message">' +
     '    <button class="send">Send</button>' +
     '  </div>' +
-    '  <div class="foot">powered by PythaFlow · text prototype — streaming voice next</div>' +
+    '  <div class="foot">powered by Balance · text prototype — streaming voice next</div>' +
     '</div>';
 
   var fab = root.querySelector(".fab");

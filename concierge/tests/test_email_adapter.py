@@ -29,7 +29,7 @@ def _make_email(
     body: str = "Hi, I'd like a table for 2 at 7pm.",
     from_email: str = "guest@example.com",
     from_name: str | None = "Jane Guest",
-    to_email: str = "demo-bistro@pythaflow.local",
+    to_email: str = "demo-bistro@getbalance.local",
 ) -> ParsedEmail:
     return ParsedEmail(
         message_id=message_id or f"<{uuid.uuid4().hex}@example.com>",
@@ -58,7 +58,7 @@ async def test_email_to_inbound_creates_correct_message():
     assert msg.content == "Table for 2 please"
     assert msg.metadata["source"] == "email"
     assert msg.metadata["email"]["subject"] == "Dinner reservation"
-    assert msg.metadata["email"]["to_email"] == "demo-bistro@pythaflow.local"
+    assert msg.metadata["email"]["to_email"] == "demo-bistro@getbalance.local"
 
 
 async def test_email_thread_ref_uses_in_reply_to():

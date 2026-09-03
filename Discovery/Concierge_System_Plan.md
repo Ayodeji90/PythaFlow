@@ -1,4 +1,4 @@
-# PythaFlow Concierge — System Architecture & Build Plan
+# Balance Concierge — System Architecture & Build Plan
 
 *Planning document. No implementation — this defines **what we build and in what
 order** so the code phase is unambiguous.*

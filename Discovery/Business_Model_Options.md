@@ -1,6 +1,6 @@
-# PythaFlow — Business Model: Options, Analysis & Recommendation
+# Balance — Business Model: Options, Analysis & Recommendation
 
-**Purpose:** decide *how PythaFlow makes money* — grounded in a real, measured cost
+**Purpose:** decide *how Balance makes money* — grounded in a real, measured cost
 stack, not vibes. This is the document that turns your "we'll set the price after
 we measure what the system actually costs" decision into a defensible number.
 
@@ -18,12 +18,12 @@ two market-research reports (`Research_Nigeria_Hospitality_AI.md`,
 ## 0. The one principle that governs everything
 
 > **Category positioning is the whole pricing game.** If a Lagos owner files
-> PythaFlow under *software* (Orda POS: ₦1k–₦20k/mo) we are 5–10× overpriced. If
+> Balance under *software* (Orda POS: ₦1k–₦20k/mo) we are 5–10× overpriced. If
 > they file it under *demand generation / revenue recovery* (social retainers
 > ₦300–400k/mo, one influencer post ₦500k+), ₦100k/mo is cheap.
 
 Every model choice below is judged by one test: **does it make the buyer experience
-PythaFlow as recovered revenue, not as a software cost?** A cost line gets cut in the
+Balance as recovered revenue, not as a software cost?** A cost line gets cut in the
 first slow month (the Q1 churn cliff the research flags). A revenue line does not.
 
 ---
@@ -82,7 +82,7 @@ which the pilot instrumentation (the Day-8 `Action`/token logging) will give you
 
 ## 2. Revenue model — the options
 
-Seven ways PythaFlow could charge. Each judged on: fit to the "revenue not software"
+Seven ways Balance could charge. Each judged on: fit to the "revenue not software"
 principle, margin safety, and Nigeria-market reality (FX risk, buyer psychology).
 
 ### A. Flat monthly subscription (one price, all-you-can-use)
@@ -115,7 +115,7 @@ principle, margin safety, and Nigeria-market reality (FX risk, buyer psychology)
 - **How:** ₦Z per approved reservation, or a small % of the recovered cover value.
 - **Pros:** the *purest* "revenue not software" framing — you literally only earn when
   they earn; devastating in a pitch ("we only get paid when you get a booking").
-- **Cons:** requires trustworthy attribution (was this booking *because of* PythaFlow?)
+- **Cons:** requires trustworthy attribution (was this booking *because of* Balance?)
   which is disputable and gameable; owners hate variable %-of-revenue deals with
   vendors; measurement burden; slow to invoice manually.
 - **Fit:** ★★★☆☆ — magic in the *narrative*, painful in *practice*. Use the outcome
@@ -254,7 +254,7 @@ seam makes this a per-tenant knob, not a company-wide bet.
 
 ## 7. The recommended model, assembled (one paragraph)
 
-**PythaFlow sells a flat monthly retainer — ₦100k for restaurants, ₦150k for hotels,
+**Balance sells a flat monthly retainer — ₦100k for restaurants, ₦150k for hotels,
 billed by manual naira invoice + Paystack link — entered through a ₦50k paid pilot with
 a recovered-bookings guarantee, and offered as an annual/Sept–Jan prepay for cash flow
 and December lock-in. It is *sold* on the weekly recovered-revenue report (outcome

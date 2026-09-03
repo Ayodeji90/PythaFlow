@@ -30,7 +30,7 @@ flowchart TB
     subgraph BROWSER["1 · Guest's browser — graycliff.com (their EXISTING site, any CMS)"]
         direction LR
         SITE["Graycliff web pages<br/>(WordPress / custom — unchanged)"]
-        subgraph WIDGET["PythaFlow Concierge widget · one script tag, Shadow-DOM isolated"]
+        subgraph WIDGET["Balance Concierge widget · one script tag, Shadow-DOM isolated"]
             BTN["Floating 'Speak with Graycliff' button<br/>Graycliff-themed panel"]
             MIC["Mic capture<br/>AudioWorklet → 16 kHz PCM frames"]
             VAD["On-device VAD (Silero WASM)<br/>end-of-speech + barge-in detection"]
@@ -170,7 +170,7 @@ Barge-in: VAD fires while agent audio is playing → gateway cancels the LLM str
 
 ```html
 <!-- pasted once into graycliff.com's template footer -->
-<script async src="https://cdn.pythaflow.com/concierge.js"
+<script async src="https://cdn.getbalance.ai/concierge.js"
         data-restaurant="graycliff"></script>
 ```
 

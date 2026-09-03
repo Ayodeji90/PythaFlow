@@ -31,7 +31,7 @@ everything**, and you get a weekly report of the bookings it captured.
 
 Worth a 15-minute call this week?
 
-{{Name}} — PythaFlow, Nassau
+{{Name}} — Balance, Nassau
 {{email}} · {{WhatsApp}}
 
 ---
@@ -68,14 +68,14 @@ strongest close — ingest their menu from their website before walking in.)*
 
 ## 4) Graycliff follow-up (relationship already open — OVERDUE, send now)
 
-**Subject:** re: PythaFlow — a simpler place to start
+**Subject:** re: Balance — a simpler place to start
 
 Hi {{Owner}},
 
 Following up on my note last week — and with a better starting point than the
 full platform demo.
 
-We've focused PythaFlow on the sharpest problem first: an **AI concierge** that
+We've focused Balance on the sharpest problem first: an **AI concierge** that
 answers Graycliff's guests 24/7 on the website and WhatsApp — grounded in your
 actual menu, hours, and policies, with your team approving every reservation.
 For a property with international guests messaging around the clock, this is

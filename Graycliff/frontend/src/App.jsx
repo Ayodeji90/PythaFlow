@@ -6,7 +6,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <span className="brand-name">GRAYCLIFF</span>
-          <span className="brand-sub">AI Concierge · powered by PythaFlow</span>
+          <span className="brand-sub">AI Concierge · powered by Balance</span>
         </div>
         <nav className="nav">
           <NavLink to="/" end>Guest Menu</NavLink>

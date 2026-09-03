@@ -1,4 +1,4 @@
-// PythaFlow — purposeful motion only. Everything degrades gracefully
+// Balance — purposeful motion only. Everything degrades gracefully
 // without JS, and everything pauses under prefers-reduced-motion.
 (function () {
   'use strict';

@@ -1,4 +1,4 @@
-# PythaFlow — Business Plan
+# Balance — Business Plan
 
 **The AI concierge for premium Lagos hospitality: answers every guest 24/7 on
 WhatsApp/Instagram/web, grounded in the venue's real menu & policies, and turns
@@ -18,7 +18,7 @@ Premium Lagos restaurants, lounges and boutique hotels take most of their bookin
 through Instagram DMs, WhatsApp voice notes and a paper book — and lose the ones that
 arrive after staff clock out or during the dinner rush. No incumbent, local (Reisty,
 MoreTables) or global (OpenTable/Resy — effectively absent), owns this
-**DM-to-booking workflow.** PythaFlow is an AI concierge that sits on the channels
+**DM-to-booking workflow.** Balance is an AI concierge that sits on the channels
 guests already use, answers only from the venue's real facts (no hallucinated
 prices), and drafts every booking as a **human-approved request** — the venue's staff
 stays in charge.
@@ -34,16 +34,16 @@ stays in charge.
   (compute cost measured — see `Business_Model_Options.md`), sold on a weekly
   recovered-revenue report, entered via a ₦50k paid pilot.
 - **Moat vs Meta:** Meta Business Agent (June 2026) commoditizes generic "AI answers
-  DMs." PythaFlow is *not* that — it's hospitality-specific, grounded-in-your-facts,
+  DMs." Balance is *not* that — it's hospitality-specific, grounded-in-your-facts,
   human-in-the-loop, cross-channel, sold white-glove by a founder who shows up. Meta
-  ships a feature; PythaFlow delivers a staffed outcome.
+  ships a feature; Balance delivers a staffed outcome.
 - **Ask / plan:** bootstrap to 10 paying Lagos venues by Q1 2027 on founder-led
   walk-in sales; use the December surge as the proof engine.
 
 **Honest headline:** by raw SaaS math Lagos is not a *big* first market (a few hundred
 venues, a hostile software price anchor). It *is* the right first market because the
 buying behavior — WhatsApp bookings, walk-in trust, December surges — matches exactly
-what PythaFlow does and how a Nigerian founder can sell it.
+what Balance does and how a Nigerian founder can sell it.
 
 ---
 
@@ -60,7 +60,7 @@ what PythaFlow does and how a Nigerian founder can sell it.
    fit Nigeria's transfer-first rails). Reisty (~100 venues, ~2,000 users) is
    consumer *discovery*, not venue-side ops. The inbox is unowned software territory.
 
-**What PythaFlow is NOT solving:** staff replacement. Labor is too cheap (₦85k Lagos
+**What Balance is NOT solving:** staff replacement. Labor is too cheap (₦85k Lagos
 min wage; host ₦75–150k). The pitch is *recovered revenue and after-hours coverage*,
 never "fire your receptionist."
 
@@ -113,7 +113,7 @@ owners), so 3 flagship logos create market-wide word of mouth.
 
 ## 5. Competition & moat
 
-| Competitor | What they are | Why PythaFlow wins / coexists |
+| Competitor | What they are | Why Balance wins / coexists |
 |---|---|---|
 | **Meta Business Agent** (June 2026) | Free, built-in AI DM answering on WA/IG | Generic, not grounded in the venue's facts, no approval queue, Meta-channels only, no white-glove. We are hospitality-specific + human-in-the-loop + cross-channel + a founder who sets it up. Meta is a feature; we're an outcome. **Biggest threat — positioning must stay off "we answer DMs."** |
 | **Reisty** (~100 venues) | Consumer reservation/discovery app | Demand aggregation, not venue-side inbox ops. **Partner/channel, not rival** — we answer the DMs Reisty never sees. |

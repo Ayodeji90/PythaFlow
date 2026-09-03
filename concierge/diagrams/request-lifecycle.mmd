@@ -1,0 +1,66 @@
+sequenceDiagram
+    actor Guest
+    participant Channel as Channel Adapter
+    participant Pipeline as handle_inbound()
+    participant Guard as Guardrails
+    participant Orch as Orchestrator
+    participant RAG as RAG Retrieval
+    participant Tools as Tool Loop
+    participant ReqSvc as Request Service
+    participant Staff as Staff Console
+    participant Book as Booking Store
+    participant DB as PostgreSQL
+    participant Redis as Redis
+
+    Guest->>Channel: sends message
+    Channel->>Pipeline: InboundMessage
+
+    Pipeline->>DB: resolve tenant + conversation
+    Pipeline->>DB: create/guest turn (persisted first!)
+    Pipeline->>Redis: acquire turn lock
+
+    Pipeline->>Guard: check_inbound(content)
+    alt Injection / Abuse detected
+        Guard-->>Pipeline: refuse or escalate
+        Pipeline-->>Guest: safe deflection message
+    else Allowed
+        Guard-->>Pipeline: allow
+
+        Pipeline->>Orch: handle(msg, ctx)
+        Orch->>RAG: retrieve(tenant, query)
+        RAG->>DB: pgvector cosine search
+        RAG-->>Orch: top-k chunks (distance < 0.68)
+
+        Orch->>Orch: build_system_prompt(tenant, context, slots)
+        Orch->>DB: load_history(last 20 turns)
+
+        loop Tool-calling loop (max 4 steps)
+            Orch->>Tools: generate_with_tools(history, tools)
+            alt LLM calls a tool
+                Tools->>DB: execute tool + log Action
+                Tools-->>Orch: tool result
+                Orch->>Tools: feed result back
+            else LLM responds with text
+                Tools-->>Orch: natural language reply
+            end
+        end
+
+        alt draft_reservation created
+            Orch->>ReqSvc: open Request (needs_review)
+            ReqSvc->>DB: insert Request row
+            Orch-->>Guest: "Sent to team for review"
+        end
+
+        Orch->>Redis: release turn lock
+        Pipeline->>DB: persist assistant turn
+        Pipeline->>Redis: publish SSE notification
+    end
+
+    Pipeline-->>Guest: reply (streamed chunks)
+
+    Note over Staff,Book: Staff Approval (later)
+    Staff->>ReqSvc: approve Request
+    ReqSvc->>DB: transition → approved
+    ReqSvc->>Book: fulfil_request()
+    Book->>DB: create Reservation row
+    Book->>Redis: schedule_reminder(ZADD)

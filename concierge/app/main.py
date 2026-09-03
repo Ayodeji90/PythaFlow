@@ -9,8 +9,9 @@ from fastapi import FastAPI
 from .config import get_settings
 from .db import SessionLocal, engine, ping_db
 from .logging import configure_logging
-from .routers import approvals, health, knowledge, webchat, whatsapp
+from .routers import approvals, conversations, health, knowledge, stream, webchat, whatsapp
 from .routers import email as email_router
+from .routers import telegram as telegram_router
 from .services.redis import get_redis_client, ping_redis
 
 settings = get_settings()
@@ -20,7 +21,7 @@ log = logging.getLogger("concierge")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    log.info("starting PythaFlow Concierge v%s (env=%s)", settings.APP_VERSION, settings.ENV)
+    log.info("starting Balance Concierge v%s (env=%s)", settings.APP_VERSION, settings.ENV)
     log.info("db reachable:    %s", await ping_db())
     log.info("redis reachable: %s", await ping_redis())
     # Day 12: start the reminder scheduler as a background task
@@ -45,7 +46,7 @@ async def _start_reminder_scheduler():
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="PythaFlow Concierge",
+        title="Balance Concierge",
         version=settings.APP_VERSION,
         lifespan=lifespan,
     )
@@ -60,6 +61,9 @@ def create_app() -> FastAPI:
     app.include_router(email_router.router)
     app.include_router(approvals.router)
     app.include_router(whatsapp.router)  # Day 15: inbound WhatsApp webhook (Twilio)
+    app.include_router(telegram_router.router)  # Telegram MTProto webhook
+    app.include_router(conversations.router)  # Day 17: staff console list + transcript
+    app.include_router(stream.router)  # Day 17: SSE event stream for live updates
     # The manual test page is a development affordance only — never exposed
     # outside a dev/test environment.
     if settings.ENV.lower() in {"dev", "development", "local", "test"}:

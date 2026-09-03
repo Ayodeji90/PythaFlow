@@ -1,4 +1,4 @@
-# Sprint Log — PythaFlow Concierge (Phase 0)
+# Sprint Log — Balance Concierge (Phase 0)
 
 ## Day 1 — Project skeleton + long-lead kickoff
 - Scaffolded `concierge/` service (FastAPI · async SQLAlchemy · Postgres+pgvector · Redis), uv-managed.

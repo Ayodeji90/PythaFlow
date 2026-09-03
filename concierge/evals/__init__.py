@@ -1,1 +1,1 @@
-# Eval harness for the PythaFlow Concierge
+# Eval harness for the Balance Concierge

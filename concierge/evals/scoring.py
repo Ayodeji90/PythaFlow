@@ -97,7 +97,7 @@ def format_scorecard(sc: Scorecard) -> str:
     """Render a Scorecard as a human-readable table."""
     lines = [
         "=" * 72,
-        "  PYTHAFLOW CONCIERGE — EVAL SCORECARD",
+        "  BALANCE CONCIERGE — EVAL SCORECARD",
         "=" * 72,
         "",
     ]

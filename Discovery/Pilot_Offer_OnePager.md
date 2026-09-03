@@ -1,4 +1,4 @@
-# PythaFlow — Founding Venue Pilot
+# Balance — Founding Venue Pilot
 ### The AI concierge for restaurants & hotels that never sleeps
 
 *(Customer-facing one-pager: send as PDF or paste into email when a venue shows
@@ -53,4 +53,4 @@ founder who personally sets it up and answers the phone.
 ---
 
 **Next step:** reply "YES" and we'll have your concierge answering guests this
-week. — [Name] · PythaFlow · [email] · [phone/WhatsApp]
+week. — [Name] · Balance · [email] · [phone/WhatsApp]

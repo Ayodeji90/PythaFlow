@@ -45,7 +45,7 @@ BASELINE_PATH = HERE / "BASELINE.md"
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="PythaFlow Concierge — eval harness runner",
+        description="Balance Concierge — eval harness runner",
     )
     parser.add_argument(
         "--live",
