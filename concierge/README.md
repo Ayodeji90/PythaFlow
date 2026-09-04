@@ -42,6 +42,56 @@ Provider wrapper (app/llm/providers/*) ← swappable, one per vendor shape
 Vendor API (NVIDIA NIM / OpenAI / Groq / Mistral / local …)
 ```
 
+## Channels
+
+Guests reach the concierge through channel adapters (`app/channels/`); each
+channel owns an adapter (`to_inbound()`), an outbound client, and a router, and
+everything funnels into the same `handle_inbound()` pipeline.
+
+| Channel | Router | Thread key | Outbound |
+|---------|--------|------------|----------|
+| WebChat | `routers/webchat.py` (WebSocket + REST) | browser session | JSON over the wire |
+| WhatsApp | `routers/whatsapp.py` | `WaId` (phone) | Twilio REST |
+| Email | inbound parse + SMTP reply | `Message-ID` thread | SMTP |
+| **Telegram** | `channels/telegram/router.py` | `chat_id` | **Bot API** (`sendMessage`) |
+
+### Telegram (Bot API)
+
+Telegram is **Bot API only** — one bot per venue, created in ~2 minutes via
+[@BotFather](https://t.me/BotFather). No MTProto/Telethon, no phone number, no
+session: the bot token is the only credential, and the bot the guest messages is
+the bot that replies (one identity end-to-end). Design decisions live in
+`.kilo/plans/1788173977314-telegram-channel-integration.md`.
+
+Per-venue credentials are stored on the tenant's Telegram `Channel` row:
+`config.bot_token`, `config.webhook_secret`, and the bot @username on
+`external_id`. Two optional env vars exist: `TELEGRAM_WEBHOOK_SECRET` (fallback
+secret) and `TELEGRAM_DEFAULT_TENANT` (slug for the shared sandbox path).
+
+Webhook endpoints (per-tenant path is the multi-tenant one; `/set` registers it):
+
+```
+GET  /webhooks/telegram                health check
+POST /webhooks/telegram                sandbox → TELEGRAM_DEFAULT_TENANT
+POST /webhooks/telegram/set            {tenant_slug, url} → setWebhook + store @username
+POST /webhooks/telegram/delete         {tenant_slug} → deleteWebhook
+POST /webhooks/telegram/{tenant_slug}  inbound (secret-token header required)
+```
+
+Try it locally:
+
+```bash
+# 1. create a bot with @BotFather and export its token
+TELEGRAM_BOT_TOKEN=123456:ABC... uv run python scripts/seed.py
+
+# 2. expose the API (ngrok/cloudflared) and register the webhook
+curl -X POST localhost:8000/webhooks/telegram/set \
+  -H 'content-type: application/json' \
+  -d '{"tenant_slug": "demo", "url": "https://<your-tunnel-url>"}'
+
+# 3. message your bot — the concierge replies from the same bot
+```
+
 ## Layout
 
 ```

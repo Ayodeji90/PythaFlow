@@ -1,9 +1,9 @@
-"""Telegram MTProto channel exports."""
+"""Telegram Bot API channel exports."""
 from .adapter import TelegramAdapter, TelegramInbound
 from .client import (
+    BotApiTelegramClient,
     NullTelegramClient,
     TelegramClient,
-    TelethonClient,
     build_telegram_client,
     send_with_retry,
 )
@@ -13,7 +13,7 @@ __all__ = [
     "TelegramAdapter",
     "TelegramInbound",
     "TelegramClient",
-    "TelethonClient",
+    "BotApiTelegramClient",
     "NullTelegramClient",
     "build_telegram_client",
     "send_with_retry",

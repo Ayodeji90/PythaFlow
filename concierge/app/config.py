@@ -66,17 +66,17 @@ class Settings(BaseSettings):
     TWILIO_TEMPLATE_BOOKING_CONFIRMED: str = ""
     TWILIO_TEMPLATE_BOOKING_REMINDER: str = ""
 
-    # --- Telegram MTProto channel ------------------------------------------------
-    # MTProto requires API ID and Hash from my.telegram.org, plus a phone number
-    # for authentication. Session strings can be stored for persistent connections.
-    TELEGRAM_API_ID: int = 0
-    TELEGRAM_API_HASH: str = ""
-    TELEGRAM_PHONE_NUMBER: str = ""       # e.g. "+2348012345678"
-    TELEGRAM_SESSION_STRING: str = ""     # persisted session (optional, for production)
-    # Webhook secret for inbound update verification (same pattern as WhatsApp)
+    # --- Telegram channel (Bot API) ----------------------------------------------
+    # Venues create their bot via @BotFather; the token is the ONLY credential
+    # and is stored per-venue in Channel.config["bot_token"] (no env var).
+    # Receiving is webhook-only: each bot is registered at
+    # /webhooks/telegram/{tenant_slug} via setWebhook. In local dev expose the
+    # app with a tunnel (cloudflared/ngrok) — there is no long-polling mode.
+    # Optional global fallback secret; per-venue secrets live in Channel.config.
     TELEGRAM_WEBHOOK_SECRET: str = ""
-    # Webhook URL for receiving updates (if empty, use long polling in dev)
-    TELEGRAM_WEBHOOK_URL: str = ""
+    # Sandbox fallback: the shared /webhooks/telegram path routes here. Blank =
+    # discard (production uses the per-tenant path, so blank is the safe default).
+    TELEGRAM_DEFAULT_TENANT: str = ""
 
     # --- guardrails (Day 6) ---
     # Hybrid: rules always run (instant); the LLM moderator only runs on input the

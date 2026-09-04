@@ -61,7 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(email_router.router)
     app.include_router(approvals.router)
     app.include_router(whatsapp.router)  # Day 15: inbound WhatsApp webhook (Twilio)
-    app.include_router(telegram_router.router)  # Telegram MTProto webhook
+    app.include_router(telegram_router.router)  # Telegram Bot API webhook
     app.include_router(conversations.router)  # Day 17: staff console list + transcript
     app.include_router(stream.router)  # Day 17: SSE event stream for live updates
     # The manual test page is a development affordance only — never exposed
