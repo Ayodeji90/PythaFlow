@@ -3,6 +3,7 @@
 Creates NO actual cancellation — the reservation is only cancelled after staff
 approval (Day 10 fulfilment worker). Idempotent by reservation_id.
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -27,7 +28,7 @@ class DraftCancelReservationTool:
         "wants to cancel an existing booking. Re-drafting cancellation for the same "
         "reservation updates the existing request instead of creating a duplicate."
     )
-    args_model = DraftCancelReservationArgs
+    args_model: type[BaseModel] = DraftCancelReservationArgs
     kind = ToolKind.draft
 
     async def run(
@@ -53,9 +54,8 @@ class DraftCancelReservationTool:
                     "payload": req.payload,
                 }
 
-        summary = (
-            f"Cancel reservation {args.reservation_id[:8]}…"
-            + (f" — {args.reason}" if args.reason else "")
+        summary = f"Cancel reservation {args.reservation_id[:8]}…" + (
+            f" — {args.reason}" if args.reason else ""
         )
 
         request = Request(

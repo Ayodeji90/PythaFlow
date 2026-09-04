@@ -1,4 +1,5 @@
 """Tool registry."""
+
 from .cancel_reservation import cancel_reservation
 from .check_availability import check_availability
 from .create_reservation import create_reservation

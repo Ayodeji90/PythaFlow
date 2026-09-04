@@ -1,5 +1,10 @@
 # Review Backlog — Balance Concierge
 
+> **Last updated: 2026-09-04** — eval status corrected (replay baseline 44.8%
+> exists and CI now gates on it; false-regression bug fixed). Backlog items are
+> open until they move to the "landed" section — a status column is tracked in
+> the GitHub issues each P1/P2/P3 maps to.
+
 Two gstack reviews run against the `concierge/` product on branch `staging`
 (reviewed at `07ff4dc` / `56bbf29`):
 
@@ -17,7 +22,7 @@ survives across sessions.
 | 1 | Post-draft UX = **set an expectation + non-silent reject** (tell the guest why + offer nearest alternative) | Design review |
 | 2 | Staff approval card = **full guest thread + edit-before-approve** (correct party_size/time/area inline) | Design review |
 | 3 | Per-tenant voice = **structured schema** (tone register + do/don't examples + length-by-channel), wired through `build_system_prompt` with `channel` passed in | Design review |
-| 4 | Eval baseline = **run a first `--live` recording now** (not defer) | Eng review |
+| 4 | Eval baseline = **run a first `--live` recording now** (not defer) — ✅ partial: replay baseline 44.8% committed + CI gate fixed 2026-09-04; a true `--live` recording is still outstanding (see constraint below) | Eng review |
 | 5 | Per-turn retrieval = **keep always-on** for now (correctness > cost at pilot scale) — E7 effectively dropped | Eng review |
 | 6 | Path forward = **write this backlog doc + implement the P1s** | Eng review |
 
@@ -27,13 +32,26 @@ survives across sessions.
 |---|---|
 | **Multi-language behavior** (carried from design Pass 7) | detect-and-adapt at runtime vs. declared-locale-only. Risks: wrong locale detection vs. no localization at all. |
 
-## Live-eval constraint (honest)
+## Eval status (corrected 2026-09-04)
 
-The eval harness exists (`evals/`, 12 dialogues) but the baseline is **0.0%**
-and has never been live-run; scoring currently uses a `FakeEmbedder` that finds
-no KB matches. Decision 4 says run it now, but this machine has **no `uv`, no
-Postgres/Redis running here, and no live LLM/embeddings key** — so a real
-`--live` recording cannot be produced from this environment. To run it:
+Where the harness stands now, honestly:
+
+- **Replay gate is live and green.** 12 recordings are committed alongside 12
+dialogues; CI runs `evals.runner --baseline` and the deterministic replay
+scores **44.8%** (`BASELINE.md`, recorded 2026-07-28) — ✓ PASS. Two bugs found
+and fixed en route: the replay comparison used full precision against a
+1-decimal baseline, so every run falsely "regressed" (epsilon added in
+`scoring.py`); and `pytest-timeout` was missing from dev deps, which broke the
+CI test step (`pyproject.toml`).
+- **What the replay gate does and doesn't protect.** Replay only replays the
+recorded LLM responses — retrieval re-runs with a `FakeEmbedder` that finds no
+real KB matches, so the **grounding dimension scores near 0 in most dialogues**
+(the Gnd column in the scorecard). The gate protects tool-calling, safety, and
+resolution from regressions; it does **not** yet protect grounded
+conversation quality as designed.
+- **A true `--live` baseline is still outstanding** (Decision 4 / E5): record
+against the real LLM + real embeddings so grounding is scored honestly. Needs
+Postgres/Redis up, seed + KB ingested, and a live LLM/embeddings key:
 
 ```bash
 cd concierge
@@ -45,10 +63,8 @@ uv run python -m evals.runner --live        # records; commit evals/recordings +
 uv run python -m evals.runner               # subsequent CI runs replay + score
 ```
 
-Until a real baseline exists, **the conversation-quality regression gate that
-should protect the per-tenant voice work (D2) is inert.** This is the
-highest-leverage test investment and it is blocked on the above infra + a
-known-good commit.
+Until the live baseline exists, the D2 voice work is guarded by the replay gate
+plus manual QA — better than before, but not the full objective gate yet.
 
 ---
 

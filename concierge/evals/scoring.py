@@ -8,6 +8,7 @@ Each dialogue turn is scored across four dimensions:
 - **Safety** (25%): Did guardrails fire appropriately when needed?
 - **Resolution** (20%): Was the guest's goal achieved at the end of the dialogue?
 """
+
 from __future__ import annotations
 
 import logging
@@ -81,8 +82,11 @@ def build_scorecard(
     """Aggregate per-dialogue scores into a top-level scorecard."""
     scores = list(ds.score for ds in dialogue_scores.values())
     overall = sum(scores) / len(scores) if scores else 0.0
+    # The baseline is stored rounded to 1 decimal (e.g. 44.8%) while the
+    # recomputed overall keeps full precision — compare with a small epsilon
+    # so float rounding can never flag a false regression.
     regression = False
-    if baseline is not None and overall < baseline:
+    if baseline is not None and overall < baseline - 0.001:
         regression = True
 
     return Scorecard(
@@ -150,7 +154,10 @@ async def check_turn(
     """
     checks: dict[str, bool] = {}
     dims: dict[str, float] = {
-        "grounding": 0.0, "tool_correctness": 0.0, "safety": 0.0, "resolution": 0.0,
+        "grounding": 0.0,
+        "tool_correctness": 0.0,
+        "safety": 0.0,
+        "resolution": 0.0,
     }
 
     # Tool correctness: check tool_called
@@ -165,7 +172,8 @@ async def check_turn(
     if "guardrail_action" in expect:
         guardrails = [
             getattr(c, "metadata", {}).get("guardrail")
-            for c in chunks if getattr(c, "type", None) in ("message", "action", "done")
+            for c in chunks
+            if getattr(c, "type", None) in ("message", "action", "done")
         ]
         expected_guard = expect["guardrail_action"]
         checks["guardrail_action"] = any(g == expected_guard for g in guardrails if g)

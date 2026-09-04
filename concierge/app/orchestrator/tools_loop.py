@@ -7,6 +7,7 @@ The loop runs up to MAX_STEPS turns, each time:
 3. Feeding the results back as tool-role messages
 4. Yielding the final natural-language answer when the LLM stops calling tools
 """
+
 from __future__ import annotations
 
 import json

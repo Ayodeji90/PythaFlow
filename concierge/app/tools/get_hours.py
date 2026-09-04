@@ -1,4 +1,5 @@
 """Read-only tool: returns the venue's operating hours for the current day."""
+
 from __future__ import annotations
 
 import datetime
@@ -20,15 +21,11 @@ class GetHoursArgs(BaseModel):
 class GetHoursTool:
     name: str = "get_hours"
     description: str = "Get the venue's opening hours for today."
-    args_model = GetHoursArgs
+    args_model: type[BaseModel] = GetHoursArgs
     kind = ToolKind.read_only
 
-    async def run(
-        self, args: GetHoursArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
-        result = await db.execute(
-            select(Tenant.hours).where(Tenant.id == ctx.tenant_id)
-        )
+    async def run(self, args: GetHoursArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
+        result = await db.execute(select(Tenant.hours).where(Tenant.id == ctx.tenant_id))
         hours = result.scalar_one_or_none()
         if not hours:
             return {"hours": None, "message": "No hours configured for this venue."}

@@ -7,6 +7,7 @@ runs) into small semantic units, and only pack a unit up toward a size cap when 
 section is genuinely long. A heading is carried onto its section's chunks as a
 `title`, which both helps the model and improves embedding relevance.
 """
+
 from __future__ import annotations
 
 import re

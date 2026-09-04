@@ -63,12 +63,12 @@ async def extract_request(
         "summary (a single line staff will read in the queue), "
         "payload (JSON object with the structured data needed to fulfil the request), "
         "confidence (float between 0 and 1), "
-        "priority (either \"normal\" or \"high\")). "
-        "\n\nGuest message: \"\"\""
+        'priority (either "normal" or "high")). '
+        '\n\nGuest message: """'
         + user_content
-        + "\"\"\"\n\nAssistant response: \"\"\""
+        + '"""\n\nAssistant response: """'
         + assistant_content
-        + "\"\"\"\n\nJSON:"
+        + '"""\n\nJSON:'
     )
 
     # Call the LLM with fast tier, low temperature for deterministic classification
@@ -105,11 +105,7 @@ async def extract_request(
             # Clamp confidence
             confidence = max(0.0, min(1.0, confidence))
             priority_str = data.get("priority", "normal")
-            priority = (
-                RequestPriority.high
-                if priority_str == "high"
-                else RequestPriority.normal
-            )
+            priority = RequestPriority.high if priority_str == "high" else RequestPriority.normal
             extracted = {
                 "type": req_type,
                 "summary": summary,

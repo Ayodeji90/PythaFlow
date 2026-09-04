@@ -7,6 +7,7 @@ the config filtering logic and the factory routing.
 NOTE: Every Settings() call passes _env_file=None and explicit Azure defaults so
 these tests are hermetic — they never read from .env or the real environment.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -109,9 +110,7 @@ class TestBuildLlmService:
         s = _settings(LLM_PROVIDER="azure_failover")
         from app.llm.factory import build_llm_service
 
-        with pytest.raises(
-            ValueError, match="LLM_PROVIDER=azure_failover requires at least"
-        ):
+        with pytest.raises(ValueError, match="LLM_PROVIDER=azure_failover requires at least"):
             build_llm_service(s)
 
     def test_azure_failover_one_backend(self):
@@ -170,7 +169,7 @@ class TestBuildLlmService:
 
         svc = build_llm_service(s)
         fp = svc._provider
-        p = fp._backends[0].provider
+        p = fp._backends[0].provider  # type: ignore[reportAttributeAccessIssue] — test inspects internals
         assert p._client.default_query == {"api-version": "2024-05-01-preview"}
 
     def test_known_provider_succeeds(self):

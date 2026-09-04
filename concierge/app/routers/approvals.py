@@ -50,7 +50,7 @@ async def _require_staff_token(
             raise HTTPException(status_code=401, detail="Missing staff token")
         return x_staff_token
     # Production guard (placeholder — real auth comes in Week 3)
-    if not x_staff_token or x_staff_token != settings.get("STAFF_TOKEN", None):
+    if not x_staff_token or x_staff_token != getattr(settings, "STAFF_TOKEN", None):
         raise HTTPException(status_code=401, detail="Invalid staff token")
     return x_staff_token
 

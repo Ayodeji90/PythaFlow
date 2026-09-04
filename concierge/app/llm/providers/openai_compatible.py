@@ -3,10 +3,12 @@
 One wrapper covers a huge range of vendors just by pointing `base_url` at them:
 NVIDIA NIM, OpenAI, Groq, Mistral, Together, Fireworks, local Ollama, etc. This
 is the only file in the LLM seam that imports a vendor SDK (`openai`)."""
+
 from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator, Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 from ..base import (
     LLMMessage,
@@ -16,6 +18,9 @@ from ..base import (
     ToolCall,
     ToolDefinition,
 )
+
+if TYPE_CHECKING:
+    from openai.types.chat import ChatCompletionMessageParam, ChatCompletionMessageToolCall
 
 
 class OpenAICompatibleProvider(LLMProvider):
@@ -110,7 +115,7 @@ class OpenAICompatibleProvider(LLMProvider):
     ) -> LLMResult:
         resp = await self._client.chat.completions.create(
             model=model,
-            messages=self._payload(messages, system),
+            messages=cast("list[ChatCompletionMessageParam]", self._payload(messages, system)),
             temperature=temperature,
             max_tokens=max_tokens,
         )
@@ -130,8 +135,8 @@ class OpenAICompatibleProvider(LLMProvider):
     ) -> LLMToolResult:
         resp = await self._client.chat.completions.create(
             model=model,
-            messages=self._payload(messages, system),
-            tools=self._tool_schema(tools) if tools else None,
+            messages=cast("list[ChatCompletionMessageParam]", self._payload(messages, system)),
+            tools=cast(Any, self._tool_schema(tools) if tools else None),
             temperature=temperature,
             max_tokens=max_tokens,
         )
@@ -141,11 +146,11 @@ class OpenAICompatibleProvider(LLMProvider):
         if msg.tool_calls:
             tool_calls = [
                 ToolCall(
-                    id=tc.id,
-                    name=tc.function.name,
-                    arguments=json.loads(tc.function.arguments),
+                    id=raw.id,
+                    name=raw.function.name,
+                    arguments=json.loads(raw.function.arguments),
                 )
-                for tc in msg.tool_calls
+                for raw in cast("list[ChatCompletionMessageToolCall]", msg.tool_calls)
             ]
         return LLMToolResult(text=text, tool_calls=tool_calls or None)
 
@@ -160,7 +165,7 @@ class OpenAICompatibleProvider(LLMProvider):
     ) -> AsyncIterator[str]:
         stream = await self._client.chat.completions.create(
             model=model,
-            messages=self._payload(messages, system),
+            messages=cast("list[ChatCompletionMessageParam]", self._payload(messages, system)),
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True,

@@ -1,5 +1,6 @@
 """Channel — a configured inbound/outbound line for a tenant. The gateway routes
 an incoming message to a tenant by matching the channel's `external_id`."""
+
 from __future__ import annotations
 
 from sqlalchemy import Boolean, String, text

@@ -1,5 +1,6 @@
 """Tests for Day 11 guest memory: resolve_guest, extract_preferences,
 update_guest_preferences, and build_guest_context."""
+
 from __future__ import annotations
 
 import uuid

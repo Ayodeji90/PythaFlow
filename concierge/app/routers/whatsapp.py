@@ -11,6 +11,7 @@ LLM a turn can approach Twilio's webhook timeout; with a fast model (Groq / Azur
 Foundry) it's well within budget. Production hardening = process in the background
 and reply 200 immediately (tracked for Day 16).
 """
+
 from __future__ import annotations
 
 import logging
@@ -106,13 +107,9 @@ async def inbound_whatsapp(
     redis = get_redis_client()
     if inbound.message_sid:
         try:
-            fresh = await redis.set(
-                f"wa:seen:{inbound.message_sid}", "1", nx=True, ex=3600
-            )
+            fresh = await redis.set(f"wa:seen:{inbound.message_sid}", "1", nx=True, ex=3600)
             if not fresh:
-                log.info(
-                    "duplicate WhatsApp delivery %s — skipping", inbound.message_sid
-                )
+                log.info("duplicate WhatsApp delivery %s — skipping", inbound.message_sid)
                 return Response(content=_EMPTY_TWIML, media_type="text/xml")
         except Exception:  # noqa: BLE001 — dedup is best-effort; proceed if redis is down
             log.warning("WhatsApp dedup check failed — processing anyway")
@@ -130,9 +127,7 @@ async def inbound_whatsapp(
 
     parts: list[str] = []
     try:
-        async for chunk in handle_inbound(
-            msg, db=db, redis=redis, orchestrator=orchestrator
-        ):
+        async for chunk in handle_inbound(msg, db=db, redis=redis, orchestrator=orchestrator):
             if chunk.content and chunk.type in ("token", "message"):
                 parts.append(chunk.content)
     except TenantNotFound as e:
@@ -156,9 +151,7 @@ async def inbound_whatsapp(
     return Response(content=_EMPTY_TWIML, media_type="text/xml")
 
 
-async def _record_outbound_sid(
-    db: AsyncSession, tenant_id, thread_ref: str, sid: str
-) -> None:
+async def _record_outbound_sid(db: AsyncSession, tenant_id, thread_ref: str, sid: str) -> None:
     """Stamp the provider message id onto the assistant turn we just sent, so a
     later status callback can update its delivery state."""
     conv = (
@@ -172,16 +165,20 @@ async def _record_outbound_sid(
     if conv is None:
         return
     msg = (
-        await db.execute(
-            select(Message)
-            .where(
-                Message.conversation_id == conv.id,
-                Message.role == MessageRole.assistant,
+        (
+            await db.execute(
+                select(Message)
+                .where(
+                    Message.conversation_id == conv.id,
+                    Message.role == MessageRole.assistant,
+                )
+                .order_by(Message.created_at.desc())
+                .limit(1)
             )
-            .order_by(Message.created_at.desc())
-            .limit(1)
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     if msg is None:
         return
     msg.meta = {**(msg.meta or {}), "whatsapp_sid": sid, "whatsapp_status": "sent"}
@@ -191,10 +188,10 @@ async def _record_outbound_sid(
 async def _apply_status(db: AsyncSession, sid: str, status: str) -> None:
     """Update the delivery status recorded on the outbound message with this sid."""
     msg = (
-        await db.execute(
-            select(Message).where(Message.meta["whatsapp_sid"].astext == sid)
-        )
-    ).scalars().first()
+        (await db.execute(select(Message).where(Message.meta["whatsapp_sid"].astext == sid)))
+        .scalars()
+        .first()
+    )
     if msg is None:
         log.info("WhatsApp status '%s' for unknown sid %s", status, sid)
         return

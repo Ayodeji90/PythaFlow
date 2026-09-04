@@ -10,6 +10,7 @@ Flow: validate secret → parse update → Redis dedup (update_id) → resolve t
 from the path → run the shared concierge pipeline → reply via the SAME bot
 token the guest messaged (one identity end to end).
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,9 +41,7 @@ _EMPTY_RESPONSE = "ok"
 
 async def _tenant_by_slug(db: AsyncSession, tenant_slug: str) -> Tenant | None:
     """Look up a tenant by slug (from the webhook path or default setting)."""
-    return (
-        await db.execute(select(Tenant).where(Tenant.slug == tenant_slug))
-    ).scalar_one_or_none()
+    return (await db.execute(select(Tenant).where(Tenant.slug == tenant_slug))).scalar_one_or_none()
 
 
 async def _telegram_channel(db: AsyncSession, tenant: Tenant) -> Channel | None:
@@ -117,7 +116,8 @@ async def _handle_telegram_update(
     if tenant is None:
         log.warning(
             "No tenant for Telegram update %s (path slug=%r) — discarding",
-            update_id, tenant_slug,
+            update_id,
+            tenant_slug,
         )
         return Response(content=_EMPTY_RESPONSE)
 
@@ -130,9 +130,7 @@ async def _handle_telegram_update(
 
     parts: list[str] = []
     try:
-        async for chunk in handle_inbound(
-            msg, db=db, redis=redis, orchestrator=orchestrator
-        ):
+        async for chunk in handle_inbound(msg, db=db, redis=redis, orchestrator=orchestrator):
             if chunk.content and chunk.type in ("token", "message"):
                 parts.append(chunk.content)
     except Exception as e:  # noqa: BLE001
@@ -264,9 +262,7 @@ async def delete_telegram_webhook(
         raise HTTPException(400, "Bot token not configured")
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.post(
-            f"https://api.telegram.org/bot{bot_token}/deleteWebhook"
-        )
+        resp = await client.post(f"https://api.telegram.org/bot{bot_token}/deleteWebhook")
         resp.raise_for_status()
         return resp.json()
 

@@ -1,4 +1,5 @@
 """Tenant (the hospitality business — root of isolation) and User (staff)."""
+
 from __future__ import annotations
 
 from sqlalchemy import String, Text, UniqueConstraint, text
@@ -34,9 +35,7 @@ class Tenant(UUIDMixin, TimestampMixin, Base):
 
 class User(UUIDMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "users"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "email", name="uq_users_tenant_email"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "email", name="uq_users_tenant_email"),)
 
     email: Mapped[str] = mapped_column(String(255))
     name: Mapped[str] = mapped_column(String(200))

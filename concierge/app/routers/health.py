@@ -1,6 +1,7 @@
 """Liveness/readiness endpoint. Actually checks the datastores rather than
 returning a bare 200, and returns 503 when degraded so HTTP-based load balancers
 and orchestrators stop routing traffic to an instance that can't serve."""
+
 from fastapi import APIRouter, Response, status
 
 from ..config import get_settings

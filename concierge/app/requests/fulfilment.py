@@ -55,14 +55,11 @@ async def fulfil_request(
 
     Raises if the Request is not approved (prevents fulfilling needs_review).
     """
-    result = await db.execute(
-        select(Request).where(Request.id == request_id)
-    )
+    result = await db.execute(select(Request).where(Request.id == request_id))
     request = result.scalar_one()
     if request.status != RequestStatus.approved:
         raise ValueError(
-            f"Request {request_id} must be approved before fulfilment, "
-            f"got {request.status}"
+            f"Request {request_id} must be approved before fulfilment, got {request.status}"
         )
 
     # Mark in_progress so staff sees it's being worked on
@@ -95,6 +92,7 @@ async def fulfil_request(
 
         # Day 12: dispatch a confirmation notification after successful fulfilment
         from ..notifications import NOTIF_MESSAGE_SENT, notify
+
         await notify(
             NOTIF_MESSAGE_SENT,
             tenant_id=request.tenant_id,

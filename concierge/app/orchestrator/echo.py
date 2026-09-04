@@ -1,6 +1,7 @@
 """Day-3 placeholder orchestrator: proves the pipe end to end without any
 intelligence. Superseded by `LLMOrchestrator` on Day 4, but kept — it's the
 zero-dependency implementation the pipeline tests run against."""
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

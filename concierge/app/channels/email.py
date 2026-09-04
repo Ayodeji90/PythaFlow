@@ -12,6 +12,7 @@ Threading: email's `Message-ID` → `external_thread_id` on the Conversation row
 The `(tenant_id, external_thread_id)` index gives fast thread lookup.
 A reply (with `In-Reply-To`) reuses the same Conversation as the original email.
 """
+
 from __future__ import annotations
 
 import logging
@@ -35,18 +36,18 @@ class ParsedEmail:
     """Normalised representation of an incoming email, independent of the
     provider that delivered it (SendGrid, Mailgun, IMAP, etc.)."""
 
-    message_id: str                  # RFC 5322 Message-ID
-    in_reply_to: str | None = None   # Message-ID this replies to (for threading)
-    references: str | None = None    # full References header chain
+    message_id: str  # RFC 5322 Message-ID
+    in_reply_to: str | None = None  # Message-ID this replies to (for threading)
+    references: str | None = None  # full References header chain
     subject: str = ""
-    body: str = ""                   # plain-text body
-    html: str | None = None          # HTML body, if available
+    body: str = ""  # plain-text body
+    html: str | None = None  # HTML body, if available
     from_email: str = ""
     from_name: str | None = None
-    to_email: str = ""               # who the guest sent TO — used for tenant routing
+    to_email: str = ""  # who the guest sent TO — used for tenant routing
     date: datetime | None = None
     attachments: list[str] = field(default_factory=list)
-    raw: dict | None = None          # provider-specific extras (envelope, headers, etc.)
+    raw: dict | None = None  # provider-specific extras (envelope, headers, etc.)
 
     @property
     def thread_ref(self) -> str:
@@ -220,6 +221,8 @@ class NullSender:
     ) -> str:
         log.info(
             "[null-sender] To: %s | Subject: %s | Body: %.120s",
-            to, subject, body,
+            to,
+            subject,
+            body,
         )
         return "<null-sender@local>"

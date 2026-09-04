@@ -4,6 +4,7 @@ Each YAML file in ``evals/dialogues/`` describes one dialogue scenario: a sequen
 of guest turns and the expectations for each turn (tool called, guardrail action,
 DB state after processing).
 """
+
 from __future__ import annotations
 
 from typing import Any

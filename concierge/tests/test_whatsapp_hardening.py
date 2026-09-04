@@ -1,5 +1,6 @@
 """Day 16 — WhatsApp hardening tests: 24h session window, send retry+idempotency,
 templates, and delivery-receipt status updates. No network."""
+
 from __future__ import annotations
 
 import uuid

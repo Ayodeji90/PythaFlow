@@ -36,9 +36,7 @@ async def decide(
     result = await db.execute(select(Request).where(Request.id == request_id))
     request = result.scalar_one()
     if request.status not in (RequestStatus.new, RequestStatus.needs_review):
-        raise ValueError(
-            f"Request {request_id} is not pending decision (status={request.status})"
-        )
+        raise ValueError(f"Request {request_id} is not pending decision (status={request.status})")
 
     # Map decision string to RequestStatus
     if decision == "approved":
@@ -52,11 +50,7 @@ async def decide(
     approval = Approval(
         tenant_id=request.tenant_id,
         request_id=request.id,
-        status=(
-            ApprovalStatus.approved
-            if decision == "approved"
-            else ApprovalStatus.rejected
-        ),
+        status=(ApprovalStatus.approved if decision == "approved" else ApprovalStatus.rejected),
         decided_by=user_id,
         decided_at=datetime.now(UTC),
     )

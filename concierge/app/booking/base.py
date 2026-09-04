@@ -2,6 +2,7 @@
 
 Definitions live at the base so tools import this, never the concrete store.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -59,8 +60,7 @@ class BookingStore(ABC):
         party_size: int,
         *,
         db: AsyncSession,
-    ) -> AvailabilityResult:
-        ...
+    ) -> AvailabilityResult: ...
 
     @abstractmethod
     async def create(
@@ -71,8 +71,7 @@ class BookingStore(ABC):
         ctx: dict[str, Any],
         *,
         db: AsyncSession,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
     @abstractmethod
     async def modify(

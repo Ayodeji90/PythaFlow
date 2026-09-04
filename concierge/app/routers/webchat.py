@@ -4,6 +4,7 @@
 - `POST /api/chat` — non-streaming fallback (easy to curl / test)
 - `GET /dev/chat` — a tiny dev-only page to type into (mounted only in dev)
 """
+
 from __future__ import annotations
 
 import logging

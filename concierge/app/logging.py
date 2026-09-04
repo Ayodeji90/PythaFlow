@@ -1,6 +1,7 @@
 """PII-safe logging. A guest's email / phone / card number must never land in a
 log line in plaintext, so we redact them in the formatter — after the message is
 assembled, catching anything any module logged."""
+
 from __future__ import annotations
 
 import logging

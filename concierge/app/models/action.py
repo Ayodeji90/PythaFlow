@@ -1,6 +1,7 @@
 """Action — an audit record of every tool the agent invoked (with inputs and
 outputs). Approval — the human-in-the-loop gate that must flip to `approved`
 before a guarded write is committed."""
+
 from __future__ import annotations
 
 import uuid

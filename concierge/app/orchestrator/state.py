@@ -5,6 +5,7 @@ handful of rows, and a cache here would risk the model "forgetting" the guest's
 last message. Redis does something it's actually good at instead: a per-conversation
 turn lock (see `app/services/locks.py`).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -40,13 +41,17 @@ async def load_history(
     runs, so the returned list already ends with the message being answered.
     """
     rows = (
-        await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.created_at.desc())
-            .limit(limit)
+        (
+            await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conversation_id)
+                .order_by(Message.created_at.desc())
+                .limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     history: list[LLMMessage] = []
     for row in reversed(rows):  # back into chronological order

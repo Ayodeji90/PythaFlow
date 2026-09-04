@@ -9,6 +9,7 @@ Covers:
   - _reason classification
   - aclose error tolerance
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -47,7 +48,7 @@ class _MockProvider(LLMProvider):
         self._closed = False
         self._aclose_exc = aclose_exc
 
-    async def generate(
+    async def generate(  # type: ignore[reportIncompatibleMethodOverride] — test double
         self,
         messages: list[LLMMessage],  # noqa: ARG002
         **kwargs: Any,
@@ -59,7 +60,7 @@ class _MockProvider(LLMProvider):
             return self._result
         return LLMResult(text=f"reply-from-{self.name}", model=kwargs.get("model", "?"))
 
-    async def generate_with_tools(
+    async def generate_with_tools(  # type: ignore[reportIncompatibleMethodOverride] — test double
         self,
         messages: list[LLMMessage],  # noqa: ARG002
         **kwargs: Any,
@@ -71,7 +72,7 @@ class _MockProvider(LLMProvider):
             return self._tool_result
         return LLMToolResult(text=f"tool-reply-from-{self.name}")
 
-    async def stream(
+    async def stream(  # type: ignore[reportIncompatibleMethodOverride] — test double
         self,
         messages: list[LLMMessage],  # noqa: ARG002
         **kwargs: Any,
@@ -315,10 +316,7 @@ class TestReason:
         assert FailoverProvider._reason(TimeoutError()) == "timeout"
 
     def test_other_exception(self):
-        assert (
-            FailoverProvider._reason(RuntimeError("oops"))
-            == "RuntimeError: oops"
-        )
+        assert FailoverProvider._reason(RuntimeError("oops")) == "RuntimeError: oops"
 
 
 # ── aclose ───────────────────────────────────────────────────────────────────

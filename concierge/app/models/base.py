@@ -7,6 +7,7 @@
 
 `Tenant` itself does NOT use `TenantMixin` (it is the root of isolation).
 """
+
 from __future__ import annotations
 
 import uuid

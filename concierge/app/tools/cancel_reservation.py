@@ -3,6 +3,7 @@
 Called by the fulfilment worker ONLY (never by the LLM — hidden via
 kind=fulfilment). Uses LocalBookingStore.cancel() which sets status=cancelled.
 """
+
 from __future__ import annotations
 
 from uuid import UUID
@@ -22,12 +23,10 @@ class CancelReservationArgs(BaseModel):
 class CancelReservationTool:
     name = "cancel_reservation"
     description = "Cancel an existing Reservation row after staff approval."
-    args_model = CancelReservationArgs
+    args_model: type[BaseModel] = CancelReservationArgs
     kind = ToolKind.fulfilment
 
-    async def run(
-        self, args: CancelReservationArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
+    async def run(self, args: CancelReservationArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
         store = build_booking_store()
         result = await store.cancel(
             tenant_id=ctx.tenant_id,

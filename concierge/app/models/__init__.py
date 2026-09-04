@@ -1,5 +1,6 @@
 """Importing this package registers every model on `Base.metadata`, which is what
 Alembic autogenerate and `create_all` rely on."""
+
 from .action import Action, Approval
 from .base import Base, TenantMixin, TimestampMixin, UUIDMixin
 from .channel import Channel

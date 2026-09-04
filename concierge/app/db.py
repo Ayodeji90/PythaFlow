@@ -1,5 +1,6 @@
 """Async SQLAlchemy engine + session factory. The declarative `Base` is the
 root for the models added on Day 2."""
+
 import asyncio
 
 from sqlalchemy import text
@@ -24,6 +25,7 @@ SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=
 async def ping_db() -> bool:
     """True if a trivial query round-trips within the probe deadline. Used by
     /health and lifespan — bounded so a stalled DB degrades promptly."""
+
     async def _probe() -> None:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))

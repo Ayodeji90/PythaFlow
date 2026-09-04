@@ -8,6 +8,7 @@ turn. Grounding (Day 5) and guardrails (Day 6) slot in around this.
 Day 10 addition: post-tool-loop draft awareness + fire-and-forget request
 extractor for unhandled intents.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -22,7 +23,7 @@ from ..knowledge.retrieve import format_context, retrieve
 from ..llm.embeddings import EmbeddingService
 from ..llm.factory import build_llm_service
 from ..llm.service import LLMService
-from ..models.enums import ConversationStatus, RequestType
+from ..models.enums import ConversationStatus
 from ..schemas.message import InboundMessage, OutboundChunk
 from ..services.locks import conversation_turn_lock
 from .base import TurnContext
@@ -162,9 +163,7 @@ class LLMOrchestrator:
                 if ctx.state is not None:
                     ctx.state["intent"] = "reservation"
                 # D3: brand-voiced post-draft message (replaces hardcoded text)
-                post_draft_msg = build_post_draft_message(
-                    ctx.tenant, request_type="reservation"
-                )
+                post_draft_msg = build_post_draft_message(ctx.tenant, request_type="reservation")
                 yield OutboundChunk(
                     type="message",
                     content=post_draft_msg,
@@ -223,7 +222,7 @@ async def _run_extractor_with_retry(
             return  # success
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
-            delay = _EXTRACTOR_BASE_DELAY * (2 ** attempt)
+            delay = _EXTRACTOR_BASE_DELAY * (2**attempt)
             log.warning(
                 "Extractor attempt %d/%d failed: %s — retrying in %.1fs",
                 attempt + 1,
@@ -288,7 +287,8 @@ async def _run_extractor(
         guest_id=None,
         turns=turns,
     )
-    if extracted is None or extracted.get("type") == RequestType.none:
+    # The extractor already normalises a "none" classification to None.
+    if extracted is None:
         return
 
     # Use a fresh session so we don't interfere with the request's transaction.

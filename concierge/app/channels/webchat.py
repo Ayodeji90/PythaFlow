@@ -3,6 +3,7 @@
 Web chat is the simplest channel: the payload is already JSON we control, and the
 "thread id" is just the browser session. WhatsApp (Day 15) will do the same job
 against Meta's webhook payload and reuse the identical pipeline."""
+
 from __future__ import annotations
 
 from typing import Any

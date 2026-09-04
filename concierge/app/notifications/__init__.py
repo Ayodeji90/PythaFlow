@@ -38,7 +38,7 @@ async def notify(
     event: str,
     *,
     tenant_id: UUID,
-    request_id: UUID,
+    request_id: UUID | None = None,
     payload: dict[str, Any],
     conversation_id: UUID | None = None,
 ) -> None:
@@ -57,7 +57,7 @@ async def notify(
     envelope = {
         "event": event,
         "tenant_id": str(tenant_id),
-        "request_id": str(request_id),
+        "request_id": str(request_id) if request_id else None,
         "conversation_id": str(conversation_id) if conversation_id else None,
         "at": datetime.now(UTC).isoformat(),
         "payload": payload,

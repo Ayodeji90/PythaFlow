@@ -1,4 +1,5 @@
 """FastAPI dependencies — request-scoped DB session and the shared Redis client."""
+
 from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession

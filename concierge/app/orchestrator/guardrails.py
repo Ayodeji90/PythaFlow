@@ -12,6 +12,7 @@ Decisions:
 - REFUSE   — a safe deflection; the LLM is never asked to answer (injection, etc.).
 - ESCALATE — hand off to a human (abuse, threats, "get me a manager").
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -19,13 +20,24 @@ import enum
 import json
 import logging
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Protocol
 
 from ..config import Settings
 from ..llm.base import LLMMessage
-from ..llm.service import LLMService
 
 log = logging.getLogger("concierge.guardrails")
+
+
+class ModeratorLLM(Protocol):
+    """The only LLM surface guardrails touch — a generate() returning text.
+
+    Declared structurally (not LLMService) so tests can pass duck-typed fakes
+    and the moderation seam stays narrow.
+    """
+
+    async def generate(self, messages: Sequence[LLMMessage], *, tier: str, system: str) -> str: ...
 
 
 class GuardrailAction(enum.StrEnum):
@@ -110,7 +122,7 @@ _JSON = re.compile(r"\{.*\}", re.DOTALL)
 
 
 async def llm_moderate(
-    text: str, llm: LLMService, *, tier: str = "fast", timeout: float = 12.0
+    text: str, llm: ModeratorLLM, *, tier: str = "fast", timeout: float = 12.0
 ) -> GuardrailResult | None:
     """LLM second opinion for borderline input. Fails **open** (returns None → the
     caller treats it as ALLOW) on any timeout/parse/API error."""
@@ -134,7 +146,7 @@ async def llm_moderate(
 
 
 async def check_inbound(
-    text: str, *, llm: LLMService | None, settings: Settings
+    text: str, *, llm: ModeratorLLM | None, settings: Settings
 ) -> GuardrailResult:
     """The full hybrid check. Rules decide the obvious cases instantly; the LLM
     moderator is consulted only for borderline input."""
@@ -142,9 +154,7 @@ async def check_inbound(
     if result.action is not GuardrailAction.allow:
         return result
     if needs_review and settings.GUARDRAILS_LLM_MODERATION and llm is not None:
-        moderated = await llm_moderate(
-            text, llm, timeout=settings.GUARDRAILS_MODERATION_TIMEOUT
-        )
+        moderated = await llm_moderate(text, llm, timeout=settings.GUARDRAILS_MODERATION_TIMEOUT)
         if moderated is not None:
             return moderated
     return result

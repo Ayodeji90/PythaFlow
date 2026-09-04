@@ -5,6 +5,7 @@ create the conversation → persist the guest turn → run the orchestrator → 
 the assistant turn, streaming chunks through as they come. Adding a channel
 (WhatsApp on Day 15) means writing a `to_inbound()` — not touching any of this.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
@@ -33,9 +34,7 @@ class ChannelAdapter(Protocol):
 
 
 async def _resolve_tenant(db: AsyncSession, slug: str) -> Tenant:
-    tenant = (
-        await db.execute(select(Tenant).where(Tenant.slug == slug))
-    ).scalar_one_or_none()
+    tenant = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
     if tenant is None:
         raise TenantNotFound(f"unknown tenant '{slug}'")
     return tenant
@@ -59,14 +58,18 @@ async def _resolve_conversation(
 
     # Link the Channel row for this tenant+type when one is configured.
     channel = (
-        await db.execute(
-            select(Channel).where(
-                Channel.tenant_id == tenant.id,
-                Channel.type == msg.channel,
-                Channel.active.is_(True),
+        (
+            await db.execute(
+                select(Channel).where(
+                    Channel.tenant_id == tenant.id,
+                    Channel.type == msg.channel,
+                    Channel.active.is_(True),
+                )
             )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
 
     conv = Conversation(
         tenant_id=tenant.id,

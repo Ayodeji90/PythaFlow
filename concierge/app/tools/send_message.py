@@ -5,6 +5,7 @@ notify the guest that their booking was confirmed/modified/cancelled. For now
 the actual delivery is a log + notify() call; later it can dispatch via SMS,
 email, or WhatsApp.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,9 +21,7 @@ log = logging.getLogger("concierge.tools.send_message")
 
 class SendMessageArgs(BaseModel):
     recipient_id: str = Field(description="Guest ID or phone/email to send to")
-    subject: str = Field(
-        description="Type: confirmation, reminder, cancel_notification"
-    )
+    subject: str = Field(description="Type: confirmation, reminder, cancel_notification")
     message: str = Field(description="Message content to deliver")
     channel_type: str = Field(default="webchat", description="Delivery channel")
 
@@ -30,12 +29,10 @@ class SendMessageArgs(BaseModel):
 class SendMessageTool:
     name = "send_message"
     description = "Send a confirmation/reminder notification to a guest"
-    args_model = SendMessageArgs
+    args_model: type[BaseModel] = SendMessageArgs
     kind = ToolKind.fulfilment
 
-    async def run(
-        self, args: SendMessageArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
+    async def run(self, args: SendMessageArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
         log.info(
             "Notification: [%s] to %s via %s: %s",
             args.subject,

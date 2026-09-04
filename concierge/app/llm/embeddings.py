@@ -6,6 +6,7 @@ wrapper over the same `AsyncOpenAI` client.
 queries are embedded with different `input_type`s, which materially improves
 recall. We expose that as `embed_documents` vs `embed_query`.
 """
+
 from __future__ import annotations
 
 from typing import Literal, Protocol

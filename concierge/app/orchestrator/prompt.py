@@ -1,5 +1,6 @@
 """Builds the system prompt from the tenant's own fields + retrieved knowledge.
 This is where the concierge gets its voice *and* its facts."""
+
 from __future__ import annotations
 
 from ..models import Tenant
@@ -9,6 +10,7 @@ _BASE = (
     "You speak on behalf of the venue to its guests: warm, concise, and helpful. "
     "Answer as a knowledgeable member of the team would."
 )
+
 
 # Day 14: instruct the model to resolve relative dates into concrete ISO dates.
 def _build_date_resolution(tenant: Tenant) -> str:
@@ -25,6 +27,7 @@ def _build_date_resolution(tenant: Tenant) -> str:
         "'this Friday' resolves to next Friday in that timezone. Always pass "
         "YYYY-MM-DD and HH:MM format to tools."
     )
+
 
 # When we DID retrieve relevant facts.
 _GROUNDED = (

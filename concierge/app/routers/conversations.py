@@ -6,8 +6,10 @@
 Cross-tenant access always 404 (never 403 — never even hint the row exists).
 Every route requires the console stopgap token (real auth lands Day 24).
 """
+
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -46,16 +48,20 @@ def _status_label(conv: Conversation) -> str:
         return str(conv.status)
 
 
-async def _preview_for(db: AsyncSession, conv_id: UUID) -> tuple[str, "datetime | None"]:
+async def _preview_for(db: AsyncSession, conv_id: UUID) -> tuple[str, datetime | None]:
     """Return (preview_text, created_at) for the most recent message in the conv."""
     row = (
-        await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conv_id)
-            .order_by(Message.created_at.desc())
-            .limit(1)
+        (
+            await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conv_id)
+                .order_by(Message.created_at.desc())
+                .limit(1)
+            )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     if row is None:
         return ("", None)
     text = row.content
@@ -148,25 +154,33 @@ async def get_conversation(
         raise HTTPException(status_code=404, detail="conversation not found")
 
     msgs = (
-        await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conv.id)
-            .order_by(Message.created_at)
+        (
+            await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conv.id)
+                .order_by(Message.created_at)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     name, phone = await _guest_for(db, conv)
     linked = (
-        await db.execute(
-            select(Request.id)
-            .where(
-                Request.tenant_id == tenant.id,
-                Request.conversation_id == conv.id,
+        (
+            await db.execute(
+                select(Request.id)
+                .where(
+                    Request.tenant_id == tenant.id,
+                    Request.conversation_id == conv.id,
+                )
+                .order_by(Request.created_at.desc())
+                .limit(1)
             )
-            .order_by(Request.created_at.desc())
-            .limit(1)
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
 
     return ConversationDetailResponse(
         id=conv.id,

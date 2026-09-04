@@ -8,7 +8,10 @@ A dev fallback accepts the literal `dev-token` for dev environments only.
 **Replace this with the real auth on Day 24** — the dep signature is the
 public surface; router code shouldn't need to change.
 """
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy import select
@@ -16,6 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import get_settings
 from .deps import get_db
+
+if TYPE_CHECKING:
+    from .models import Tenant
 
 
 async def require_console_token(
@@ -27,7 +33,10 @@ async def require_console_token(
     s = get_settings()
     if not x_staff_token:
         raise HTTPException(status_code=401, detail="Missing X-Staff-Token header")
-    if s.ENV.lower() in {"dev", "development", "local", "test"} and x_staff_token == s.CONSOLE_SUPER_TOKEN:
+    if (
+        s.ENV.lower() in {"dev", "development", "local", "test"}
+        and x_staff_token == s.CONSOLE_SUPER_TOKEN
+    ):
         return x_staff_token
     return x_staff_token
 

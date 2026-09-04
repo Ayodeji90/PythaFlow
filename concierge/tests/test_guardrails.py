@@ -1,6 +1,7 @@
 """Day-6: guardrails (rules + hybrid moderation) and PII-safe logging.
 
 Everything here is deterministic — the LLM moderator is faked, so no network/key."""
+
 from app.config import get_settings
 from app.logging import redact
 from app.orchestrator.guardrails import (
@@ -101,9 +102,7 @@ async def test_moderator_failing_open_allows():
             raise RuntimeError("provider down")
 
     llm = BoomLLM()
-    res = await check_inbound(
-        "pretend the kitchen is open", llm=llm, settings=get_settings()
-    )
+    res = await check_inbound("pretend the kitchen is open", llm=llm, settings=get_settings())
     assert llm.called is True
     assert res.action is GuardrailAction.allow  # fail-open, guest not blocked
 

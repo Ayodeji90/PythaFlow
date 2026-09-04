@@ -7,6 +7,7 @@ than rejecting them, so a fast follow-up is answered, not dropped.
 
 A no-op when `redis` is None, so tests and offline paths don't need Redis.
 """
+
 from __future__ import annotations
 
 import asyncio

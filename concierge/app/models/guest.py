@@ -1,5 +1,6 @@
 """Guest — the end customer the concierge talks to. One guest may reach out on
 several channels, so we keep per-channel `handles` plus a phone for matching."""
+
 from __future__ import annotations
 
 from datetime import datetime

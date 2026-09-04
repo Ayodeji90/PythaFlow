@@ -4,6 +4,7 @@ Creates NO actual changes to the Reservation — the modification only happens
 after staff approval (Day 10 fulfilment worker). Idempotent by reservation_id
 so re-drafting the same modification updates the existing open Request.
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -33,7 +34,7 @@ class DraftModifyReservationTool:
         "Re-drafting the same modification updates the existing request instead of "
         "creating a duplicate."
     )
-    args_model = DraftModifyReservationArgs
+    args_model: type[BaseModel] = DraftModifyReservationArgs
     kind = ToolKind.draft
 
     async def run(

@@ -1,5 +1,15 @@
 # Router exports
-from . import health, webchat, knowledge, email, approvals, whatsapp, conversations, stream, telegram
+from . import (
+    approvals,
+    conversations,
+    email,
+    health,
+    knowledge,
+    stream,
+    telegram,
+    webchat,
+    whatsapp,
+)
 
 __all__ = [
     "health",

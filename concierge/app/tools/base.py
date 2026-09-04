@@ -29,7 +29,8 @@ class Tool(Protocol):
     kind: ToolKind
 
     @abstractmethod
-    async def run(
-        self, args: BaseModel, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict[str, Any]:
+    async def run(self, args: Any, *, ctx: ToolContext, db: AsyncSession) -> dict[str, Any]:
+        # args is Any, not BaseModel: each tool declares its own args_model and
+        # validates it in run(); a covariant protocol type would flag every
+        # concrete tool as non-conforming.
         ...

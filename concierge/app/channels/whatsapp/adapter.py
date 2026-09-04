@@ -4,6 +4,7 @@
 turns it into the canonical `InboundMessage` the shared pipeline already speaks.
 Nothing in the orchestrator or tools changes — that's the whole point.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,10 +17,10 @@ from ...schemas.message import InboundMessage, SenderRef
 class WhatsAppInbound:
     """Normalised inbound WhatsApp message, independent of the BSP."""
 
-    from_number: str          # guest, e.g. "whatsapp:+2348012345678"
-    to_number: str            # venue/sandbox line, e.g. "whatsapp:+14155238886"
+    from_number: str  # guest, e.g. "whatsapp:+2348012345678"
+    to_number: str  # venue/sandbox line, e.g. "whatsapp:+14155238886"
     body: str
-    wa_id: str                # guest number, digits only (Twilio "WaId")
+    wa_id: str  # guest number, digits only (Twilio "WaId")
     profile_name: str | None = None
     message_sid: str = ""
     raw: dict | None = None

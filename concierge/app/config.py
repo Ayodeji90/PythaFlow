@@ -1,5 +1,6 @@
 """Central configuration. Everything downstream reads from here, never from the
 environment directly, so the app has one typed source of truth."""
+
 from functools import lru_cache
 
 from pydantic import field_validator, model_validator
@@ -13,9 +14,7 @@ _DEV_ENVS = {"dev", "development", "local", "test"}
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # --- app ---
     ENV: str = "dev"
@@ -32,10 +31,10 @@ class Settings(BaseSettings):
     HEALTH_PROBE_TIMEOUT: float = 3.0
     REDIS_CONNECT_TIMEOUT: float = 3.0
     REDIS_SOCKET_TIMEOUT: float = 3.0
-    LLM_TIMEOUT: float = 60.0   # free-tier 70b can take ~30s to first token
+    LLM_TIMEOUT: float = 60.0  # free-tier 70b can take ~30s to first token
 
     # --- email channel (optional — only needed when email adapter is used) ---
-    EMAIL_SENDER: str = "smtp"          # "smtp" | "sendgrid"
+    EMAIL_SENDER: str = "smtp"  # "smtp" | "sendgrid"
     EMAIL_SMTP_HOST: str = ""
     EMAIL_SMTP_PORT: int = 587
     EMAIL_SMTP_USERNAME: str = ""
@@ -47,10 +46,10 @@ class Settings(BaseSettings):
     # Twilio is the default because its WhatsApp Sandbox needs NO Meta business
     # verification — a venue (or you) can demo on real WhatsApp with just a Twilio
     # account. Swappable to the Meta Cloud API later (WHATSAPP_PROVIDER=meta).
-    WHATSAPP_PROVIDER: str = "twilio"          # twilio | meta (future)
+    WHATSAPP_PROVIDER: str = "twilio"  # twilio | meta (future)
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
-    TWILIO_WHATSAPP_FROM: str = ""             # e.g. "whatsapp:+14155238886" (sandbox)
+    TWILIO_WHATSAPP_FROM: str = ""  # e.g. "whatsapp:+14155238886" (sandbox)
     # Verify the X-Twilio-Signature on inbound webhooks (proves it's really Twilio).
     WHATSAPP_VALIDATE_SIGNATURE: bool = True
     # Sandbox fallback: if an inbound message's "To" number matches no whatsapp
@@ -60,7 +59,7 @@ class Settings(BaseSettings):
     # WhatsApp only allows free-form text within 24h of the guest's last message;
     # outside that window a pre-approved template is required.
     WHATSAPP_SESSION_WINDOW_HOURS: int = 24
-    WHATSAPP_SEND_MAX_RETRIES: int = 3         # outbound send retries on transient failure
+    WHATSAPP_SEND_MAX_RETRIES: int = 3  # outbound send retries on transient failure
     # Twilio Content template SIDs (HX…) for out-of-window / proactive messages.
     # Submitting + getting these approved is an ops long-lead; blank disables them.
     TWILIO_TEMPLATE_BOOKING_CONFIRMED: str = ""
@@ -88,7 +87,7 @@ class Settings(BaseSettings):
     # nvidia | openai | groq | mistral | openai_compatible | azure_failover
     LLM_PROVIDER: str = "nvidia"
     LLM_API_KEY: str = ""
-    LLM_BASE_URL: str = ""                # optional override; blank = provider default
+    LLM_BASE_URL: str = ""  # optional override; blank = provider default
     LLM_MODEL_FAST: str = "meta/llama-3.1-8b-instruct"
     LLM_MODEL_QUALITY: str = "meta/llama-3.3-70b-instruct"
     LLM_TEMPERATURE: float = 0.4
@@ -105,15 +104,15 @@ class Settings(BaseSettings):
     #
     # If all three are deployments under the SAME Foundry resource, use the SAME
     # endpoint + key for all three and only change the MODEL (the deployment name).
-    AZURE_FOUNDRY_1_ENDPOINT: str = ""     # e.g. https://<resource>.services.ai.azure.com/models
+    AZURE_FOUNDRY_1_ENDPOINT: str = ""  # e.g. https://<resource>.services.ai.azure.com/models
     AZURE_FOUNDRY_1_KEY: str = ""
-    AZURE_FOUNDRY_1_MODEL: str = ""        # deployment name, e.g. DeepSeek-V4-Pro
+    AZURE_FOUNDRY_1_MODEL: str = ""  # deployment name, e.g. DeepSeek-V4-Pro
     AZURE_FOUNDRY_2_ENDPOINT: str = ""
     AZURE_FOUNDRY_2_KEY: str = ""
-    AZURE_FOUNDRY_2_MODEL: str = ""        # e.g. grok-4-20-non-reasoning
+    AZURE_FOUNDRY_2_MODEL: str = ""  # e.g. grok-4-20-non-reasoning
     AZURE_FOUNDRY_3_ENDPOINT: str = ""
     AZURE_FOUNDRY_3_KEY: str = ""
-    AZURE_FOUNDRY_3_MODEL: str = ""        # e.g. Kimi-K2.6
+    AZURE_FOUNDRY_3_MODEL: str = ""  # e.g. Kimi-K2.6
     # Azure AI Inference endpoints (…/models) require an api-version. Leave blank
     # if your endpoint is a plain OpenAI-compatible route (…/openai/v1).
     AZURE_FOUNDRY_API_VERSION: str = ""
@@ -129,7 +128,7 @@ class Settings(BaseSettings):
 
     # --- request handling (Day 10) ---
     REQUEST_REVIEW_CONFIDENCE: float = 0.75  # below this => forced human review
-    REQUEST_EXTRACTOR_ENABLED: bool = True   # post-turn help classifier
+    REQUEST_EXTRACTOR_ENABLED: bool = True  # post-turn help classifier
     REQUEST_EXTRACTOR_TIER: str = "fast"
     STAFF_TOKEN_HEADER: str = "X-Staff-Token"  # stopgap auth until Week 3/Day 24
 
@@ -171,14 +170,14 @@ class Settings(BaseSettings):
             (self.AZURE_FOUNDRY_2_ENDPOINT, self.AZURE_FOUNDRY_2_KEY, self.AZURE_FOUNDRY_2_MODEL),
             (self.AZURE_FOUNDRY_3_ENDPOINT, self.AZURE_FOUNDRY_3_KEY, self.AZURE_FOUNDRY_3_MODEL),
         ]
-        return [
-            (e.strip(), k.strip(), m.strip())
-            for e, k, m in raw
-            if e.strip() and m.strip()
-        ]
+        return [(e.strip(), k.strip(), m.strip()) for e, k, m in raw if e.strip() and m.strip()]
 
     @field_validator(
-        "LLM_API_KEY", "LLM_BASE_URL", "LLM_PROVIDER", "EMBED_API_KEY", "EMBED_PROVIDER",
+        "LLM_API_KEY",
+        "LLM_BASE_URL",
+        "LLM_PROVIDER",
+        "EMBED_API_KEY",
+        "EMBED_PROVIDER",
         mode="before",
     )
     @classmethod

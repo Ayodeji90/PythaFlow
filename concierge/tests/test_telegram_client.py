@@ -4,6 +4,7 @@ The core assertion is the identity fix: outbound is a plain HTTPS POST to
 api.telegram.org/bot<TOKEN>/sendMessage — a bot's own token, never a user
 session. Uses httpx.MockTransport so no real network call is made.
 """
+
 from __future__ import annotations
 
 import json

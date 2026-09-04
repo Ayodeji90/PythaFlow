@@ -6,6 +6,7 @@ and feeds the parsed email through the same concierge pipeline as web chat.
 The reply is sent via the configured EmailSender (SMTP by default).
 If no email sender is configured, the reply is logged instead.
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,6 +28,11 @@ log = logging.getLogger("concierge.email")
 router = APIRouter()
 
 
+def _text_field(value: Any) -> str:
+    """Form/webhook values can be UploadFile — only text matters for headers."""
+    return value if isinstance(value, str) else ""
+
+
 # ── Provider-specific parsers ────────────────────────────────────────────
 
 
@@ -39,6 +45,7 @@ def _parse_sendgrid(payload: dict[str, Any]) -> ParsedEmail:
     envelope = payload.get("envelope", "{}")
     if isinstance(envelope, str):
         import json
+
         envelope = json.loads(envelope)
     elif not isinstance(envelope, dict):
         envelope = {}
@@ -201,18 +208,21 @@ async def inbound_email(
     else:
         # Generic fallback — try best-effort parsing.
         parsed = ParsedEmail(
-            message_id=payload.get("message_id", payload.get("id", "")),
-            subject=payload.get("subject", ""),
-            body=payload.get("text", payload.get("body", "")),
-            from_email=payload.get("from", ""),
-            to_email=payload.get("to", ""),
+            message_id=_text_field(payload.get("message_id", payload.get("id", ""))),
+            subject=_text_field(payload.get("subject", "")),
+            body=_text_field(payload.get("text", payload.get("body", ""))),
+            from_email=_text_field(payload.get("from", "")),
+            to_email=_text_field(payload.get("to", "")),
             raw=payload,
         )
         provider = "generic"
 
     log.info(
         "inbound email [%s] from=%s to=%s subject=%s",
-        provider, parsed.from_email, parsed.to_email, parsed.subject,
+        provider,
+        parsed.from_email,
+        parsed.to_email,
+        parsed.subject,
     )
 
     # Resolve the tenant from the recipient address.
@@ -235,9 +245,7 @@ async def inbound_email(
 
     parts: list[str] = []
     try:
-        async for chunk in handle_inbound(
-            msg, db=db, redis=redis, orchestrator=orchestrator
-        ):
+        async for chunk in handle_inbound(msg, db=db, redis=redis, orchestrator=orchestrator):
             if chunk.content and chunk.type in ("token", "message"):
                 parts.append(chunk.content)
     except TenantNotFound as e:

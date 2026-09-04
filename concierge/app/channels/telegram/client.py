@@ -8,12 +8,13 @@ there is nothing to authenticate interactively and nothing to hang on stdin.
 One identity end to end: the guest messages @VenueBot and the reply is sent by
 the SAME bot (its token lives in Channel.config["bot_token"]).
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import httpx
 
@@ -58,14 +59,12 @@ class BotApiTelegramClient(TelegramClient):
             else [text[i : i + MAX_MESSAGE_CHARS] for i in range(0, len(text), MAX_MESSAGE_CHARS)]
         )
         message_ids: list[str] = []
-        kwargs = {"timeout": self._timeout}
+        kwargs: dict[str, Any] = {"timeout": self._timeout}
         if self._transport is not None:
             kwargs["transport"] = self._transport
         async with httpx.AsyncClient(**kwargs) as client:
             for part in parts:
-                resp = await client.post(
-                    url, json={"chat_id": chat_id, "text": part}
-                )
+                resp = await client.post(url, json={"chat_id": chat_id, "text": part})
                 resp.raise_for_status()
                 result = resp.json().get("result", {})
                 message_ids.append(str(result.get("message_id", "")))
@@ -121,7 +120,9 @@ async def send_with_retry(  # noqa: UP047 — keep 3.12-compatible generic
                 wait = _retry_after_seconds(exc, base_delay * (2**attempt))
                 log.warning(
                     "Telegram rate limited (attempt %d/%d) — sleeping %.1fs",
-                    attempt + 1, max_retries, wait,
+                    attempt + 1,
+                    max_retries,
+                    wait,
                 )
                 await asyncio.sleep(wait)
                 continue
@@ -129,7 +130,10 @@ async def send_with_retry(  # noqa: UP047 — keep 3.12-compatible generic
                 delay = base_delay * (2**attempt)
                 log.warning(
                     "Telegram send failed (attempt %d/%d): %s — retrying in %.1fs",
-                    attempt + 1, max_retries, exc, delay,
+                    attempt + 1,
+                    max_retries,
+                    exc,
+                    delay,
                 )
                 await asyncio.sleep(delay)
         except Exception as exc:  # noqa: BLE001 — retry any transient send failure
@@ -138,12 +142,13 @@ async def send_with_retry(  # noqa: UP047 — keep 3.12-compatible generic
                 delay = base_delay * (2**attempt)
                 log.warning(
                     "Telegram send failed (attempt %d/%d): %s — retrying in %.1fs",
-                    attempt + 1, max_retries, exc, delay,
+                    attempt + 1,
+                    max_retries,
+                    exc,
+                    delay,
                 )
                 await asyncio.sleep(delay)
-    raise RuntimeError(
-        f"Telegram send failed after {max_retries} attempts"
-    ) from last_exc
+    raise RuntimeError(f"Telegram send failed after {max_retries} attempts") from last_exc
 
 
 def _retry_after_seconds(exc: httpx.HTTPStatusError, fallback: float) -> float:

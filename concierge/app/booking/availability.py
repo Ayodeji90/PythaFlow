@@ -3,6 +3,7 @@
 Given a tenant, date, time, and party size, compute whether the requested
 slot can accommodate that party and offer alternatives when it can't.
 """
+
 from __future__ import annotations
 
 import logging
@@ -145,5 +146,3 @@ def _add_minutes(t: time, mins: int) -> time:
 def _parse_time_str(s: str) -> time:
     """Parse 'HH:MM' or 'HH:MM:SS' into a time object."""
     return time.fromisoformat(s.strip())
-
-

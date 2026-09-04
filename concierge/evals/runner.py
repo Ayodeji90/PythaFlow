@@ -15,6 +15,7 @@ Usage:
     # Run in regression-detection mode (removes grounding instructions)
     uv run python -m evals.runner --break-grounding
 """
+
 from __future__ import annotations
 
 import argparse
@@ -259,9 +260,7 @@ async def _run_turns(
 
         msg = _message_for_turn(turn, conv_ref=conv_ref)
 
-        chunks, db_state = await _execute_turn(
-            msg, orch, db, break_grounding=break_grounding
-        )
+        chunks, db_state = await _execute_turn(msg, orch, db, break_grounding=break_grounding)
 
         # Get last system prompt from the provider
         provider = orch._llm._provider
@@ -274,10 +273,12 @@ async def _run_turns(
             db_state=db_state,
         )
 
-        turns_data.append({
-            "checks": checks,
-            "dimensions": dims,
-        })
+        turns_data.append(
+            {
+                "checks": checks,
+                "dimensions": dims,
+            }
+        )
 
     return score_dialogue(dialogue.name, turns_data)
 
@@ -306,7 +307,10 @@ async def _execute_turn(
     # do so — our outer transaction uses savepoint mode so the test fixture
     # (or in this case the eval session) rolls back cleanly afterwards.
     async for chunk in handle_inbound(
-        msg, db=db, redis=None, orchestrator=orch,
+        msg,
+        db=db,
+        redis=None,
+        orchestrator=orch,
     ):
         chunks.append(chunk)
 
@@ -324,15 +328,11 @@ async def _gather_db_state(db) -> dict[str, Any]:
 
     state: dict[str, Any] = {}
 
-    requests = (
-        (await db.execute(select(Request).limit(5))).scalars().all()
-    )
+    requests = (await db.execute(select(Request).limit(5))).scalars().all()
     if requests:
         latest = requests[-1]
         req_type = latest.type
-        state["request_type"] = (
-            req_type.value if hasattr(req_type, "value") else str(req_type)
-        )
+        state["request_type"] = req_type.value if hasattr(req_type, "value") else str(req_type)
         req_status = latest.status
         state["request_status"] = (
             req_status.value if hasattr(req_status, "value") else str(req_status)
@@ -371,9 +371,10 @@ async def _setup_db(fixture_name: str) -> tuple[Any, dict]:
     session = maker()
 
     # Store engine/conn for teardown
-    session._eval_engine = engine
-    session._eval_conn = conn
-    session._eval_trans = trans
+    # The eval session piggybacks private attrs on AsyncSession for teardown.
+    session._eval_engine = engine  # type: ignore[reportAttributeAccessIssue]
+    session._eval_conn = conn  # type: ignore[reportAttributeAccessIssue]
+    session._eval_trans = trans  # type: ignore[reportAttributeAccessIssue]
 
     tenant_info = await load_fixture(session, fixture_name)
     return session, tenant_info
@@ -412,7 +413,7 @@ def _message_for_turn(turn, *, conv_ref: str) -> Any:
     )
 
 
-def _load_baseline() -> float:
+def _load_baseline() -> float | None:
     """Read baseline from BASELINE.md."""
     if not BASELINE_PATH.exists():
         log.warning("No BASELINE.md found at %s", BASELINE_PATH)

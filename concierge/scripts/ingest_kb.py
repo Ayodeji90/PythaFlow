@@ -1,8 +1,9 @@
 """Ingest a text/markdown file into a tenant's knowledge base.
 
-    uv run python scripts/ingest_kb.py --tenant demo --source hours data/hours.md
-    uv run python scripts/ingest_kb.py --tenant demo path/to/venue.md   # source = filename
+uv run python scripts/ingest_kb.py --tenant demo --source hours data/hours.md
+uv run python scripts/ingest_kb.py --tenant demo path/to/venue.md   # source = filename
 """
+
 import argparse
 import asyncio
 import sys

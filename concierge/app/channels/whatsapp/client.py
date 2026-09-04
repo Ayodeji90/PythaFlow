@@ -5,6 +5,7 @@ account (no Meta business verification), which is what lets a pre-registration
 founder demo on real WhatsApp today. The `WhatsAppClient` Protocol keeps the rest
 of the code vendor-agnostic, so a Meta Cloud API client can slot in later.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -148,12 +149,13 @@ async def send_with_retry(  # noqa: UP047 — keep 3.12-compatible generic
         except Exception as exc:  # noqa: BLE001 — retry any transient send failure
             last_exc = exc
             if attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)
+                delay = base_delay * (2**attempt)
                 log.warning(
                     "WhatsApp send failed (attempt %d/%d): %s — retrying in %.1fs",
-                    attempt + 1, max_retries, exc, delay,
+                    attempt + 1,
+                    max_retries,
+                    exc,
+                    delay,
                 )
                 await asyncio.sleep(delay)
-    raise RuntimeError(
-        f"WhatsApp send failed after {max_retries} attempts"
-    ) from last_exc
+    raise RuntimeError(f"WhatsApp send failed after {max_retries} attempts") from last_exc

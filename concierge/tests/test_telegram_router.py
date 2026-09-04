@@ -8,6 +8,7 @@ routing (each venue's bot token), secret-token validation, update dedup, the
 private-chat-only guard, unknown-tenant discard, and — critically — that the
 reply is delivered through the venue's own bot client (one identity end to end).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -45,6 +46,7 @@ def _make_app(session=None, *, secret: str = "", default_tenant: str = ""):
     app = create_app()
 
     if session is not None:
+
         async def _override_db():
             yield session
 
@@ -91,7 +93,7 @@ async def async_client(session):
 VENUE_SECRET = "venue-secret"
 
 
-async def _post(client: AsyncClient, path: str, update: dict, *, secret: str = VENUE_SECRET):
+async def _post(client: AsyncClient, path: str, update: dict, *, secret: str | None = VENUE_SECRET):
     """POST a Telegram update with the venue's registered webhook secret."""
     headers = {"X-Telegram-Bot-Api-Secret-Token": secret} if secret is not None else {}
     return await client.post(path, json=update, headers=headers)
@@ -181,7 +183,8 @@ class TestInboundTelegram:
         venue's own bot client (never a different identity)."""
         client, fake, tokens = async_client
         resp = await _post(
-            client, f"/webhooks/telegram/{tenant_with_channel.slug}",
+            client,
+            f"/webhooks/telegram/{tenant_with_channel.slug}",
             _tg_update("Any tables for two?"),
         )
         assert resp.status_code == 200
@@ -189,9 +192,7 @@ class TestInboundTelegram:
         assert fake.sent == [(123456789, "You said: Any tables for two?")]
         assert tokens[-1] == "123456:TESTTOKEN"  # the venue's own token
 
-    async def test_secret_mismatch_403(
-        self, async_client, session, tenant_with_channel
-    ):
+    async def test_secret_mismatch_403(self, async_client, session, tenant_with_channel):
         """Wrong/missing X-Telegram-Bot-Api-Secret-Token → 403, not processed."""
         client, fake, _ = async_client
         for headers in ({"X-Telegram-Bot-Api-Secret-Token": "wrong"}, {}):
@@ -208,9 +209,7 @@ class TestInboundTelegram:
         client, fake, _ = async_client
         update = _tg_update("Book a table", update_id=424242)
         for _ in range(2):
-            resp = await _post(
-                client, f"/webhooks/telegram/{tenant_with_channel.slug}", update
-            )
+            resp = await _post(client, f"/webhooks/telegram/{tenant_with_channel.slug}", update)
             assert resp.status_code == 200
         assert len(fake.sent) == 1
 
@@ -219,7 +218,8 @@ class TestInboundTelegram:
         never processed."""
         client, fake, _ = async_client
         resp = await _post(
-            client, f"/webhooks/telegram/{tenant_with_channel.slug}",
+            client,
+            f"/webhooks/telegram/{tenant_with_channel.slug}",
             _tg_update("hi everyone", chat_type="group"),
         )
         assert resp.status_code == 200
@@ -231,9 +231,7 @@ class TestInboundTelegram:
         update = _tg_update("photo")
         del update["message"]["text"]
         update["message"]["photo"] = [{"file_id": "x", "width": 10, "height": 10}]
-        resp = await _post(
-            client, f"/webhooks/telegram/{tenant_with_channel.slug}", update
-        )
+        resp = await _post(client, f"/webhooks/telegram/{tenant_with_channel.slug}", update)
         assert resp.status_code == 200
         assert fake.sent == []
 
@@ -244,9 +242,7 @@ class TestInboundTelegram:
         assert resp.status_code == 200
         assert fake.sent == []
 
-    async def test_default_tenant_shared_path(
-        self, async_client, session, tenant_with_channel
-    ):
+    async def test_default_tenant_shared_path(self, async_client, session, tenant_with_channel):
         """Shared /webhooks/telegram path routes to TELEGRAM_DEFAULT_TENANT."""
         app, patch_settings, patch_build, fake, tokens = _make_app(
             session, default_tenant=tenant_with_channel.slug
@@ -269,14 +265,16 @@ class TestInboundTelegram:
         # Fresh update_ids — Redis dedup keys live for an hour, so fixed ids
         # would collide with earlier test runs and be skipped as duplicates.
         resp = await _post(
-            client, f"/webhooks/telegram/{tenant_with_channel.slug}",
+            client,
+            f"/webhooks/telegram/{tenant_with_channel.slug}",
             _tg_update("table for 2"),
         )
         assert resp.status_code == 200
         assert tokens[-1] == "123456:TESTTOKEN"
 
         resp = await _post(
-            client, f"/webhooks/telegram/{other.slug}",
+            client,
+            f"/webhooks/telegram/{other.slug}",
             _tg_update("table for 4"),
         )
         assert resp.status_code == 200

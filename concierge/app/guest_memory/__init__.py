@@ -8,6 +8,7 @@ system-prompt context for the orchestrator.
 Future channels (WhatsApp, email) will provide a phone/email for matching
 across conversations.
 """
+
 from __future__ import annotations
 
 from uuid import UUID
@@ -36,9 +37,7 @@ async def resolve_guest(
     Sets conversation.guest_id if not already set.
     """
     # First, check if the conversation already has a guest linked
-    conv_result = await db.execute(
-        select(Conversation).where(Conversation.id == conversation_id)
-    )
+    conv_result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conv = conv_result.scalar_one()
 
     if conv.guest_id:
@@ -150,9 +149,7 @@ async def build_guest_context(
 
     Returns None if no preferences are known yet.
     """
-    conv_result = await db.execute(
-        select(Conversation).where(Conversation.id == conversation_id)
-    )
+    conv_result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conv = conv_result.scalar_one()
     if not conv.guest_id:
         return None

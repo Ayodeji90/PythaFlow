@@ -1,5 +1,6 @@
 """Day-3 proof: a message round-trips through the pipeline and both turns land in
 the database under the right tenant + conversation."""
+
 import uuid
 
 import pytest_asyncio
@@ -27,9 +28,7 @@ async def test_echo_roundtrips_and_persists(session):
 
     chunks = [
         c
-        async for c in handle_inbound(
-            msg, db=session, redis=None, orchestrator=EchoOrchestrator()
-        )
+        async for c in handle_inbound(msg, db=session, redis=None, orchestrator=EchoOrchestrator())
     ]
 
     # the echo came back
@@ -49,12 +48,16 @@ async def test_echo_roundtrips_and_persists(session):
 
     # both turns persisted, in order, under the right tenant + conversation
     rows = (
-        await session.execute(
-            select(Message)
-            .where(Message.conversation_id == conv.id)
-            .order_by(Message.created_at)
+        (
+            await session.execute(
+                select(Message)
+                .where(Message.conversation_id == conv.id)
+                .order_by(Message.created_at)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert [r.role for r in rows] == [MessageRole.guest, MessageRole.assistant]
     assert rows[0].content == "Hello there"
     assert rows[1].content == "You said: Hello there"
@@ -71,23 +74,21 @@ async def test_same_thread_reuses_conversation(session):
         msg = WebChatAdapter.to_inbound(
             tenant_slug=tenant.slug, conversation_ref=conv_ref, content=text
         )
-        async for _ in handle_inbound(
-            msg, db=session, redis=None, orchestrator=EchoOrchestrator()
-        ):
+        async for _ in handle_inbound(msg, db=session, redis=None, orchestrator=EchoOrchestrator()):
             pass
 
     convs = (
-        await session.execute(
-            select(Conversation).where(Conversation.tenant_id == tenant.id)
-        )
-    ).scalars().all()
+        (await session.execute(select(Conversation).where(Conversation.tenant_id == tenant.id)))
+        .scalars()
+        .all()
+    )
     assert len(convs) == 1  # same thread ref -> one conversation
 
     rows = (
-        await session.execute(
-            select(Message).where(Message.conversation_id == convs[0].id)
-        )
-    ).scalars().all()
+        (await session.execute(select(Message).where(Message.conversation_id == convs[0].id)))
+        .scalars()
+        .all()
+    )
     assert len(rows) == 4  # 2 guest + 2 assistant
 
 
@@ -96,9 +97,7 @@ async def test_unknown_tenant_raises(session):
         tenant_slug="does-not-exist", conversation_ref="x", content="hi"
     )
     try:
-        async for _ in handle_inbound(
-            msg, db=session, redis=None, orchestrator=EchoOrchestrator()
-        ):
+        async for _ in handle_inbound(msg, db=session, redis=None, orchestrator=EchoOrchestrator()):
             pass
         raise AssertionError("expected TenantNotFound")
     except TenantNotFound:

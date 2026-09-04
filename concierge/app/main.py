@@ -1,5 +1,6 @@
 """FastAPI application factory + lifespan. On boot it logs whether the datastores
 are reachable; it does not crash if they aren't, so `/health` can report the truth."""
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager

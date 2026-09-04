@@ -4,6 +4,7 @@ Each fixture creates a tenant and ingests the venue's knowledge base markdown
 into ``KnowledgeChunk`` rows (without real embeddings — the eval uses replay mode
 and doesn't need vector search).
 """
+
 from __future__ import annotations
 
 import logging
@@ -61,10 +62,7 @@ async def load_fixture(
     """
     spec = _FIXTURES.get(fixture_name)
     if spec is None:
-        raise ValueError(
-            f"Unknown fixture {fixture_name!r}. "
-            f"Available: {list(_FIXTURES)}"
-        )
+        raise ValueError(f"Unknown fixture {fixture_name!r}. Available: {list(_FIXTURES)}")
 
     from app.models import Tenant
 

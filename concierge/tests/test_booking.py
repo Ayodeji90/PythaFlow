@@ -2,6 +2,7 @@
 
 Tests use mocked DB sessions so they run without Postgres.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -143,8 +144,9 @@ def test_availability_result_available():
 
 
 def test_availability_result_full():
-    r = AvailabilityResult(available=False, alternatives=["20:30", "21:00"],
-                           booked_count=20, remaining=0)
+    r = AvailabilityResult(
+        available=False, alternatives=["20:30", "21:00"], booked_count=20, remaining=0
+    )
     assert r.available is False
     assert len(r.alternatives) == 2
 
@@ -187,8 +189,12 @@ async def test_compute_availability_available():
     from app.models.tenant import Tenant
 
     tenant = Tenant(
-        id=uuid.uuid4(), slug="test", name="Test Bistro",
-        timezone="UTC", hours={}, config={"covers_per_slot": 20, "slot_minutes": 30},
+        id=uuid.uuid4(),
+        slug="test",
+        name="Test Bistro",
+        timezone="UTC",
+        hours={},
+        config={"covers_per_slot": 20, "slot_minutes": 30},
     )
 
     db = AsyncMock()
@@ -207,8 +213,12 @@ async def test_compute_availability_full():
     from app.models.tenant import Tenant
 
     tenant = Tenant(
-        id=uuid.uuid4(), slug="full", name="Full",
-        timezone="UTC", hours={}, config={"covers_per_slot": 10, "slot_minutes": 30},
+        id=uuid.uuid4(),
+        slug="full",
+        name="Full",
+        timezone="UTC",
+        hours={},
+        config={"covers_per_slot": 10, "slot_minutes": 30},
     )
 
     db = AsyncMock()
@@ -232,12 +242,11 @@ async def test_check_availability_tool():
     db = AsyncMock()
     mock_result = AvailabilityResult(available=True, booked_count=3, remaining=17)
 
-    with patch.object(
-        LocalBookingStore, "check_availability", AsyncMock(return_value=mock_result)
-    ):
+    with patch.object(LocalBookingStore, "check_availability", AsyncMock(return_value=mock_result)):
         result = await check_availability.run(
             CheckAvailabilityArgs(date="2026-07-25", time="20:00", party_size=4),
-            ctx=ctx, db=db,
+            ctx=ctx,
+            db=db,
         )
 
     assert result["available"] is True
@@ -260,7 +269,8 @@ async def test_draft_reservation_creates_request():
 
     result = await draft_reservation.run(
         DraftReservationArgs(date="2026-07-25", time="20:00", party_size=4),
-        ctx=ctx, db=db,
+        ctx=ctx,
+        db=db,
     )
 
     assert result["status"] == "drafted"
@@ -276,15 +286,15 @@ async def test_draft_reservation_existing_draft():
     ctx = ToolContext(tenant_id=uuid.uuid4(), conversation_id=uuid.uuid4())
 
     # Pre-compute the key so we can match it
-    key = _idempotency_key(
-        str(ctx.tenant_id), str(ctx.conversation_id), "2026-07-25", "20:00", 4
-    )
+    key = _idempotency_key(str(ctx.tenant_id), str(ctx.conversation_id), "2026-07-25", "20:00", 4)
 
     existing = MagicMock()
     existing.id = uuid.uuid4()
     existing.summary = "Table for 4 on 2026-07-25 at 20:00"
     existing.payload = {
-        "date": "2026-07-25", "time": "20:00", "party_size": 4,
+        "date": "2026-07-25",
+        "time": "20:00",
+        "party_size": 4,
         "idempotency_key": key,
     }
 
@@ -293,7 +303,8 @@ async def test_draft_reservation_existing_draft():
 
     result = await draft_reservation.run(
         DraftReservationArgs(date="2026-07-25", time="20:00", party_size=4),
-        ctx=ctx, db=db,
+        ctx=ctx,
+        db=db,
     )
 
     assert result["status"] == "existing_draft"

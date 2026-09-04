@@ -6,6 +6,7 @@
 Set TELEGRAM_BOT_TOKEN (optionally TELEGRAM_BOT_USERNAME and
 TELEGRAM_WEBHOOK_SECRET) to also provision the demo tenant's Telegram channel.
 """
+
 import asyncio
 import os
 import sys

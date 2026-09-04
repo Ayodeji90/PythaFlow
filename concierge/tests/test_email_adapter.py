@@ -2,6 +2,7 @@
 
 Tests use the `session` fixture (transaction-rolled-back per test) and the
 `EchoOrchestrator` — no network, no LLM, deterministic assertions."""
+
 from __future__ import annotations
 
 import uuid
@@ -96,9 +97,7 @@ async def test_email_roundtrips_and_persists(session):
 
     chunks = [
         c
-        async for c in handle_inbound(
-            msg, db=session, redis=None, orchestrator=EchoOrchestrator()
-        )
+        async for c in handle_inbound(msg, db=session, redis=None, orchestrator=EchoOrchestrator())
     ]
 
     types = [c.type for c in chunks]
@@ -117,12 +116,16 @@ async def test_email_roundtrips_and_persists(session):
 
     # Both turns persisted, in order.
     rows = (
-        await session.execute(
-            select(Message)
-            .where(Message.conversation_id == conv.id)
-            .order_by(Message.created_at)
+        (
+            await session.execute(
+                select(Message)
+                .where(Message.conversation_id == conv.id)
+                .order_by(Message.created_at)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert [r.role for r in rows] == [MessageRole.guest, MessageRole.assistant]
     assert rows[0].content == "What are your hours?"
     assert rows[1].content == "You said: What are your hours?"
@@ -142,9 +145,7 @@ async def test_email_reply_reuses_same_conversation(session):
     # First email — brand new thread.
     email1 = _make_email(message_id=parent_id, body="I'd like to book a table")
     msg1 = EmailAdapter.to_inbound(email1, tenant_slug=tenant.slug)
-    async for _ in handle_inbound(
-        msg1, db=session, redis=None, orchestrator=EchoOrchestrator()
-    ):
+    async for _ in handle_inbound(msg1, db=session, redis=None, orchestrator=EchoOrchestrator()):
         pass
 
     # Reply — same thread, references the parent.
@@ -154,27 +155,25 @@ async def test_email_reply_reuses_same_conversation(session):
         body="Actually, make it 8pm",
     )
     msg2 = EmailAdapter.to_inbound(email2, tenant_slug=tenant.slug)
-    async for _ in handle_inbound(
-        msg2, db=session, redis=None, orchestrator=EchoOrchestrator()
-    ):
+    async for _ in handle_inbound(msg2, db=session, redis=None, orchestrator=EchoOrchestrator()):
         pass
 
     # Only one Conversation for this thread.
     convs = (
-        await session.execute(
-            select(Conversation).where(Conversation.tenant_id == tenant.id)
-        )
-    ).scalars().all()
+        (await session.execute(select(Conversation).where(Conversation.tenant_id == tenant.id)))
+        .scalars()
+        .all()
+    )
     assert len(convs) == 1
 
     # 4 messages: 2 guest + 2 assistant.
     # All created_at are identical (same transaction), and UUIDs are random,
     # so assert by content presence rather than positional ordering.
     rows = (
-        await session.execute(
-            select(Message).where(Message.conversation_id == convs[0].id)
-        )
-    ).scalars().all()
+        (await session.execute(select(Message).where(Message.conversation_id == convs[0].id)))
+        .scalars()
+        .all()
+    )
     contents = [r.content for r in rows]
     assert len(contents) == 4
     assert "I'd like to book a table" in contents
@@ -196,9 +195,7 @@ async def test_email_unknown_tenant_raises(session):
         _make_email(to_email="unknown@venue.com"), tenant_slug="does-not-exist"
     )
     try:
-        async for _ in handle_inbound(
-            msg, db=session, redis=None, orchestrator=EchoOrchestrator()
-        ):
+        async for _ in handle_inbound(msg, db=session, redis=None, orchestrator=EchoOrchestrator()):
             pass
         raise AssertionError("expected TenantNotFound")
     except TenantNotFound:

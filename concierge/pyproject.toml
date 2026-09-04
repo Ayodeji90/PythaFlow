@@ -18,7 +18,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff>=0.6", "pytest>=8", "pytest-asyncio>=0.23", "anyio>=4", "PyYAML>=6", "fakeredis[lua]>=2", "aiosmtplib>=1.1"]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "pytest-timeout>=2.3",
+    "anyio>=4",
+    "PyYAML>=6",
+    "fakeredis[lua]>=2",
+    "aiosmtplib>=1.1",
+    "pyright>=1.1.390",
+]
 
 # Treat this as an application, not a distributable package — uv installs the
 # dependencies into .venv but never tries to build `app/` itself.
@@ -33,6 +43,13 @@ extend-exclude = ["alembic"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+# app/ + evals/ + tests are type-checked; alembic is generated code.
+include = ["app", "evals", "scripts", "tests"]
+exclude = ["alembic"]
+typeCheckingMode = "basic"
+pythonVersion = "3.12"
 
 [tool.ruff.lint.flake8-bugbear]
 # `Depends(...)` in an argument default is the FastAPI idiom, not a B008 bug.

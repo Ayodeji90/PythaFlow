@@ -21,20 +21,18 @@ class CreateReservationArgs(BaseModel):
     date: str = Field(description="YYYY-MM-DD, e.g. '2026-07-25'")
     time: str = Field(description="HH:MM 24-hour, e.g. '20:00'")
     party_size: int = Field(ge=1, le=50, description="Number of guests")
-    area: str | None = Field(None, description="Optional: indoor, terrace, bar, etc.")
-    notes: str | None = Field(None, description="Optional guest preference")
+    area: str | None = Field(default=None, description="Optional: indoor, terrace, bar, etc.")
+    notes: str | None = Field(default=None, description="Optional guest preference")
     idempotency_key: str = Field(description="From the draft Request payload — ensures idempotency")
 
 
 class CreateReservationTool:
     name = "create_reservation"
     description = "Create a confirmed Reservation row after staff approval."
-    args_model = CreateReservationArgs
+    args_model: type[BaseModel] = CreateReservationArgs
     kind = ToolKind.fulfilment
 
-    async def run(
-        self, args: CreateReservationArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
+    async def run(self, args: CreateReservationArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
         store = build_booking_store()
         draft = ReservationDraft(
             party_size=args.party_size,

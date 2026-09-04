@@ -6,6 +6,7 @@ message; outside that window a pre-approved template is required. This answers
 inbound reply and proactive sends (reminders/confirmations) can choose
 text-vs-template correctly.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -33,9 +34,7 @@ async def last_inbound_at(db: AsyncSession, conversation_id: UUID) -> datetime |
     ).scalar_one_or_none()
 
 
-async def session_window_open(
-    db: AsyncSession, conversation_id: UUID, *, hours: int = 24
-) -> bool:
+async def session_window_open(db: AsyncSession, conversation_id: UUID, *, hours: int = 24) -> bool:
     """True if a free-form WhatsApp message may still be sent (the guest messaged
     within `hours`). False → a pre-approved template is required instead."""
     ts = await last_inbound_at(db, conversation_id)

@@ -9,6 +9,7 @@ Covers end-to-end code paths in ``app/routers/whatsapp.py`` that the unit-level
 helper tests (in test_whatsapp_hardening.py) can't reach — signature validation,
 empty body handling, dedup, tenant resolution, and the status callback.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -36,6 +37,7 @@ def _make_app(session=None, *, enable_signatures: bool = False):
     app = create_app()
 
     if session is not None:
+
         async def _override_db():
             yield session
 
@@ -159,9 +161,7 @@ class TestInboundWhatsapp:
         assert resp.status_code == 200
         assert "<Response></Response>" in resp.text
 
-    async def test_happy_path_processes(
-        self, async_client, session, tenant_with_channel
-    ):
+    async def test_happy_path_processes(self, async_client, session, tenant_with_channel):
         """Valid message → EchoOrchestrator processes → 200 Twiml."""
         resp = await async_client.post(
             "/webhooks/whatsapp",
@@ -170,9 +170,7 @@ class TestInboundWhatsapp:
         assert resp.status_code == 200
         assert "<Response></Response>" in resp.text
 
-    async def test_outbound_failure_does_not_500(
-        self, async_client, session, tenant_with_channel
-    ):
+    async def test_outbound_failure_does_not_500(self, async_client, session, tenant_with_channel):
         """Outbound send failure is caught — webhook still returns 200."""
         resp = await async_client.post(
             "/webhooks/whatsapp",
@@ -186,9 +184,7 @@ class TestInboundWhatsapp:
 
 
 class TestWhatsappStatus:
-    async def test_status_updates_known_message(
-        self, async_client, session, tenant_with_channel
-    ):
+    async def test_status_updates_known_message(self, async_client, session, tenant_with_channel):
         """A delivery receipt with a known SID updates the message status."""
         tenant = tenant_with_channel
         conv = Conversation(

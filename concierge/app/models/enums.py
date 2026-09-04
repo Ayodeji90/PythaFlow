@@ -1,5 +1,6 @@
 """Domain enums, stored as VARCHAR + CHECK (native_enum=False) so adding a new
 value later is a light migration instead of an ALTER TYPE."""
+
 from __future__ import annotations
 
 import enum
@@ -24,8 +25,8 @@ class ChannelType(enum.StrEnum):
 
 
 class ConversationStatus(enum.StrEnum):
-    active = "active"   # AI is handling it
-    human = "human"     # escalated / staff has taken over
+    active = "active"  # AI is handling it
+    human = "human"  # escalated / staff has taken over
     closed = "closed"
 
 
@@ -38,9 +39,9 @@ class MessageRole(enum.StrEnum):
 
 
 class ReservationStatus(enum.StrEnum):
-    pending = "pending"       # drafted by the concierge, awaiting approval
-    approved = "approved"     # staff approved
-    confirmed = "confirmed"   # committed to the booking system
+    pending = "pending"  # drafted by the concierge, awaiting approval
+    approved = "approved"  # staff approved
+    confirmed = "confirmed"  # committed to the booking system
     cancelled = "cancelled"
     rejected = "rejected"
 

@@ -2,6 +2,7 @@
 
 Every tool invocation is recorded as an Action row so the staff dashboard can
 review what the AI proposed, what was executed, and what failed."""
+
 from __future__ import annotations
 
 from uuid import UUID

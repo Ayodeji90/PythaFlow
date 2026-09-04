@@ -3,6 +3,7 @@
 Uses the ``reservations`` table and tenant capacity rules from
 ``Tenant.config``. Swapped for a real PMS/POS adapter on Day 26+.
 """
+
 from __future__ import annotations
 
 import logging
@@ -82,15 +83,18 @@ class LocalBookingStore(BookingStore):
         from sqlalchemy import select
 
         result = await db.execute(
-            select(Reservation)
-            .where(Reservation.id == reservation_id, Reservation.tenant_id == tenant_id)
+            select(Reservation).where(
+                Reservation.id == reservation_id, Reservation.tenant_id == tenant_id
+            )
         )
         reservation = result.scalar_one()
         if changes.date is not None:
             from datetime import date as date_type
+
             reservation.date = date_type.fromisoformat(changes.date)
         if changes.time is not None:
             from datetime import time as time_type
+
             reservation.time = time_type.fromisoformat(changes.time)
         if changes.party_size is not None:
             reservation.party_size = changes.party_size
@@ -126,8 +130,9 @@ class LocalBookingStore(BookingStore):
         from ..models.enums import ReservationStatus
 
         result = await db.execute(
-            select(Reservation)
-            .where(Reservation.id == reservation_id, Reservation.tenant_id == tenant_id)
+            select(Reservation).where(
+                Reservation.id == reservation_id, Reservation.tenant_id == tenant_id
+            )
         )
         reservation = result.scalar_one()
         old_status = reservation.status
@@ -138,7 +143,7 @@ class LocalBookingStore(BookingStore):
 
         return {
             "reservation_id": str(reservation.id),
-            "old_status": old_status.value if hasattr(old_status, 'value') else old_status,
+            "old_status": old_status.value if hasattr(old_status, "value") else old_status,
             "new_status": ReservationStatus.cancelled.value,
             "reason": reason,
         }

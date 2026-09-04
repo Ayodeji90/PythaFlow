@@ -7,6 +7,7 @@ attached to the application lifespan.
 Day 12 upgrade: Redis ZADD/ZRANGEBYSCORE for efficient due-queue (vs full DB scan).
 Falls back to DB scan when Redis is unavailable.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -113,9 +114,9 @@ async def _check_and_fire(
                                 "subject": "reminder",
                                 "reservation_id": res_id,
                                 "message": (
-                                        f"Reminder: you have a reservation "
-                                        f"in about {REMINDER_LEAD_HOURS} hours."
-                                    ),
+                                    f"Reminder: you have a reservation "
+                                    f"in about {REMINDER_LEAD_HOURS} hours."
+                                ),
                             },
                         )
                         fired.add(res_id)
@@ -160,9 +161,9 @@ async def _check_and_fire(
                             "subject": "reminder",
                             "reservation_id": key,
                             "message": (
-                                        f"Reminder: you have a reservation "
-                                        f"in about {REMINDER_LEAD_HOURS} hours."
-                                    ),
+                                f"Reminder: you have a reservation "
+                                f"in about {REMINDER_LEAD_HOURS} hours."
+                            ),
                         },
                     )
 

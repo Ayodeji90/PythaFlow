@@ -4,6 +4,7 @@ Every tool that writes (draft_reservation, modify, cancel, order) creates a
 Request. Staff triage from a single queue, approve/reject, and the orchestrator
 worker picks up approved requests for fulfilment.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -60,6 +61,4 @@ class Request(UUIDMixin, TenantMixin, TimestampMixin, Base):
     decided_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    decided_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

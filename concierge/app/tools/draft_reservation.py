@@ -4,6 +4,7 @@ Creates NO Reservation row — the booking only exists after staff approval
 (Day 10 fulfilment worker). Idempotent by SHA256 hash so re-drafting the
 same slot updates the existing open Request instead of stacking duplicates.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -21,8 +22,10 @@ class DraftReservationArgs(BaseModel):
     date: str = Field(description="YYYY-MM-DD, e.g. '2026-07-25'")
     time: str = Field(description="HH:MM 24-hour, e.g. '20:00'")
     party_size: int = Field(ge=1, le=50, description="Number of guests")
-    area: str | None = Field(None, description="Optional: indoor, terrace, bar, etc.")
-    notes: str | None = Field(None, description="Optional guest preference, e.g. 'high chair'")
+    area: str | None = Field(default=None, description="Optional: indoor, terrace, bar, etc.")
+    notes: str | None = Field(
+        default=None, description="Optional guest preference, e.g. 'high chair'"
+    )
 
 
 def _idempotency_key(
@@ -41,12 +44,10 @@ class DraftReservationTool:
         "checking availability. Re-drafting the same booking updates the "
         "existing request instead of creating a duplicate."
     )
-    args_model = DraftReservationArgs
+    args_model: type[BaseModel] = DraftReservationArgs
     kind = ToolKind.draft
 
-    async def run(
-        self, args: DraftReservationArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
+    async def run(self, args: DraftReservationArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
         key = _idempotency_key(
             str(ctx.tenant_id),
             str(ctx.conversation_id),

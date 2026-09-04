@@ -1,6 +1,7 @@
 """KnowledgeChunk — a chunk of the venue's knowledge, embedded for RAG (Day 5).
 The `embedding` dimension follows Settings.EMBED_DIM (NVIDIA nv-embedqa-e5-v5 =
 1024). Changing the embedding provider/dim means a re-embed + a migration."""
+
 from __future__ import annotations
 
 from pgvector.sqlalchemy import Vector

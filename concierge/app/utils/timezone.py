@@ -6,6 +6,7 @@ the real current date) and the get_hours tool (so a guest asking "are you open
 today?" near a day boundary gets the right day's hours). Computing "today" in UTC
 silently gives the wrong answer for any venue west of GMT during late-evening turns.
 """
+
 from __future__ import annotations
 
 import datetime

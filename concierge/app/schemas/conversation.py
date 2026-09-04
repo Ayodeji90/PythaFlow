@@ -1,4 +1,5 @@
 """Pydantic schemas for the staff-console conversation endpoints (Day 17)."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -11,7 +12,7 @@ from pydantic import BaseModel
 class ConversationListItem(BaseModel):
     id: UUID
     channel_type: str
-    external_thread_id: str
+    external_thread_id: str | None = None
     guest_name: str | None = None
     guest_phone: str | None = None
     last_message_preview: str
@@ -37,7 +38,7 @@ class TranscriptMessage(BaseModel):
 class ConversationDetailResponse(BaseModel):
     id: UUID
     channel_type: str
-    external_thread_id: str
+    external_thread_id: str | None = None
     guest_name: str | None = None
     guest_phone: str | None = None
     status: str

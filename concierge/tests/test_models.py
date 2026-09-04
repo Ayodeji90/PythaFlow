@@ -1,4 +1,5 @@
 """Day-2 guardrail: prove tenant isolation and that model defaults work."""
+
 import uuid
 
 from sqlalchemy import select
@@ -19,16 +20,12 @@ async def test_tenant_isolation(session):
     await session.flush()
 
     # A tenant-scoped query returns ONLY that tenant's rows.
-    rows = (
-        await session.execute(select(Guest).where(Guest.tenant_id == t1.id))
-    ).scalars().all()
+    rows = (await session.execute(select(Guest).where(Guest.tenant_id == t1.id))).scalars().all()
     assert [r.id for r in rows] == [g1.id]
 
     # Trying to reach tenant 2's row through tenant 1's scope returns nothing.
     leaked = (
-        await session.execute(
-            select(Guest).where(Guest.tenant_id == t1.id, Guest.id == g2.id)
-        )
+        await session.execute(select(Guest).where(Guest.tenant_id == t1.id, Guest.id == g2.id))
     ).scalar_one_or_none()
     assert leaked is None
 
@@ -43,7 +40,7 @@ async def test_defaults_and_pk(session):
     await session.flush()
     await session.refresh(conv)
 
-    assert conv.id is not None                 # server-generated UUID pk
-    assert conv.status.value == "active"       # enum server default
-    assert conv.state == {}                    # jsonb server default
-    assert conv.created_at is not None         # timestamp default
+    assert conv.id is not None  # server-generated UUID pk
+    assert conv.status.value == "active"  # enum server default
+    assert conv.state == {}  # jsonb server default
+    assert conv.created_at is not None  # timestamp default

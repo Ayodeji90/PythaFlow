@@ -1,5 +1,6 @@
 """Knowledge-base ingestion endpoint. `POST /api/kb` chunks, embeds, and upserts
 a document for a tenant."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException

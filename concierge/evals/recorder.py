@@ -14,6 +14,7 @@ FakeEmbedder
     A dummy embedder that returns a zero vector, used when the eval doesn't
     need real retrieval but the orchestrator still calls the embed path.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -28,6 +29,7 @@ from app.llm.base import (
     LLMToolResult,
     ToolCall,
 )
+from app.llm.embeddings import InputType
 
 # ── Fake embedder for retrieval bypass ───────────────────────────────────
 
@@ -37,19 +39,21 @@ class FakeEmbedder:
 
     This lets the orchestrator's ``retrieve()`` step succeed (finding chunks
     with zero embeddings at distance 0) without calling any real embedding API.
+    Conforms to the ``EmbeddingService`` protocol so it can be passed anywhere
+    a real embedder would go.
     """
 
     def __init__(self, dim: int = 1024) -> None:
-        self._dim = dim
+        self.dim = dim
 
-    async def embed(self, text: str) -> list[float]:
-        return [0.0] * self._dim
+    async def embed(self, texts: list[str], *, input_type: InputType) -> list[list[float]]:
+        return [[0.0] * self.dim for _ in texts]
 
     async def embed_query(self, text: str) -> list[float]:
-        return [0.0] * self._dim
+        return [0.0] * self.dim
 
     async def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return [[0.0] * self._dim for _ in texts]
+        return [[0.0] * self.dim for _ in texts]
 
     async def aclose(self) -> None:
         pass
@@ -79,11 +83,13 @@ class RecordingProvider(LLMProvider):
         result = await self._inner.generate(
             messages, model=model, system=system, temperature=temperature, max_tokens=max_tokens
         )
-        self.recordings.append({
-            "type": "generate",
-            "system": system,
-            "result": _result_to_dict(result),
-        })
+        self.recordings.append(
+            {
+                "type": "generate",
+                "system": system,
+                "result": _result_to_dict(result),
+            }
+        )
         return result
 
     async def stream(self, messages, *, model, system=None, temperature=0.4, max_tokens=1024):
@@ -95,11 +101,13 @@ class RecordingProvider(LLMProvider):
         ):
             chunks.append(chunk)
             yield chunk
-        self.recordings.append({
-            "type": "stream",
-            "system": system,
-            "result": {"text": "".join(chunks)},
-        })
+        self.recordings.append(
+            {
+                "type": "stream",
+                "system": system,
+                "result": {"text": "".join(chunks)},
+            }
+        )
 
     async def generate_with_tools(
         self,
@@ -121,11 +129,13 @@ class RecordingProvider(LLMProvider):
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        self.recordings.append({
-            "type": "generate_with_tools",
-            "system": system,
-            "result": _result_to_dict(result),
-        })
+        self.recordings.append(
+            {
+                "type": "generate_with_tools",
+                "system": system,
+                "result": _result_to_dict(result),
+            }
+        )
         return result
 
     def save_recording(self, path: str | Path) -> None:

@@ -2,6 +2,7 @@
 
 Retrieval is tested with a FAKE embedder whose vectors we control, so the search,
 tenant-scoping, and the floor are all deterministic and need no network/key."""
+
 import uuid
 
 from app.knowledge.chunk import chunk_document
@@ -94,8 +95,11 @@ async def _seed_kb(session) -> Tenant:
 async def test_retrieval_returns_relevant_chunk(session):
     tenant = await _seed_kb(session)
     hits = await retrieve(
-        session, tenant_id=tenant.id, query="do you have vegan food?",
-        embedder=FakeEmbedder(), max_distance=0.5,
+        session,
+        tenant_id=tenant.id,
+        query="do you have vegan food?",
+        embedder=FakeEmbedder(),
+        max_distance=0.5,
     )
     assert hits, "expected a relevant chunk"
     assert "vegan" in hits[0].content.lower()
@@ -107,8 +111,11 @@ async def test_floor_rejects_irrelevant(session):
     # 'wifi' topic isn't in the KB → every chunk is on a different axis → the
     # floor rejects them all, so the concierge will defer to the team.
     hits = await retrieve(
-        session, tenant_id=tenant.id, query="what is the wifi password?",
-        embedder=FakeEmbedder(), max_distance=0.5,
+        session,
+        tenant_id=tenant.id,
+        query="what is the wifi password?",
+        embedder=FakeEmbedder(),
+        max_distance=0.5,
     )
     assert hits == []
 
@@ -120,13 +127,19 @@ async def test_retrieval_is_tenant_scoped(session):
     await session.flush()
     # t2 has no KB — even a perfect query returns nothing for it.
     hits = await retrieve(
-        session, tenant_id=t2.id, query="vegan", embedder=FakeEmbedder(),
+        session,
+        tenant_id=t2.id,
+        query="vegan",
+        embedder=FakeEmbedder(),
         max_distance=0.5,
     )
     assert hits == []
     # ...while t1 still finds it.
     hits1 = await retrieve(
-        session, tenant_id=t1.id, query="vegan", embedder=FakeEmbedder(),
+        session,
+        tenant_id=t1.id,
+        query="vegan",
+        embedder=FakeEmbedder(),
         max_distance=0.5,
     )
     assert hits1

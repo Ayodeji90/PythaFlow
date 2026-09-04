@@ -1,5 +1,6 @@
 """Chooses and constructs the provider from Settings, then wraps it in the
 stable LLMService. This is the single place that knows which vendors exist."""
+
 from __future__ import annotations
 
 from ..config import Settings, get_settings
@@ -28,9 +29,7 @@ def build_llm_service(settings: Settings | None = None) -> LLMService:
     if provider_key in _OPENAI_COMPATIBLE_BASE_URLS:
         base_url = s.LLM_BASE_URL or _OPENAI_COMPATIBLE_BASE_URLS[provider_key]
         if not base_url:
-            raise ValueError(
-                f"LLM_PROVIDER={provider_key!r} requires LLM_BASE_URL to be set."
-            )
+            raise ValueError(f"LLM_PROVIDER={provider_key!r} requires LLM_BASE_URL to be set.")
         provider = OpenAICompatibleProvider(
             api_key=s.LLM_API_KEY,
             base_url=base_url,

@@ -1,4 +1,5 @@
 """Tests for built-in tools (get_hours, etc)."""
+
 from __future__ import annotations
 
 import uuid
@@ -47,7 +48,8 @@ async def test_get_hours_returns_configured_hours(session):
 async def test_get_hours_no_hours(session):
     """When Tenant.hours is null the tool returns a friendly message."""
     tenant = Tenant(slug=f"t-{uuid.uuid4().hex[:8]}", name="No Hours")
-    tenant.hours = None
+    tenant.hours = None  # type: ignore[reportAttributeAccessIssue] — SQLAlchemy mapped attr
+    # (assigning None clears the hours JSON column; see Tenant model)
     session.add(tenant)
     await session.flush()
 

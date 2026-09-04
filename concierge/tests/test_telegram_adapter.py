@@ -1,5 +1,6 @@
 """Telegram adapter unit tests — webhook parsing guards and the canonical
 InboundMessage mapping (mirrors test_whatsapp_adapter.py)."""
+
 from __future__ import annotations
 
 from app.channels.telegram.adapter import TelegramAdapter, TelegramInbound

@@ -64,6 +64,14 @@ jobs:
         working-directory: concierge
         run: uv run ruff check .
 
+      - name: Check formatting with ruff
+        working-directory: concierge
+        run: uv run ruff format --check .
+
+      - name: Typecheck with pyright
+        working-directory: concierge
+        run: uv run pyright
+
       - name: Run unit tests
         working-directory: concierge
         run: uv run pytest -v --timeout 30

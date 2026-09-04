@@ -4,6 +4,7 @@ Appends/updates reservation rows so a pilot venue watches bookings arrive in
 a familiar spreadsheet. Failures log a warning and never fail the booking —
 the database is always the source of truth.
 """
+
 from __future__ import annotations
 
 import logging
@@ -32,7 +33,7 @@ class SheetMirror:
             return False
 
         try:
-            import gspread  # noqa: PLC0415 — lazy import
+            import gspread  # type: ignore[reportMissingImports]  # noqa: PLC0415 — lazy import, optional dep
         except ImportError:
             log.warning("gspread not installed — Sheet mirror disabled")
             return False

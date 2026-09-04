@@ -1,4 +1,5 @@
 """Conversation (a thread with a guest on a channel) and Message (one turn)."""
+
 from __future__ import annotations
 
 import uuid
@@ -40,9 +41,7 @@ class Conversation(UUIDMixin, TenantMixin, TimestampMixin, Base):
 
 class Message(UUIDMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "messages"
-    __table_args__ = (
-        Index("ix_messages_conversation_created", "conversation_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_messages_conversation_created", "conversation_id", "created_at"),)
 
     conversation_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False

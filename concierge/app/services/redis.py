@@ -1,4 +1,5 @@
 """Shared async Redis client (session/hot state from Day 4 onward)."""
+
 import asyncio
 from functools import lru_cache
 

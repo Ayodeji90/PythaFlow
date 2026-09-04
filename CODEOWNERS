@@ -1,0 +1,51 @@
+# Balance monorepo — module ownership map.
+#
+# One owner per area = one natural reviewer per PR (GitHub auto-assigns from
+# this file). These are ROLE placeholders, not real handles — the file is
+# inert (and reads as a map) until the GitHub org exists; then swap in team
+# handles and it activates. Order matters: last match wins.
+#
+# Roles
+#   @balance-ai      AI/backend engineer — the concierge brain, evals
+#   @balance-backend Backend engineer — guest channels, infra, durability
+#   @balance-front   Frontend engineer — staff console, site
+#   @balance-ml      ML engineer — Graycliff (only if productized)
+#   @balance-founder Founder — GTM, product decisions
+
+# ── concierge: the product ────────────────────────────────────────────────
+
+# The brain — orchestrator, RAG, guardrails, tools, requests, LLM seam
+/concierge/app/orchestrator/   @balance-ai
+/concierge/app/knowledge/      @balance-ai
+/concierge/app/llm/            @balance-ai
+/concierge/app/tools/          @balance-ai
+/concierge/app/requests/       @balance-ai
+/concierge/app/models/         @balance-ai
+/concierge/alembic/            @balance-ai
+/concierge/evals/              @balance-ai
+
+# Guest channels + delivery — webchat, WhatsApp, email, Telegram, reminders
+/concierge/app/channels/       @balance-backend
+/concierge/app/reminders/      @balance-backend
+/concierge/app/notifications/  @balance-backend
+/concierge/app/services/       @balance-backend
+/concierge/app/booking/        @balance-backend
+
+# Staff surface — approvals, console routers/schemas, SSE
+/concierge/app/approvals/      @balance-front
+/concierge/app/routers/        @balance-front
+/concierge/app/schemas/        @balance-front
+
+# Tests follow their code — the concrete tool files under app/* decide; the
+# shared test fixtures default to the AI owner.
+/concierge/tests/              @balance-ai
+
+# Repo-governance files live in the repo root (see CONTRIBUTING).
+/concierge/pyproject.toml      @balance-ai
+/concierge/docs/               @balance-ai
+
+# ── Everything else ───────────────────────────────────────────────────────
+
+/Graycliff/                    @balance-ml
+/balance-site/                 @balance-front
+/Discovery/                    @balance-founder

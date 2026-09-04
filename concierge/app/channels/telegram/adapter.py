@@ -5,6 +5,7 @@ Receiving is webhook-only: Telegram POSTs Bot API update objects (the same JSON
 shape as getUpdates) to /webhooks/telegram/{tenant_slug}. This adapter converts
 them to the canonical InboundMessage the shared pipeline expects.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

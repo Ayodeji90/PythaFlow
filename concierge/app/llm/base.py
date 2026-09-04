@@ -1,4 +1,5 @@
 """Types + the provider-wrapper contract. This module has no vendor imports."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -11,8 +12,8 @@ from typing import Any
 class LLMMessage:
     role: str  # "system" | "user" | "assistant" | "tool"
     content: str = ""
-    tool_call_id: str | None = None   # for role="tool" — matches ToolCall.id
-    name: str | None = None           # for role="tool" — the function name
+    tool_call_id: str | None = None  # for role="tool" — matches ToolCall.id
+    name: str | None = None  # for role="tool" — the function name
     tool_calls: list[ToolCall] | None = None  # for role="assistant"
 
 
@@ -73,8 +74,7 @@ class LLMProvider(ABC):
         system: str | None = None,
         temperature: float = 0.4,
         max_tokens: int = 1024,
-    ) -> LLMResult:
-        ...
+    ) -> LLMResult: ...
 
     async def generate_with_tools(
         self,

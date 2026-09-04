@@ -1,6 +1,7 @@
 """Reservation — a booking the concierge creates or changes. The unique
 `(tenant_id, idempotency_key)` makes a duplicate booking *impossible* even if the
 LLM retries the tool call."""
+
 from __future__ import annotations
 
 import uuid

@@ -30,13 +30,10 @@ async def open_request(
     idempotency key in its payload, return it. Otherwise insert a new Request.
     """
     idempotency_key = payload.get("idempotency_key")
-    stmt = (
-        select(Request)
-        .where(
-            Request.tenant_id == ctx["tenant_id"],
-            Request.type == type,
-            Request.status.in_([RequestStatus.new, RequestStatus.needs_review]),
-        )
+    stmt = select(Request).where(
+        Request.tenant_id == ctx["tenant_id"],
+        Request.type == type,
+        Request.status.in_([RequestStatus.new, RequestStatus.needs_review]),
     )
     if idempotency_key:
         stmt = stmt.where(Request.payload["idempotency_key"].astext == idempotency_key)
@@ -94,17 +91,12 @@ async def transition(
 
     if not allowed:
         raise ValueError(
-            f"Illegal Request transition: {current.value} -> {to.value} "
-            f"(request_id={request_id})"
+            f"Illegal Request transition: {current.value} -> {to.value} (request_id={request_id})"
         )
 
     # Enforce confidence & priority gates for auto-approve
     settings = get_settings()
-    if (
-        to == RequestStatus.approved
-        and request.priority == RequestPriority.high
-        and not user_id
-    ):
+    if to == RequestStatus.approved and request.priority == RequestPriority.high and not user_id:
         raise ValueError("High-priority requests require explicit staff approval")
     if (
         to == RequestStatus.approved

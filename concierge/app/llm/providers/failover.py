@@ -8,6 +8,7 @@ Built for Azure AI Foundry, where several serverless deployments (DeepSeek, Grok
 Kimi, …) can back one concierge with automatic fallback — so a slow or unavailable
 model never stalls a guest reply.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -52,7 +53,7 @@ class FailoverProvider(LLMProvider):
         self,
         messages: Sequence[LLMMessage],
         *,
-        model: str | None = None,     # ignored — each backend uses its own model
+        model: str | None = None,  # ignored — each backend uses its own model
         system: str | None = None,
         temperature: float = 0.4,
         max_tokens: int = 1024,
@@ -74,11 +75,10 @@ class FailoverProvider(LLMProvider):
                 last_exc = exc
                 log.warning(
                     "LLM backend %r failed (%s) — routing to next",
-                    b.model, self._reason(exc),
+                    b.model,
+                    self._reason(exc),
                 )
-        raise RuntimeError(
-            f"All {len(self._backends)} LLM backends failed"
-        ) from last_exc
+        raise RuntimeError(f"All {len(self._backends)} LLM backends failed") from last_exc
 
     async def generate_with_tools(
         self,
@@ -108,11 +108,10 @@ class FailoverProvider(LLMProvider):
                 last_exc = exc
                 log.warning(
                     "LLM backend %r failed on tool call (%s) — routing to next",
-                    b.model, self._reason(exc),
+                    b.model,
+                    self._reason(exc),
                 )
-        raise RuntimeError(
-            f"All {len(self._backends)} LLM backends failed (tools)"
-        ) from last_exc
+        raise RuntimeError(f"All {len(self._backends)} LLM backends failed (tools)") from last_exc
 
     async def stream(
         self,
@@ -136,25 +135,22 @@ class FailoverProvider(LLMProvider):
                 max_tokens=max_tokens,
             ).__aiter__()
             try:
-                first = await asyncio.wait_for(
-                    gen.__anext__(), timeout=self._attempt_timeout
-                )
+                first = await asyncio.wait_for(gen.__anext__(), timeout=self._attempt_timeout)
             except StopAsyncIteration:
                 return  # backend produced an empty but successful stream
             except Exception as exc:  # noqa: BLE001
                 last_exc = exc
                 log.warning(
                     "LLM backend %r failed before first token (%s) — routing to next",
-                    b.model, self._reason(exc),
+                    b.model,
+                    self._reason(exc),
                 )
                 continue
             yield first
             async for chunk in gen:
                 yield chunk
             return
-        raise RuntimeError(
-            f"All {len(self._backends)} LLM backends failed (stream)"
-        ) from last_exc
+        raise RuntimeError(f"All {len(self._backends)} LLM backends failed (stream)") from last_exc
 
     @staticmethod
     def _reason(exc: Exception) -> str:

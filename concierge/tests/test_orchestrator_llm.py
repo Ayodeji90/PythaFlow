@@ -4,6 +4,7 @@ streaming, persona wiring, and multi-turn context deterministically.
 
 Day 12 additions: confirm-back prompt presence, slot-context injection,
 reminder scheduling, multi-turn corrections."""
+
 import uuid
 from collections.abc import AsyncIterator, Sequence
 from datetime import UTC, datetime
@@ -82,30 +83,32 @@ async def test_streams_tokens_and_persists(session):
     msg = WebChatAdapter.to_inbound(
         tenant_slug=tenant.slug, conversation_ref=conv_ref, content="hi there"
     )
-    chunks = [
-        c
-        async for c in handle_inbound(msg, db=session, redis=None, orchestrator=orch)
-    ]
+    chunks = [c async for c in handle_inbound(msg, db=session, redis=None, orchestrator=orch)]
     types = [c.type for c in chunks]
 
     # streamed as tokens, then done
     assert "token" in types
     assert types[-1] == "done"
-    reply = "".join(c.content for c in chunks if c.type == "token")
+    reply = "".join(c.content or "" for c in chunks if c.type == "token")
     assert reply.strip() == "Welcome to Bella Vista!"
 
     # persona wiring: the system prompt carried the tenant's name + brand voice
+    assert provider.last_system is not None
     assert "Bella Vista" in provider.last_system
     assert "Playful." in provider.last_system
 
     # the assistant turn was persisted (pipeline concatenated the tokens)
     rows = (
-        await session.execute(
-            select(Message)
-            .where(Message.conversation_id.isnot(None), Message.tenant_id == tenant.id)
-            .order_by(Message.created_at)
+        (
+            await session.execute(
+                select(Message)
+                .where(Message.conversation_id.isnot(None), Message.tenant_id == tenant.id)
+                .order_by(Message.created_at)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert [r.role for r in rows] == [MessageRole.guest, MessageRole.assistant]
     assert rows[1].content.strip() == "Welcome to Bella Vista!"
 
@@ -136,6 +139,7 @@ async def test_multi_turn_sees_prior_messages(session):
 
 # ── Day 12: confirm-back prompt presence ──────────────────────────────
 
+
 def test_confirm_back_instructions_in_prompt():
     """The _MULTI_TURN prompt includes explicit confirm-before-tool language."""
     assert "Shall I proceed" in _MULTI_TURN
@@ -144,6 +148,7 @@ def test_confirm_back_instructions_in_prompt():
 
 
 # ── Day 12: build_slot_context ────────────────────────────────────────
+
 
 def test_build_slot_context_full():
     state = {"date": "2026-07-28", "time": "19:00", "party_size": 4, "area": "terrace"}
@@ -167,6 +172,7 @@ def test_build_slot_context_empty():
 
 
 # ── Day 12: slot context injected into system prompt ──────────────────
+
 
 async def test_slot_context_in_system_prompt(session):
     """When Conversation.state has booking data, the system prompt includes it."""
@@ -197,6 +203,7 @@ async def test_slot_context_in_system_prompt(session):
 
 
 # ── Day 12: reminder scheduling ───────────────────────────────────────
+
 
 @pytest.mark.anyio
 async def test_schedule_reminder_zadd():
@@ -237,6 +244,7 @@ async def test_schedule_reminder_redis_none():
 
 
 # ── Day 12: state propagation across turns ────────────────────────────
+
 
 async def test_state_propagates_across_turns(session):
     """Conversation.state JSONB persists across turns via handle_inbound."""

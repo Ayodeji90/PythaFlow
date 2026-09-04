@@ -11,6 +11,7 @@ stale state via its own reconnect timer and fall back to polling (`GET .../messa
 on Day 18 will be the polling sibling — for now, the client is expected to
 re-open the SSE on error).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -85,9 +86,7 @@ async def stream_conversation_events(
                     return
 
                 if pubsub is not None:
-                    msg = await pubsub.get_message(
-                        ignore_subscribe_messages=True, timeout=0.5
-                    )
+                    msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
                     if msg and msg.get("type") == "message":
                         try:
                             envelope = json.loads(msg["data"])
@@ -96,15 +95,14 @@ async def stream_conversation_events(
                         # Tenant-broadcast only emits if it matches this tenant
                         # (the publisher includes tenant_id); the per-conv
                         # channel is stronger so we trust it as-is.
-                        if (
-                            envelope.get("conversation_id") is None
-                            and envelope.get("tenant_id") != str(tenant.id)
-                        ):
+                        if envelope.get("conversation_id") is None and envelope.get(
+                            "tenant_id"
+                        ) != str(tenant.id):
                             continue
                         yield {"event": "notification", "data": envelope}
                         continue
 
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(heartbeat)
                 yield {"event": "heartbeat"}
         finally:
             if pubsub is not None:

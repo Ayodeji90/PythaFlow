@@ -4,6 +4,7 @@ Upsert semantics: re-ingesting the same `source` for a tenant replaces that
 source's chunks (delete-then-insert) so editing a venue's hours doesn't leave
 stale copies behind.
 """
+
 from __future__ import annotations
 
 import uuid

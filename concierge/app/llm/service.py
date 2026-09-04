@@ -3,6 +3,7 @@
 The app core (routers, and from Day 4 the orchestrator) depends ONLY on this.
 It maps a quality *tier* to a concrete model and delegates to whatever provider
 wrapper is configured. Swapping vendors never touches a single caller."""
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Sequence

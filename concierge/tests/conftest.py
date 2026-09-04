@@ -6,6 +6,7 @@ calls (the app code commits!) land on a SAVEPOINT inside our outer transaction â
 so the whole test still rolls back cleanly at teardown.
 
 Assumes the schema is already migrated (`alembic upgrade head`)."""
+
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool

@@ -5,6 +5,7 @@ Exercises the entire seam end to end:
 
 Run:  uv run python scripts/check_llm.py
 """
+
 import asyncio
 import sys
 from pathlib import Path

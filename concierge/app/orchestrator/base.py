@@ -7,6 +7,7 @@ The signature is streaming (`AsyncIterator`) so token streaming needs no interfa
 change. `handle` is a plain `def` returning an `AsyncIterator` because an
 async-generator function returns its iterator immediately (no await).
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

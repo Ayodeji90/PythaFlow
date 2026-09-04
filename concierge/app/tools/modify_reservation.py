@@ -3,6 +3,7 @@
 Called by the fulfilment worker ONLY (never by the LLM — hidden via
 kind=fulfilment). Uses LocalBookingStore.modify() which handles the DB update.
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -25,12 +26,10 @@ class ModifyReservationArgs(BaseModel):
 class ModifyReservationTool:
     name = "modify_reservation"
     description = "Modify an existing Reservation row after staff approval."
-    args_model = ModifyReservationArgs
+    args_model: type[BaseModel] = ModifyReservationArgs
     kind = ToolKind.fulfilment
 
-    async def run(
-        self, args: ModifyReservationArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
+    async def run(self, args: ModifyReservationArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
         store = build_booking_store()
         from uuid import UUID
 

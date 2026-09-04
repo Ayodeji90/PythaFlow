@@ -1,4 +1,5 @@
 """WhatsApp channel (Twilio-backed, Meta Cloud API swappable later)."""
+
 from .adapter import WhatsAppAdapter, WhatsAppInbound
 from .client import (
     NullWhatsAppClient,

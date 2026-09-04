@@ -1,5 +1,6 @@
 """Tests for the Day 10 approval flow: decide(), create_reservation tool,
 and the approval router endpoints."""
+
 from __future__ import annotations
 
 import uuid
@@ -55,7 +56,9 @@ async def test_decide_approves(session):
     await session.flush()
 
     approval = await decide(
-        session, request.id, decision="approved",
+        session,
+        request.id,
+        decision="approved",
     )
 
     await session.refresh(request)
@@ -82,7 +85,9 @@ async def test_decide_rejects(session):
     await session.flush()
 
     approval = await decide(
-        session, request.id, decision="rejected",
+        session,
+        request.id,
+        decision="rejected",
         note="Table not available",
     )
 
@@ -176,7 +181,9 @@ async def test_create_reservation_run(session):
 
     result = await tool.run(
         CreateReservationArgs(
-            date="2026-07-25", time="20:00", party_size=4,
+            date="2026-07-25",
+            time="20:00",
+            party_size=4,
             idempotency_key="test-key-123",
         ),
         ctx=ctx,

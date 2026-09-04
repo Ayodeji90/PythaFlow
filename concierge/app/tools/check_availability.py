@@ -3,6 +3,7 @@
 The LLM calls this freely mid-chat so it can say "8:00 is full, but 8:30
 works?" without touching any write path.
 """
+
 from __future__ import annotations
 
 from datetime import date, time
@@ -28,12 +29,10 @@ class CheckAvailabilityTool:
         "how many covers are already booked, and up to 3 alternative times when "
         "the requested slot is full."
     )
-    args_model = CheckAvailabilityArgs
+    args_model: type[BaseModel] = CheckAvailabilityArgs
     kind = ToolKind.read_only
 
-    async def run(
-        self, args: CheckAvailabilityArgs, *, ctx: ToolContext, db: AsyncSession
-    ) -> dict:
+    async def run(self, args: CheckAvailabilityArgs, *, ctx: ToolContext, db: AsyncSession) -> dict:
         store = build_booking_store()
         result = await store.check_availability(
             tenant_id=ctx.tenant_id,

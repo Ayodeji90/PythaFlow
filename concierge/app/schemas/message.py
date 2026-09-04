@@ -7,6 +7,7 @@ orchestrator streams back. **The brain never sees channel specifics.**
 These are wire/in-flight DTOs and are deliberately separate from the persisted
 `app.models.Message` row — the transport contract shouldn't be coupled to storage.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime

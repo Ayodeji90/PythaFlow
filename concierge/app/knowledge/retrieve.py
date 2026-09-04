@@ -6,6 +6,7 @@ matches worse than `RAG_MAX_DISTANCE` are dropped. If nothing survives, the
 caller injects no context and the concierge says it'll check with the team —
 which is how we get "no invention" rather than answering from a bad match.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -53,7 +54,7 @@ async def retrieve(
                 distance,
             )
             .where(
-                KnowledgeChunk.tenant_id == tenant_id,       # tenant isolation
+                KnowledgeChunk.tenant_id == tenant_id,  # tenant isolation
                 KnowledgeChunk.embedding.isnot(None),
             )
             .order_by(distance)
@@ -66,7 +67,7 @@ async def retrieve(
             title=r.title, content=r.content, source=r.source, distance=float(r.distance)
         )
         for r in rows
-        if float(r.distance) <= max_distance   # the similarity floor
+        if float(r.distance) <= max_distance  # the similarity floor
     ]
 
 
